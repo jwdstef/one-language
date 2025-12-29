@@ -284,12 +284,15 @@ export class WordPopupService {
     
     promises.push(phoneticPromise);
     
-    // Fetch complete dictionary data from AI
-    const aiPromise = this.fetchAIDictionaryData(word, nativeLanguage).then((aiData) => {
+    // Fetch complete dictionary data from AI (including context sentence translation)
+    const aiPromise = this.fetchAIDictionaryData(word, nativeLanguage, basicData.contextSentence).then((aiData) => {
       if (aiData) {
         completeData.meanings = aiData.meanings;
         if (aiData.morphology) {
           completeData.morphology = aiData.morphology;
+        }
+        if (aiData.contextTranslation) {
+          completeData.contextSentenceTranslation = aiData.contextTranslation;
         }
       }
     }).catch((error) => {
@@ -307,13 +310,19 @@ export class WordPopupService {
   /**
    * Fetch dictionary data from AI with full meanings, examples, and morphology
    */
-  private async fetchAIDictionaryData(word: string, targetLanguage: string): Promise<{
+  private async fetchAIDictionaryData(word: string, targetLanguage: string, contextSentence?: string): Promise<{
     meanings: Meaning[];
     morphology?: MorphologyAnalysis;
+    contextTranslation?: string;
   } | null> {
     const langName = this.getLanguageName(targetLanguage);
     
-    const systemPrompt = `你是一个专业的英语词典助手。请为单词提供详细的${langName}释义。
+    // Build the prompt with optional context sentence (Chinese sentence to be translated to English)
+    const contextPart = contextSentence 
+      ? `\n\n原句语境（中文）："${contextSentence}"\n请将这个中文原句翻译成英文，放在contextTrans字段中。`
+      : '';
+    
+    const systemPrompt = `你是一个专业的英语词典助手。请为单词提供详细的${langName}释义。${contextPart}
 
 要求：
 1. 按词性分类，每个词性提供${langName}释义
@@ -334,11 +343,13 @@ export class WordPopupService {
     "prefix": {"text": "前缀", "meaning": "含义"},
     "root": {"text": "词根", "meaning": "含义"},
     "suffix": {"text": "后缀", "meaning": "含义"}
-  }
+  },
+  "contextTrans": "中文原句的英文翻译（如果提供了原句）"
 }
 
 注意：
 - morphology字段可选，只有当单词有明显构词结构时才返回
+- contextTrans字段可选，只有当提供了原句时才返回
 - 最多返回3个词性释义
 - 只返回JSON，不要其他文字`;
 
@@ -369,6 +380,7 @@ export class WordPopupService {
   private parseAIDictionaryResponse(content: string): {
     meanings: Meaning[];
     morphology?: MorphologyAnalysis;
+    contextTranslation?: string;
   } | null {
     try {
       // Try to extract JSON from response
@@ -416,7 +428,10 @@ export class WordPopupService {
         }
       }
       
-      return { meanings, morphology };
+      // Extract context translation
+      const contextTranslation = data.contextTrans || undefined;
+      
+      return { meanings, morphology, contextTranslation };
     } catch (error) {
       console.warn('[WordPopupService] Failed to parse AI dictionary response:', error);
       
@@ -472,10 +487,10 @@ export class WordPopupService {
    * Extract word data from translated word element
    */
   private extractWordData(element: HTMLElement): WordData | null {
-    // Get the translation text (the content of the element - this is the translated word, e.g., Chinese)
+    // Get the translation text (the content of the element - this is the English translation)
     const translationText = element.textContent?.trim().replace(/[()]/g, '').trim() || '';
     
-    // Get the original text from data attribute (this is the original English word)
+    // Get the original text from data attribute (this is the original Chinese word before translation)
     const originalText = element.getAttribute('data-original-text') || '';
     
     console.log('[WordPopupService] extractWordData - translationText:', translationText, 'originalText:', originalText);
@@ -486,18 +501,26 @@ export class WordPopupService {
     }
     
     // Determine which text to use for dictionary lookup
-    // If originalText exists and looks like English, use it
-    // Otherwise fall back to translationText
+    // translationText is the English word (what user clicked)
+    // originalText is the Chinese source word
     const isEnglish = (text: string) => /^[a-zA-Z\s\-']+$/.test(text);
-    const wordForLookup = (originalText && isEnglish(originalText)) ? originalText : 
-                          (isEnglish(translationText) ? translationText : originalText || translationText);
+    
+    // Use the English translation text for dictionary lookup
+    const wordForLookup = isEnglish(translationText) ? translationText : 
+                          (originalText && isEnglish(originalText)) ? originalText : translationText;
     
     console.log('[WordPopupService] wordForLookup:', wordForLookup);
     
+    // Get the original page word (the word that was on the page before translation)
+    // This is stored in the sibling .wxt-original-word element
+    const originalPageWord = this.getOriginalPageWord(element);
+    
+    // Extract the Chinese sentence containing the original word (语境强化)
+    // Use the original Chinese word to search in the original Chinese text
+    const originalChineseWord = originalPageWord || originalText || '';
+    const contextSentence = this.extractSentence(element, originalChineseWord);
+    
     // Create basic word data
-    // IMPORTANT: 'word' should be the ORIGINAL English word for dictionary lookup
-    // 'originalText' stores the original English word
-    // The translation (Chinese) is displayed in the popup but we look up the English word
     const wordData: WordData = {
       word: wordForLookup,
       originalText: originalText || translationText,
@@ -508,11 +531,164 @@ export class WordPopupService {
       exampleSentences: [], // Will be fetched from API
       sourceUrl: window.location.href,
       context: this.extractContext(element),
+      contextSentence: contextSentence,
     };
     
     return wordData;
   }
-
+  
+  /**
+   * Get the original page word from the sibling .wxt-original-word element
+   */
+  private getOriginalPageWord(element: HTMLElement): string {
+    // The structure is usually: <span class="wxt-original-word">原文</span><span class="wxt-translation-term">翻译</span>
+    // or the reverse depending on settings
+    
+    // Check previous sibling
+    let sibling = element.previousElementSibling;
+    if (sibling?.classList.contains('wxt-original-word')) {
+      let text = sibling.textContent || '';
+      // Remove parentheses if present
+      text = text.replace(/^\(|\)$/g, '').trim();
+      return text;
+    }
+    
+    // Check next sibling
+    sibling = element.nextElementSibling;
+    if (sibling?.classList.contains('wxt-original-word')) {
+      let text = sibling.textContent || '';
+      text = text.replace(/^\(|\)$/g, '').trim();
+      return text;
+    }
+    
+    // Check parent's children
+    const parent = element.parentElement;
+    if (parent) {
+      const originalWord = parent.querySelector('.wxt-original-word');
+      if (originalWord) {
+        let text = originalWord.textContent || '';
+        text = text.replace(/^\(|\)$/g, '').trim();
+        return text;
+      }
+    }
+    
+    return '';
+  }
+  
+  /**
+   * Extract the sentence containing the word (语境强化)
+   * Extracts the original Chinese sentence from the page, which will be translated by AI
+   * @param element - The clicked translation element
+   * @param originalWord - The original Chinese word to search for
+   */
+  private extractSentence(element: HTMLElement, originalWord: string): string {
+    console.log('[WordPopupService] extractSentence called for word:', originalWord);
+    
+    if (!originalWord) return '';
+    
+    // Strategy: Find the closest paragraph-like container
+    const container = element.closest('p, li, h1, h2, h3, h4, h5, h6, td, th, blockquote, figcaption, div') as HTMLElement;
+    
+    if (!container) {
+      console.log('[WordPopupService] No suitable container found');
+      return '';
+    }
+    
+    console.log('[WordPopupService] Found container:', container.tagName);
+    
+    // Get the original Chinese text from container (before translation)
+    const originalText = this.getOriginalTextFromContainer(container);
+    
+    console.log('[WordPopupService] Original text:', originalText?.substring(0, 150));
+    
+    if (!originalText) {
+      console.log('[WordPopupService] No original text found');
+      return '';
+    }
+    
+    // Find the sentence containing the original word
+    const sentence = this.extractSentenceWithWord(originalText, originalWord);
+    
+    console.log('[WordPopupService] Extracted sentence:', sentence?.substring(0, 100));
+    
+    return sentence || '';
+  }
+  
+  /**
+   * Get original text from container (the text before translation)
+   * This extracts the original Chinese content
+   */
+  private getOriginalTextFromContainer(container: HTMLElement): string {
+    // Clone to avoid modifying DOM
+    const clone = container.cloneNode(true) as HTMLElement;
+    
+    // Remove all translation term elements (keep only original text)
+    clone.querySelectorAll('.wxt-translation-term').forEach(el => el.remove());
+    
+    // Unwrap original word wrappers (keep their text content as plain text)
+    clone.querySelectorAll('.wxt-original-word').forEach(wrapper => {
+      let text = wrapper.textContent || '';
+      // Remove parentheses if present
+      text = text.replace(/^\s*\(|\)\s*$/g, '').trim();
+      const textNode = document.createTextNode(text);
+      wrapper.parentNode?.replaceChild(textNode, wrapper);
+    });
+    
+    // Get clean text and normalize whitespace
+    let text = clone.textContent || '';
+    text = text.replace(/\s*\(\s*\)\s*/g, ''); // Remove empty parentheses
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    return text;
+  }
+  
+  /**
+   * Extract the sentence containing a specific word
+   */
+  private extractSentenceWithWord(text: string, word: string): string {
+    if (!word) return '';
+    
+    // Split by common sentence-ending punctuation (both Chinese and English)
+    // Use more comprehensive punctuation: 。！？；.!?; and also handle comma-separated clauses for long text
+    const sentences = text.split(/(?<=[。！？.!?])\s*/);
+    
+    // Find sentence containing the word
+    const wordLower = word.toLowerCase();
+    for (const sentence of sentences) {
+      const trimmed = sentence.trim();
+      if (!trimmed) continue;
+      
+      // Check if this sentence contains the word
+      if (trimmed.includes(word) || trimmed.toLowerCase().includes(wordLower)) {
+        // If sentence is still too long (>120 chars), try to split by secondary punctuation
+        if (trimmed.length > 120) {
+          const clauses = trimmed.split(/(?<=[，,；;：:])\s*/);
+          for (const clause of clauses) {
+            const clauseTrimmed = clause.trim();
+            if (clauseTrimmed && (clauseTrimmed.includes(word) || clauseTrimmed.toLowerCase().includes(wordLower))) {
+              // Return the clause, max 100 chars
+              if (clauseTrimmed.length > 100) {
+                const idx = clauseTrimmed.toLowerCase().indexOf(wordLower);
+                if (idx >= 0) {
+                  const start = Math.max(0, idx - 40);
+                  const end = Math.min(clauseTrimmed.length, idx + word.length + 40);
+                  let segment = clauseTrimmed.substring(start, end);
+                  if (start > 0) segment = '...' + segment;
+                  if (end < clauseTrimmed.length) segment += '...';
+                  return segment;
+                }
+              }
+              return clauseTrimmed;
+            }
+          }
+        }
+        return trimmed;
+      }
+    }
+    
+    return '';
+  }
+  
   /**
    * Extract context around the word
    */

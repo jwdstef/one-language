@@ -22,19 +22,15 @@ const CSS_CLASSES = {
 };
 
 const POPUP_DIMENSIONS = {
-  WIDTH: 340,
+  WIDTH: 400,
   MIN_HEIGHT: 150,
   ARROW_HEIGHT: 8,
   VIEWPORT_PADDING: 16,
 };
 
 const SVG_ICONS = {
-  STAR_EMPTY: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-  </svg>`,
-  STAR_FILLED: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-  </svg>`,
+  STAR_EMPTY: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+  STAR_FILLED: `<svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
 };
 
 export class WordPopupManager {
@@ -112,17 +108,37 @@ export class WordPopupManager {
       this.setupAudioButtonListeners();
     }
     
+    // Update context section (语境强化)
+    // contextSentence is the original Chinese sentence
+    // contextSentenceTranslation is the English translation
+    // Use originalText (Chinese word) for highlighting in the Chinese sentence
+    const contextSection = this.popupElement.querySelector('.wxt-context-section') as HTMLElement;
+    const contextBox = this.popupElement.querySelector('.wxt-context-box');
+    if (contextSection && contextBox) {
+      if (wordData.contextSentence) {
+        const contextHtml = WordPopupTemplate.renderContext(
+          wordData.contextSentence,
+          wordData.contextSentenceTranslation,
+          wordData.originalText // Use Chinese original word for highlighting
+        );
+        contextBox.innerHTML = contextHtml;
+        contextSection.style.display = 'block';
+      } else {
+        contextSection.style.display = 'none';
+      }
+    }
+    
     const meaningsContainer = this.popupElement.querySelector('.wxt-meanings-list');
     if (meaningsContainer) {
       meaningsContainer.innerHTML = WordPopupTemplate.renderMeanings(wordData.meanings);
     }
     
     const morphologySection = this.popupElement.querySelector('.wxt-morphology-section') as HTMLElement;
-    const morphologyContent = this.popupElement.querySelector('.wxt-morphology-content');
-    if (morphologySection && morphologyContent) {
+    const morphologyGrid = this.popupElement.querySelector('.wxt-morphology-grid');
+    if (morphologySection && morphologyGrid) {
       const morphologyHtml = WordPopupTemplate.renderMorphology(wordData.morphology);
       if (morphologyHtml) {
-        morphologyContent.innerHTML = morphologyHtml;
+        morphologyGrid.innerHTML = morphologyHtml;
         morphologySection.style.display = 'block';
       } else {
         morphologySection.style.display = 'none';
@@ -146,7 +162,7 @@ export class WordPopupManager {
 
   public updateTags(tags: string[]): void {
     this.state.tags = tags;
-    const tagsContainer = this.popupElement?.querySelector('.wxt-tags-container');
+    const tagsContainer = this.popupElement?.querySelector('.wxt-tags-cloud');
     if (tagsContainer) {
       tagsContainer.innerHTML = WordPopupTemplate.renderTags(tags);
       this.setupTagRemoveListeners();

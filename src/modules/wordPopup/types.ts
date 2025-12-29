@@ -47,6 +47,10 @@ export interface WordData {
   morphology?: MorphologyAnalysis;
   sourceUrl: string;
   context?: string;
+  /** 单词所在的原句（用于语境强化） */
+  contextSentence?: string;
+  /** 原句的翻译 */
+  contextSentenceTranslation?: string;
 }
 
 // Popup position configuration
