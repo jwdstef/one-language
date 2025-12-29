@@ -103,10 +103,20 @@ export class TextReplacerService {
    * @param config 新的配置（部分更新）
    */
   public updateConfig(config: Partial<ReplacementConfig>): void {
+    // 检查是否有影响翻译结果的配置变化
+    const needsClearCache = 
+      config.userLevel !== undefined && config.userLevel !== this.config.userLevel ||
+      config.replacementRate !== undefined && config.replacementRate !== this.config.replacementRate;
+    
     this.config = { ...this.config, ...config };
 
     if (config.translationStyle) {
       this.styleManager.setTranslationStyle(config.translationStyle);
+    }
+
+    // 清除缓存以确保新配置生效
+    if (needsClearCache) {
+      this.clearAllCache();
     }
   }
 

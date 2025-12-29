@@ -138,6 +138,7 @@ export class ListenerService implements IListenerService {
         newSettings.enablePronunciationTooltip ||
       this.settings.userLevel !== newSettings.userLevel ||
       this.settings.useGptApi !== newSettings.useGptApi ||
+      this.settings.replacementRate !== newSettings.replacementRate ||
       this.settings.multilingualConfig.targetLanguage !==
         newSettings.multilingualConfig.targetLanguage ||
       this.settings.multilingualConfig.nativeLanguage !==
