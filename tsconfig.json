@@ -1,0 +1,4 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "exclude": ["backend", "admin", ".output", "node_modules"]
+}

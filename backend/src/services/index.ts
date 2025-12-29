@@ -1,0 +1,7 @@
+export * as authService from './auth.service.js';
+export * as vocabularyService from './vocabulary.service.js';
+export * as statsService from './stats.service.js';
+export * as exportService from './export.service.js';
+export * as reviewService from './review.service.js';
+export * as listService from './list.service.js';
+export * as adminService from './admin.service.js';

@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  passwordHash     String    @map("password_hash")
+  name             String
+  avatarUrl        String?   @map("avatar_url")
+  subscriptionTier String    @default("free") @map("subscription_tier")
+  role             String    @default("user")
+  status           String    @default("active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  lastLoginAt      DateTime? @map("last_login_at")
+
+  // Relations
+  favoriteWords      FavoriteWord[]
+  learningActivities LearningActivity[]
+  userStreak         UserStreak?
+  refreshTokens      RefreshToken[]
+  vocabularyLists    VocabularyList[]
+
+  @@map("users")
+}
+
+// Refresh tokens for JWT authentication
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique @db.VarChar(512)
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// Favorite words table
+model FavoriteWord {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  word             String    @db.VarChar(255)
+  originalText     String?   @map("original_text") @db.Text
+  pronunciation    Json?
+  meanings         Json?
+  exampleSentences Json?     @map("example_sentences")
+  sourceUrl        String?   @map("source_url") @db.VarChar(2048)
+  context          String?   @db.Text
+  tags             Json      @default("[]")
+  masteryLevel     String    @default("new") @map("mastery_level")
+  reviewCount      Int       @default(0) @map("review_count")
+  lastReviewedAt   DateTime? @map("last_reviewed_at")
+  favoritedAt      DateTime  @default(now()) @map("favorited_at")
+
+  // Relations
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningActivities LearningActivity[]
+  vocabularyLists    VocabularyListWord[]
+
+  @@unique([userId, word])
+  @@index([userId])
+  @@index([word])
+  @@index([favoritedAt])
+  @@map("favorite_words")
+}
+
+// Learning activity table
+model LearningActivity {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  activityType String   @map("activity_type")
+  wordId       String?  @map("word_id")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word FavoriteWord? @relation(fields: [wordId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("learning_activities")
+}
+
+// User streaks table
+model UserStreak {
+  userId           String    @id @map("user_id")
+  currentStreak    Int       @default(0) @map("current_streak")
+  longestStreak    Int       @default(0) @map("longest_streak")
+  lastActivityDate DateTime? @map("last_activity_date") @db.Date
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_streaks")
+}
+
+// Custom vocabulary lists table
+model VocabularyList {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  color       String?  @default("#3b82f6")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  words VocabularyListWord[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("vocabulary_lists")
+}
+
+// Junction table for vocabulary list words
+model VocabularyListWord {
+  id        String   @id @default(uuid())
+  listId    String   @map("list_id")
+  wordId    String   @map("word_id")
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  // Relations
+  list VocabularyList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  word FavoriteWord   @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, wordId])
+  @@index([listId])
+  @@index([wordId])
+  @@map("vocabulary_list_words")
+}

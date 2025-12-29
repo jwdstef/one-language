@@ -1,0 +1,45 @@
+{
+  "name": "illa-helper-admin",
+  "version": "1.0.0",
+  "description": "Admin dashboard for illa-helper SaaS platform",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.vue",
+    "lint:fix": "eslint src --ext .ts,.vue --fix",
+    "format": "prettier --write \"src/**/*.{ts,vue,css}\"",
+    "check": "npm run format && npm run lint:fix"
+  },
+  "dependencies": {
+    "@vueuse/core": "^13.5.0",
+    "axios": "^1.7.7",
+    "chart.js": "^4.4.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.522.0",
+    "pinia": "^2.2.6",
+    "reka-ui": "^2.3.1",
+    "tailwind-merge": "^3.3.1",
+    "vue": "^3.5.13",
+    "vue-chartjs": "^5.3.2",
+    "vue-i18n": "^9.14.5",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.10",
+    "@types/node": "^22.9.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.14.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-vue": "^9.31.0",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vue-tsc": "^2.2.10"
+  }
+}
