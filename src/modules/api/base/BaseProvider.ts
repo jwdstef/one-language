@@ -44,7 +44,7 @@ export abstract class BaseProvider implements ITranslationProvider {
 
   /**
    * 应用替换比例限制
-   * 根据用户设置的比例，限制实际替换的词汇数量
+   * 核心后处理：精确控制最终替换数量，确保用户设置的比例生效
    */
   protected applyReplacementRateLimit(
     result: FullTextAnalysisResponse,
@@ -55,34 +55,52 @@ export abstract class BaseProvider implements ITranslationProvider {
       return result;
     }
 
-    // 计算原文的单词数（简单按空格分割）
-    const wordCount = originalText.split(/\s+/).filter(w => w.length > 0).length;
+    // 计算原文的单词数（排除标点和空白）
+    const words = originalText.split(/\s+/).filter(w => w.length > 0 && /\w/.test(w));
+    const wordCount = words.length;
     
-    // 计算目标替换数量
-    const targetCount = Math.max(1, Math.round(wordCount * replacementRate));
-    
-    // 如果当前替换数量已经在合理范围内，不做调整
-    const currentCount = result.replacements.length;
-    const tolerance = 0.3; // 30% 容差
-    const lowerBound = targetCount * (1 - tolerance);
-    const upperBound = targetCount * (1 + tolerance);
-    
-    if (currentCount >= lowerBound && currentCount <= upperBound) {
+    if (wordCount === 0) {
       return result;
     }
 
-    // 如果替换太多，随机选择保留
-    if (currentCount > upperBound) {
-      // 按位置排序，然后均匀选择
+    // 计算目标替换数量（严格按比例）
+    const targetCount = Math.max(1, Math.round(wordCount * replacementRate));
+    const currentCount = result.replacements.length;
+
+    console.log(`[ReplacementRate] 原文单词数: ${wordCount}, 目标比例: ${replacementRate * 100}%, 目标数量: ${targetCount}, AI返回数量: ${currentCount}`);
+
+    // 如果 AI 返回的数量正好或接近目标（±1），直接使用
+    if (Math.abs(currentCount - targetCount) <= 1) {
+      return result;
+    }
+
+    // 如果替换太多，均匀选择保留
+    if (currentCount > targetCount) {
+      // 按位置排序
       const sorted = [...result.replacements].sort((a, b) => 
         (a.position?.start || 0) - (b.position?.start || 0)
       );
       
-      const step = currentCount / targetCount;
-      const selected = [];
-      for (let i = 0; i < targetCount && i * step < sorted.length; i++) {
-        selected.push(sorted[Math.floor(i * step)]);
+      // 均匀分布选择
+      const selected: typeof result.replacements = [];
+      const step = sorted.length / targetCount;
+      for (let i = 0; i < targetCount; i++) {
+        const index = Math.min(Math.floor(i * step), sorted.length - 1);
+        if (!selected.includes(sorted[index])) {
+          selected.push(sorted[index]);
+        }
       }
+      
+      // 如果因为去重导致数量不足，补充相邻的
+      let idx = 0;
+      while (selected.length < targetCount && idx < sorted.length) {
+        if (!selected.includes(sorted[idx])) {
+          selected.push(sorted[idx]);
+        }
+        idx++;
+      }
+
+      console.log(`[ReplacementRate] 裁剪后数量: ${selected.length}`);
       
       return {
         ...result,
@@ -92,7 +110,8 @@ export abstract class BaseProvider implements ITranslationProvider {
       };
     }
 
-    // 如果替换太少，保持原样（AI 已经尽力了）
+    // 如果替换太少，保持原样（AI 已经尽力选择了）
+    console.log(`[ReplacementRate] AI返回数量不足，保持原样: ${currentCount}`);
     return result;
   }
 
