@@ -98,6 +98,13 @@ export interface AITranslationEntry {
   explain: string;
   /** 翻译来源标识 */
   source: string;
+  /** 构词分析（可选） */
+  morphology?: {
+    prefix?: { text: string; meaning: string };
+    root?: { text: string; meaning: string };
+    suffix?: { text: string; meaning: string };
+    etymology?: string;
+  };
 }
 
 /**

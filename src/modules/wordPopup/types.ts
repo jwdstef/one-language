@@ -9,12 +9,16 @@ export interface Pronunciation {
   audioUrl?: string;
   ukPhonetic?: string;
   usPhonetic?: string;
+  ukAudioUrl?: string;
+  usAudioUrl?: string;
 }
 
-// Word meaning
+// Word meaning with example
 export interface Meaning {
   partOfSpeech: string;
   definition: string;
+  example?: string;
+  exampleTranslation?: string;
   examples?: string[];
 }
 
@@ -25,6 +29,14 @@ export interface ExampleSentence {
   source?: string;
 }
 
+// Word morphology analysis (构词分析)
+export interface MorphologyAnalysis {
+  prefix?: { text: string; meaning: string };
+  root?: { text: string; meaning: string };
+  suffix?: { text: string; meaning: string };
+  etymology?: string;
+}
+
 // Complete word data for popup display
 export interface WordData {
   word: string;
@@ -32,6 +44,7 @@ export interface WordData {
   pronunciation: Pronunciation;
   meanings: Meaning[];
   exampleSentences: ExampleSentence[];
+  morphology?: MorphologyAnalysis;
   sourceUrl: string;
   context?: string;
 }

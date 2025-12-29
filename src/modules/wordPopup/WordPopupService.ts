@@ -6,14 +6,14 @@
  */
 
 import { WordPopupManager } from './WordPopupManager';
-import type { WordData, PopupEventHandler, PopupEventType, Meaning, ExampleSentence } from './types';
+import type { WordData, PopupEventHandler, PopupEventType, Meaning, MorphologyAnalysis } from './types';
 import { WORD_POPUP_STYLES } from './WordPopupTemplate';
 import { vocabularyService } from '../vocabulary/VocabularyService';
 import { authService } from '../auth/AuthService';
 import type { FavoriteWordInput } from '../vocabulary/types';
 import { DictionaryApiProvider } from '../pronunciation/phonetic/DictionaryApiProvider';
-import { AITranslationProvider } from '../pronunciation/translation/AITranslationProvider';
 import { StorageService } from '../core/storage';
+import { UniversalApiService } from '../api/services/UniversalApiService';
 
 // CSS selector for translated words
 const TRANSLATED_WORD_SELECTOR = '.wxt-translation-term';
@@ -36,8 +36,8 @@ export class WordPopupService {
   // Dictionary API provider for phonetics and meanings
   private dictionaryProvider: DictionaryApiProvider;
   
-  // AI Translation provider for Chinese meanings
-  private aiTranslationProvider: AITranslationProvider | null = null;
+  // Universal API service for AI calls
+  private universalApi: UniversalApiService;
   
   // Storage service for API config
   private storageService: StorageService;
@@ -50,23 +50,7 @@ export class WordPopupService {
     this.boundHandleWordClick = this.handleWordClick.bind(this);
     this.dictionaryProvider = new DictionaryApiProvider();
     this.storageService = StorageService.getInstance();
-    
-    // Initialize AI translation provider asynchronously
-    this.initAITranslationProvider();
-  }
-  
-  /**
-   * Initialize AI Translation Provider with API config from storage
-   */
-  private async initAITranslationProvider(): Promise<void> {
-    try {
-      const apiConfig = await this.storageService.getActiveApiConfig();
-      if (apiConfig) {
-        this.aiTranslationProvider = new AITranslationProvider(apiConfig);
-      }
-    } catch (error) {
-      console.warn('[WordPopupService] Failed to initialize AI translation provider:', error);
-    }
+    this.universalApi = UniversalApiService.getInstance();
   }
 
   /**
@@ -269,63 +253,30 @@ export class WordPopupService {
     
     console.log('[WordPopupService] Fetching complete data for word:', word);
     
-    // Parallel fetch phonetics and AI translation
+    // Get user's target language for translations
+    const userSettings = await this.storageService.getUserSettings();
+    const nativeLanguage = userSettings.multilingualConfig?.nativeLanguage || 'zh';
+    
+    // Parallel fetch phonetics and AI dictionary data
     const promises: Promise<void>[] = [];
     
-    // Fetch phonetics and English meanings from Dictionary API
+    // Fetch phonetics from Dictionary API
     const phoneticPromise = this.dictionaryProvider.getPhonetic(word).then((result) => {
       console.log('[WordPopupService] Dictionary API result:', result);
       if (result.success && result.data) {
-        // Extract phonetics
+        // Extract phonetics with audio URLs
         const phonetics = result.data.phonetics || [];
-        const ukPhonetic = phonetics.find(p => p.audio?.includes('uk'))?.text || '';
-        const usPhonetic = phonetics.find(p => p.audio?.includes('us'))?.text || phonetics[0]?.text || '';
-        const audioUrl = phonetics.find(p => p.audio)?.audio || '';
+        const ukPhoneticData = phonetics.find(p => p.audio?.includes('uk'));
+        const usPhoneticData = phonetics.find(p => p.audio?.includes('us')) || phonetics[0];
         
         completeData.pronunciation = {
-          phonetic: usPhonetic || ukPhonetic,
-          ukPhonetic: ukPhonetic,
-          usPhonetic: usPhonetic,
-          audioUrl: audioUrl,
+          phonetic: usPhoneticData?.text || ukPhoneticData?.text || '',
+          ukPhonetic: ukPhoneticData?.text || '',
+          usPhonetic: usPhoneticData?.text || phonetics[0]?.text || '',
+          ukAudioUrl: ukPhoneticData?.audio || '',
+          usAudioUrl: usPhoneticData?.audio || phonetics.find(p => p.audio)?.audio || '',
+          audioUrl: phonetics.find(p => p.audio)?.audio || '',
         };
-        
-        // Extract meanings from dictionary API (English definitions)
-        if (result.data.meanings && result.data.meanings.length > 0) {
-          const meanings: Meaning[] = [];
-          const examples: ExampleSentence[] = [];
-          
-          result.data.meanings.forEach((meaning) => {
-            const partOfSpeech = meaning.partOfSpeech || '';
-            
-            meaning.definitions?.forEach((def, index) => {
-              // Only take first 2 definitions per part of speech
-              if (index < 2) {
-                meanings.push({
-                  partOfSpeech: partOfSpeech,
-                  definition: def.definition || '',
-                  examples: def.example ? [def.example] : [],
-                });
-                
-                // Extract example sentences
-                if (def.example) {
-                  examples.push({
-                    sentence: def.example,
-                    translation: '', // Will be filled by AI translation if available
-                  });
-                }
-              }
-            });
-          });
-          
-          // Only use dictionary meanings if we don't have AI translation
-          if (meanings.length > 0 && completeData.meanings.length === 0) {
-            completeData.meanings = meanings.slice(0, 4); // Limit to 4 meanings
-          }
-          
-          if (examples.length > 0 && completeData.exampleSentences.length === 0) {
-            completeData.exampleSentences = examples.slice(0, 3); // Limit to 3 examples
-          }
-        }
       }
     }).catch((error) => {
       console.warn('[WordPopupService] Dictionary API failed:', error);
@@ -333,27 +284,19 @@ export class WordPopupService {
     
     promises.push(phoneticPromise);
     
-    // Fetch Chinese meaning from AI Translation
-    if (this.aiTranslationProvider) {
-      const aiPromise = this.aiTranslationProvider.getMeaning(word).then((result) => {
-        console.log('[WordPopupService] AI Translation result:', result);
-        if (result.success && result.data) {
-          // Parse AI translation result into meanings
-          const aiExplain = result.data.explain || '';
-          if (aiExplain) {
-            // Parse format like "n. 名词释义; v. 动词释义"
-            const parsedMeanings = this.parseAIMeaning(aiExplain);
-            if (parsedMeanings.length > 0) {
-              completeData.meanings = parsedMeanings;
-            }
-          }
+    // Fetch complete dictionary data from AI
+    const aiPromise = this.fetchAIDictionaryData(word, nativeLanguage).then((aiData) => {
+      if (aiData) {
+        completeData.meanings = aiData.meanings;
+        if (aiData.morphology) {
+          completeData.morphology = aiData.morphology;
         }
-      }).catch((error) => {
-        console.warn('[WordPopupService] AI translation failed:', error);
-      });
-      
-      promises.push(aiPromise);
-    }
+      }
+    }).catch((error) => {
+      console.warn('[WordPopupService] AI dictionary failed:', error);
+    });
+    
+    promises.push(aiPromise);
     
     // Wait for all fetches to complete
     await Promise.allSettled(promises);
@@ -362,34 +305,167 @@ export class WordPopupService {
   }
   
   /**
-   * Parse AI meaning response into structured meanings
-   * Format: "n. 名词释义; v. 动词释义" or "adj. 形容词释义，另一个释义"
+   * Fetch dictionary data from AI with full meanings, examples, and morphology
    */
-  private parseAIMeaning(aiExplain: string): Meaning[] {
-    const meanings: Meaning[] = [];
+  private async fetchAIDictionaryData(word: string, targetLanguage: string): Promise<{
+    meanings: Meaning[];
+    morphology?: MorphologyAnalysis;
+  } | null> {
+    const langName = this.getLanguageName(targetLanguage);
     
-    // Split by semicolon or newline
-    const parts = aiExplain.split(/[;；\n]/).map(p => p.trim()).filter(p => p);
-    
-    for (const part of parts) {
-      // Match pattern like "n. definition" or "adj. definition"
-      const match = part.match(/^(n\.|v\.|adj\.|adv\.|prep\.|conj\.|pron\.|interj\.|abbr\.)\s*(.+)$/i);
+    const systemPrompt = `你是一个专业的英语词典助手。请为单词提供详细的${langName}释义。
+
+要求：
+1. 按词性分类，每个词性提供${langName}释义
+2. 每个释义配一个英文例句和${langName}翻译
+3. 如果单词有明显的构词结构，提供构词分析
+
+返回JSON格式：
+{
+  "meanings": [
+    {
+      "pos": "n.",
+      "def": "${langName}释义",
+      "example": "English example sentence.",
+      "exampleTrans": "例句的${langName}翻译"
+    }
+  ],
+  "morphology": {
+    "prefix": {"text": "前缀", "meaning": "含义"},
+    "root": {"text": "词根", "meaning": "含义"},
+    "suffix": {"text": "后缀", "meaning": "含义"}
+  }
+}
+
+注意：
+- morphology字段可选，只有当单词有明显构词结构时才返回
+- 最多返回3个词性释义
+- 只返回JSON，不要其他文字`;
+
+    try {
+      const result = await this.universalApi.call(word, {
+        systemPrompt,
+        temperature: 0,
+        maxTokens: 500,
+        timeout: 10000,
+      });
       
+      if (!result.success || !result.content) {
+        return null;
+      }
+      
+      // Parse JSON response
+      const parsed = this.parseAIDictionaryResponse(result.content);
+      return parsed;
+    } catch (error) {
+      console.error('[WordPopupService] AI dictionary request failed:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Parse AI dictionary JSON response
+   */
+  private parseAIDictionaryResponse(content: string): {
+    meanings: Meaning[];
+    morphology?: MorphologyAnalysis;
+  } | null {
+    try {
+      // Try to extract JSON from response
+      let jsonStr = content.trim();
+      
+      // Remove markdown code blocks if present
+      if (jsonStr.startsWith('```')) {
+        jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      const data = JSON.parse(jsonStr);
+      
+      const meanings: Meaning[] = [];
+      if (data.meanings && Array.isArray(data.meanings)) {
+        for (const m of data.meanings) {
+          meanings.push({
+            partOfSpeech: m.pos || '',
+            definition: m.def || '',
+            example: m.example || '',
+            exampleTranslation: m.exampleTrans || '',
+          });
+        }
+      }
+      
+      let morphology: MorphologyAnalysis | undefined;
+      if (data.morphology) {
+        morphology = {};
+        if (data.morphology.prefix) {
+          morphology.prefix = {
+            text: data.morphology.prefix.text || '',
+            meaning: data.morphology.prefix.meaning || '',
+          };
+        }
+        if (data.morphology.root) {
+          morphology.root = {
+            text: data.morphology.root.text || '',
+            meaning: data.morphology.root.meaning || '',
+          };
+        }
+        if (data.morphology.suffix) {
+          morphology.suffix = {
+            text: data.morphology.suffix.text || '',
+            meaning: data.morphology.suffix.meaning || '',
+          };
+        }
+      }
+      
+      return { meanings, morphology };
+    } catch (error) {
+      console.warn('[WordPopupService] Failed to parse AI dictionary response:', error);
+      
+      // Fallback: try to parse as simple text
+      return this.parseSimpleTextResponse(content);
+    }
+  }
+  
+  /**
+   * Fallback parser for non-JSON responses
+   */
+  private parseSimpleTextResponse(content: string): { meanings: Meaning[]; } | null {
+    const meanings: Meaning[] = [];
+    const lines = content.split('\n').filter(l => l.trim());
+    
+    for (const line of lines) {
+      const match = line.match(/^(n\.|v\.|adj\.|adv\.|prep\.|conj\.|pron\.|interj\.)\s*(.+)$/i);
       if (match) {
         meanings.push({
           partOfSpeech: match[1].toLowerCase(),
           definition: match[2].trim(),
-        });
-      } else if (part.length > 0) {
-        // If no part of speech found, add as general meaning
-        meanings.push({
-          partOfSpeech: '',
-          definition: part,
+          example: '',
+          exampleTranslation: '',
         });
       }
     }
     
-    return meanings.slice(0, 4); // Limit to 4 meanings
+    return meanings.length > 0 ? { meanings } : null;
+  }
+  
+  /**
+   * Get display name for language code
+   */
+  private getLanguageName(langCode: string): string {
+    const langMap: Record<string, string> = {
+      'zh': '中文',
+      'zh-CN': '中文',
+      'zh-TW': '繁体中文',
+      'en': 'English',
+      'ja': '日本語',
+      'ko': '한국어',
+      'fr': 'Français',
+      'de': 'Deutsch',
+      'es': 'Español',
+      'pt': 'Português',
+      'ru': 'Русский',
+      'it': 'Italiano',
+    };
+    return langMap[langCode] || langCode;
   }
 
   /**
@@ -554,14 +630,46 @@ export class WordPopupService {
    * Handle play audio action
    * Requirements: 2.3
    */
-  private handlePlayAudio(wordData: WordData): void {
-    // TODO: Integrate with existing TTS service
-    console.log('[WordPopupService] Play audio for:', wordData.word);
+  private handlePlayAudio(data: { wordData: WordData; accent: string }): void {
+    const { wordData, accent } = data;
+    console.log('[WordPopupService] Play audio for:', wordData.word, 'accent:', accent);
     
-    // Try to use Web Speech API as fallback
+    // Try to use audio URL from pronunciation data first
+    const pronunciation = wordData.pronunciation;
+    let audioUrl = '';
+    
+    if (accent === 'uk' && pronunciation.ukAudioUrl) {
+      audioUrl = pronunciation.ukAudioUrl;
+    } else if (accent === 'us' && pronunciation.usAudioUrl) {
+      audioUrl = pronunciation.usAudioUrl;
+    } else if (pronunciation.audioUrl) {
+      audioUrl = pronunciation.audioUrl;
+    }
+    
+    if (audioUrl) {
+      // Play audio from URL
+      const audio = new Audio(audioUrl);
+      audio.play().catch((error) => {
+        console.warn('[WordPopupService] Failed to play audio URL, falling back to TTS:', error);
+        this.playTTS(wordData.word, accent);
+      });
+    } else {
+      // Fallback to Web Speech API
+      this.playTTS(wordData.word, accent);
+    }
+  }
+  
+  /**
+   * Play text-to-speech for a word
+   */
+  private playTTS(word: string, accent: string): void {
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(wordData.word);
-      utterance.lang = 'en-US';
+      // Cancel any ongoing speech
+      speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = accent === 'uk' ? 'en-GB' : 'en-US';
+      utterance.rate = 0.9;
       speechSynthesis.speak(utterance);
     }
   }

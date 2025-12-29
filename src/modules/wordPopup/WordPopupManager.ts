@@ -22,10 +22,19 @@ const CSS_CLASSES = {
 };
 
 const POPUP_DIMENSIONS = {
-  WIDTH: 320,
+  WIDTH: 340,
   MIN_HEIGHT: 150,
   ARROW_HEIGHT: 8,
   VIEWPORT_PADDING: 16,
+};
+
+const SVG_ICONS = {
+  STAR_EMPTY: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+  </svg>`,
+  STAR_FILLED: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+  </svg>`,
 };
 
 export class WordPopupManager {
@@ -35,6 +44,7 @@ export class WordPopupManager {
   private state: PopupState;
   private eventHandler: PopupEventHandler | null = null;
   private currentTargetElement: HTMLElement | null = null;
+  private currentWordData: WordData | null = null;
   private boundHandleClickOutside: (e: MouseEvent) => void;
   private boundHandleEscapeKey: (e: KeyboardEvent) => void;
 
@@ -64,6 +74,7 @@ export class WordPopupManager {
 
   public show(element: HTMLElement, wordData: WordData): void {
     this.currentTargetElement = element;
+    this.currentWordData = wordData;
     this.state.wordData = wordData;
     this.state.visible = true;
     if (!this.popupElement) {
@@ -81,24 +92,41 @@ export class WordPopupManager {
     this.state.visible = false;
     this.popupElement.classList.remove(CSS_CLASSES.POPUP_VISIBLE);
     this.currentTargetElement = null;
+    this.currentWordData = null;
     this.removeDismissalListeners();
     this.emitEvent('close');
   }
 
+
   public updateContent(wordData: WordData): void {
     if (!this.popupElement) return;
     this.state.wordData = wordData;
+    this.currentWordData = wordData;
+    
     const wordText = this.popupElement.querySelector('.wxt-word-text');
     if (wordText) wordText.textContent = wordData.word;
-    const phonetic = this.popupElement.querySelector('.wxt-word-phonetic');
-    if (phonetic) phonetic.textContent = wordData.pronunciation.phonetic || '';
-    const meaningsContainer = this.popupElement.querySelector('.wxt-word-meanings');
-    if (meaningsContainer) {
-      meaningsContainer.innerHTML = this.renderMeanings(wordData.meanings);
+    
+    const pronunciationSection = this.popupElement.querySelector('.wxt-pronunciation-section');
+    if (pronunciationSection) {
+      pronunciationSection.innerHTML = WordPopupTemplate.renderPronunciation(wordData.pronunciation);
+      this.setupAudioButtonListeners();
     }
-    const examplesContainer = this.popupElement.querySelector('.wxt-word-examples-list');
-    if (examplesContainer) {
-      examplesContainer.innerHTML = this.renderExamples(wordData.exampleSentences);
+    
+    const meaningsContainer = this.popupElement.querySelector('.wxt-meanings-list');
+    if (meaningsContainer) {
+      meaningsContainer.innerHTML = WordPopupTemplate.renderMeanings(wordData.meanings);
+    }
+    
+    const morphologySection = this.popupElement.querySelector('.wxt-morphology-section') as HTMLElement;
+    const morphologyContent = this.popupElement.querySelector('.wxt-morphology-content');
+    if (morphologySection && morphologyContent) {
+      const morphologyHtml = WordPopupTemplate.renderMorphology(wordData.morphology);
+      if (morphologyHtml) {
+        morphologyContent.innerHTML = morphologyHtml;
+        morphologySection.style.display = 'block';
+      } else {
+        morphologySection.style.display = 'none';
+      }
     }
   }
 
@@ -106,34 +134,25 @@ export class WordPopupManager {
     this.state.isFavorited = isFavorited;
     const favoriteBtn = this.popupElement?.querySelector('.wxt-favorite-btn');
     if (favoriteBtn) {
-      favoriteBtn.textContent = isFavorited ? '★' : '☆';
+      favoriteBtn.innerHTML = isFavorited ? SVG_ICONS.STAR_FILLED : SVG_ICONS.STAR_EMPTY;
       favoriteBtn.classList.toggle('wxt-favorite-btn--active', isFavorited);
     }
     
-    // Show/hide tags section based on favorite state (Requirements: 9.5)
     const tagsSection = this.popupElement?.querySelector('.wxt-word-tags');
     if (tagsSection) {
       tagsSection.classList.toggle('wxt-word-tags--hidden', !isFavorited);
     }
   }
 
-  /**
-   * Update tags display
-   * Requirements: 9.5
-   */
   public updateTags(tags: string[]): void {
     this.state.tags = tags;
     const tagsContainer = this.popupElement?.querySelector('.wxt-tags-container');
     if (tagsContainer) {
       tagsContainer.innerHTML = WordPopupTemplate.renderTags(tags);
-      // Re-attach remove button listeners
       this.setupTagRemoveListeners();
     }
   }
 
-  /**
-   * Get current tags
-   */
   public getTags(): string[] {
     return this.state.tags || [];
   }
@@ -158,22 +177,18 @@ export class WordPopupManager {
     this.popupElement = document.createElement('div');
     this.popupElement.className = CSS_CLASSES.POPUP;
     this.popupElement.style.zIndex = String(this.config.zIndex);
-    this.popupElement.innerHTML = this.getPopupTemplate();
+    this.popupElement.innerHTML = WordPopupTemplate.getTemplate(
+      this.config.enableAudio, 
+      this.config.enableFavorite, 
+      this.config.enableTags
+    );
     this.setupPopupEventListeners();
     document.body.appendChild(this.popupElement);
   }
 
-  private getPopupTemplate(): string {
-    return WordPopupTemplate.getTemplate(this.config.enableAudio, this.config.enableFavorite, this.config.enableTags);
-  }
-
   private setupPopupEventListeners(): void {
     if (!this.popupElement) return;
-    const audioBtn = this.popupElement.querySelector('.wxt-audio-btn');
-    audioBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.emitEvent('playAudio', this.state.wordData);
-    });
+    
     const favoriteBtn = this.popupElement.querySelector('.wxt-favorite-btn');
     favoriteBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -181,14 +196,23 @@ export class WordPopupManager {
       this.emitEvent(eventType, this.state.wordData);
     });
     
-    // Setup tag input listeners (Requirements: 9.5)
     this.setupTagInputListeners();
+    this.setupAudioButtonListeners();
   }
 
-  /**
-   * Setup tag input event listeners
-   * Requirements: 9.5
-   */
+  private setupAudioButtonListeners(): void {
+    if (!this.popupElement) return;
+    
+    const audioButtons = this.popupElement.querySelectorAll('.wxt-pronunciation-audio-btn');
+    audioButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const accent = (btn as HTMLElement).dataset.accent || 'us';
+        this.emitEvent('playAudio', { wordData: this.currentWordData, accent });
+      });
+    });
+  }
+
   private setupTagInputListeners(): void {
     if (!this.popupElement) return;
     
@@ -196,13 +220,11 @@ export class WordPopupManager {
     const tagAddBtn = this.popupElement.querySelector('.wxt-tag-add-btn');
     
     if (tagInput && tagAddBtn) {
-      // Add tag on button click
       tagAddBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.handleAddTag(tagInput);
       });
       
-      // Add tag on Enter key
       tagInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -211,20 +233,12 @@ export class WordPopupManager {
         }
       });
       
-      // Prevent popup from closing when clicking input
-      tagInput.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
+      tagInput.addEventListener('click', (e) => e.stopPropagation());
     }
     
-    // Setup remove button listeners
     this.setupTagRemoveListeners();
   }
 
-  /**
-   * Setup tag remove button listeners
-   * Requirements: 9.5
-   */
   private setupTagRemoveListeners(): void {
     if (!this.popupElement) return;
     
@@ -240,18 +254,11 @@ export class WordPopupManager {
     });
   }
 
-  /**
-   * Handle adding a new tag
-   * Requirements: 9.5
-   */
   private handleAddTag(input: HTMLInputElement): void {
     const tag = input.value.trim().toLowerCase();
-    if (tag && tag.length > 0 && tag.length <= 30) {
-      // Check if tag already exists
-      if (!this.state.tags?.includes(tag)) {
-        this.emitEvent('addTag', { tag, wordData: this.state.wordData });
-        input.value = '';
-      }
+    if (tag && tag.length > 0 && tag.length <= 30 && !this.state.tags?.includes(tag)) {
+      this.emitEvent('addTag', { tag, wordData: this.state.wordData });
+      input.value = '';
     }
   }
 
@@ -261,16 +268,19 @@ export class WordPopupManager {
     const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
+    
     let left = rect.left + scrollLeft + (rect.width / 2) - (POPUP_DIMENSIONS.WIDTH / 2);
     if (left < POPUP_DIMENSIONS.VIEWPORT_PADDING) {
       left = POPUP_DIMENSIONS.VIEWPORT_PADDING;
     } else if (left + POPUP_DIMENSIONS.WIDTH > viewportWidth - POPUP_DIMENSIONS.VIEWPORT_PADDING) {
       left = viewportWidth - POPUP_DIMENSIONS.WIDTH - POPUP_DIMENSIONS.VIEWPORT_PADDING;
     }
+    
     const spaceAbove = rect.top;
     const spaceBelow = viewportHeight - rect.bottom;
     let top: number;
     let arrowPosition: 'top' | 'bottom';
+    
     if (spaceBelow >= POPUP_DIMENSIONS.MIN_HEIGHT + POPUP_DIMENSIONS.ARROW_HEIGHT) {
       top = rect.bottom + scrollTop + POPUP_DIMENSIONS.ARROW_HEIGHT;
       arrowPosition = 'top';
@@ -281,6 +291,7 @@ export class WordPopupManager {
       top = rect.bottom + scrollTop + POPUP_DIMENSIONS.ARROW_HEIGHT;
       arrowPosition = 'top';
     }
+    
     return { top, left, arrowPosition };
   }
 
@@ -293,14 +304,6 @@ export class WordPopupManager {
     this.popupElement.classList.add(
       position.arrowPosition === 'top' ? CSS_CLASSES.POPUP_ARROW_TOP : CSS_CLASSES.POPUP_ARROW_BOTTOM
     );
-  }
-
-  private renderMeanings(meanings: WordData['meanings']): string {
-    return WordPopupTemplate.renderMeanings(meanings);
-  }
-
-  private renderExamples(examples: WordData['exampleSentences']): string {
-    return WordPopupTemplate.renderExamples(examples, this.config.maxExamples);
   }
 
   private addDismissalListeners(): void {
