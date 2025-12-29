@@ -130,9 +130,10 @@ export class TextReplacerService {
   /**
    * 替换文本中的词汇
    * @param text 原始文本
+   * @param targetReplacementCount 可选的目标替换数量（用于全局比例控制）
    * @returns 替换结果
    */
-  public async replaceText(text: string): Promise<FullTextAnalysisResponse> {
+  public async replaceText(text: string, targetReplacementCount?: number): Promise<FullTextAnalysisResponse> {
     try {
       // 获取当前用户设置
       const storageService = StorageService.getInstance();
@@ -147,7 +148,7 @@ export class TextReplacerService {
       const settingsForApi = this.buildUserSettings(settings);
 
       // 处理翻译
-      return await this.processTranslation(text, settingsForApi);
+      return await this.processTranslation(text, settingsForApi, targetReplacementCount);
     } catch (error) {
       console.error('文本替换失败:', error);
       return this.createEmptyResult(text);
@@ -297,14 +298,16 @@ export class TextReplacerService {
    * 统一的翻译处理方法
    * @param text 原始文本
    * @param settings 用户设置
+   * @param targetReplacementCount 可选的目标替换数量（用于全局比例控制）
    * @returns 翻译结果
    */
   private async processTranslation(
     text: string,
     settings: UserSettings,
+    targetReplacementCount?: number,
   ): Promise<FullTextAnalysisResponse> {
-    // 生成缓存键
-    const cacheKey = this.generateCacheKey(text, settings);
+    // 生成缓存键（包含目标替换数量以区分不同的请求）
+    const cacheKey = this.generateCacheKey(text, settings, targetReplacementCount);
 
     // 检查缓存
     const cachedResult = this.getCachedResult(cacheKey);
@@ -314,7 +317,7 @@ export class TextReplacerService {
 
     try {
       // 获取API结果
-      const apiResult = await this.callTranslationAPI(text, settings);
+      const apiResult = await this.callTranslationAPI(text, settings, targetReplacementCount);
 
       // 存入缓存
       this.setCachedResult(cacheKey, apiResult);
@@ -332,6 +335,7 @@ export class TextReplacerService {
   private async callTranslationAPI(
     text: string,
     settings: UserSettings,
+    targetReplacementCount?: number,
   ): Promise<FullTextAnalysisResponse> {
     // 获取当前活跃的API配置
     const activeConfig = settings.apiConfigs.find(
@@ -345,8 +349,8 @@ export class TextReplacerService {
     // 使用工厂方法创建正确的提供商实例
     const translationProvider = ApiServiceFactory.createProvider(activeConfig);
 
-    // 调用API进行翻译
-    return await translationProvider.analyzeFullText(text, settings);
+    // 调用API进行翻译，传递目标替换数量
+    return await translationProvider.analyzeFullText(text, settings, targetReplacementCount);
   }
 
   /**
@@ -367,9 +371,10 @@ export class TextReplacerService {
    * 生成缓存键
    * @param text 文本
    * @param settings 设置
+   * @param targetReplacementCount 目标替换数量
    * @returns 缓存键字符串
    */
-  private generateCacheKey(text: string, settings: UserSettings): string {
+  private generateCacheKey(text: string, settings: UserSettings, targetReplacementCount?: number): string {
     const targetLanguage = settings.multilingualConfig.targetLanguage;
 
     const keyData: CacheKey = {
@@ -379,14 +384,25 @@ export class TextReplacerService {
       replacementRate: settings.replacementRate,
     };
 
-    return this.hashCacheKey(keyData);
+    // 如果有目标替换数量，加入缓存键
+    const keyStr = targetReplacementCount !== undefined 
+      ? JSON.stringify({ ...keyData, targetCount: targetReplacementCount })
+      : JSON.stringify(keyData);
+
+    return this.hashCacheKeyString(keyStr);
   }
 
   /**
    * 生成缓存键的哈希值
    */
   private hashCacheKey(keyData: CacheKey): string {
-    const str = JSON.stringify(keyData);
+    return this.hashCacheKeyString(JSON.stringify(keyData));
+  }
+
+  /**
+   * 对字符串生成哈希值
+   */
+  private hashCacheKeyString(str: string): string {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);

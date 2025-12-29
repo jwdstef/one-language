@@ -24,6 +24,7 @@ export abstract class BaseProvider implements ITranslationProvider {
   async analyzeFullText(
     text: string,
     settings: UserSettings,
+    targetReplacementCount?: number,
   ): Promise<FullTextAnalysisResponse> {
     const originalText = text || '';
 
@@ -34,8 +35,8 @@ export abstract class BaseProvider implements ITranslationProvider {
 
     try {
       const result = await this.doAnalyzeFullText(originalText, settings);
-      // 应用替换比例限制
-      return this.applyReplacementRateLimit(result, originalText, settings.replacementRate);
+      // 应用替换比例限制，支持外部传入的目标替换数量
+      return this.applyReplacementRateLimit(result, originalText, settings.replacementRate, targetReplacementCount);
     } catch (error: any) {
       console.error(`${this.getProviderName()} API请求失败:`, error);
       return createErrorResponse(originalText);
@@ -43,31 +44,70 @@ export abstract class BaseProvider implements ITranslationProvider {
   }
 
   /**
+   * 计算文本中的"单词"数量
+   * 支持中英文混合文本
+   */
+  private countWords(text: string): number {
+    if (!text || text.trim().length === 0) {
+      return 0;
+    }
+
+    // 中文字符
+    const chineseChars = text.match(/[\u4e00-\u9fff]/g) || [];
+    const chineseCount = chineseChars.length;
+
+    // 英文单词
+    const textWithoutChinese = text.replace(/[\u4e00-\u9fff]/g, ' ');
+    const englishWords = textWithoutChinese.split(/\s+/).filter(w => w.length > 0 && /[a-zA-Z]/.test(w));
+    const englishCount = englishWords.length;
+
+    // 中文2个字符约等于1个单词
+    const chineseWordEquivalent = Math.ceil(chineseCount / 2);
+
+    return englishCount + chineseWordEquivalent;
+  }
+
+  /**
    * 应用替换比例限制
    * 核心后处理：精确控制最终替换数量，确保用户设置的比例生效
+   * 
+   * @param result API返回的翻译结果
+   * @param originalText 原始文本
+   * @param replacementRate 替换比例 (0-1)
+   * @param targetReplacementCount 可选的目标替换数量（由外部计算，用于全局比例控制）
    */
   protected applyReplacementRateLimit(
     result: FullTextAnalysisResponse,
     originalText: string,
     replacementRate: number,
+    targetReplacementCount?: number,
   ): FullTextAnalysisResponse {
     if (!result.replacements || result.replacements.length === 0) {
       return result;
     }
 
-    // 计算原文的单词数（排除标点和空白）
-    const words = originalText.split(/\s+/).filter(w => w.length > 0 && /\w/.test(w));
-    const wordCount = words.length;
+    // 计算原文的单词数（支持中英文）
+    const wordCount = this.countWords(originalText);
     
     if (wordCount === 0) {
       return result;
     }
 
-    // 计算目标替换数量（严格按比例）
-    const targetCount = Math.max(1, Math.round(wordCount * replacementRate));
+    // 如果外部提供了目标替换数量，使用外部值；否则按本段落比例计算
+    const targetCount = targetReplacementCount !== undefined 
+      ? targetReplacementCount 
+      : Math.max(1, Math.round(wordCount * replacementRate));
     const currentCount = result.replacements.length;
 
-    console.log(`[ReplacementRate] 原文单词数: ${wordCount}, 目标比例: ${replacementRate * 100}%, 目标数量: ${targetCount}, AI返回数量: ${currentCount}`);
+    console.log(`[ReplacementRate] 原文单词数: ${wordCount}, 目标比例: ${replacementRate * 100}%, 目标数量: ${targetCount}, AI返回数量: ${currentCount}${targetReplacementCount !== undefined ? ' (全局分配)' : ''}`);
+
+    // 如果目标为0，返回空结果
+    if (targetCount === 0) {
+      return {
+        ...result,
+        replacements: [],
+      };
+    }
 
     // 如果 AI 返回的数量正好或接近目标（±1），直接使用
     if (Math.abs(currentCount - targetCount) <= 1) {

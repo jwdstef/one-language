@@ -69,6 +69,35 @@ export class ProcessingCoordinator {
   }
 
   /**
+   * 计算文本中的"单词"数量
+   * 支持中英文混合文本：
+   * - 英文按空格分词
+   * - 中文每个字符算一个"词"（因为中文没有空格分隔）
+   * - 对于翻译比例计算，中文3个字符约等于1个英文单词
+   */
+  private countWords(text: string): number {
+    if (!text || text.trim().length === 0) {
+      return 0;
+    }
+
+    // 分离中文和英文
+    // 中文字符范围：\u4e00-\u9fff
+    const chineseChars = text.match(/[\u4e00-\u9fff]/g) || [];
+    const chineseCount = chineseChars.length;
+
+    // 英文单词：移除中文后按空格分词
+    const textWithoutChinese = text.replace(/[\u4e00-\u9fff]/g, ' ');
+    const englishWords = textWithoutChinese.split(/\s+/).filter(w => w.length > 0 && /[a-zA-Z]/.test(w));
+    const englishCount = englishWords.length;
+
+    // 中文3个字符约等于1个英文单词的信息量
+    // 但为了翻译比例更合理，我们用2个中文字符 = 1个单词
+    const chineseWordEquivalent = Math.ceil(chineseCount / 2);
+
+    return englishCount + chineseWordEquivalent;
+  }
+
+  /**
    * 处理内容段落列表
    * 主要入口方法，确保所有段落按顺序处理
    */
@@ -136,6 +165,63 @@ export class ProcessingCoordinator {
       globalProcessingState.markProcessingStart(segment.fingerprint),
     );
 
+    // ========== 全局比例分配计算 ==========
+    // 计算所有待处理段落的总单词数和每个段落的单词数
+    const segmentWordCounts = successfullyMarked.map((segment) => {
+      return this.countWords(segment.textContent);
+    });
+    const totalWordCount = segmentWordCounts.reduce((sum, count) => sum + count, 0);
+    
+    // 获取替换比例（从textReplacer的配置中获取）
+    const replacementRate = textReplacer.getConfig?.()?.replacementRate || 0.07;
+    
+    // 计算总目标替换数量
+    const totalTargetCount = Math.max(1, Math.round(totalWordCount * replacementRate));
+    
+    // 按段落单词数比例分配目标替换数量
+    const segmentTargetCounts = segmentWordCounts.map((wordCount, index) => {
+      if (totalWordCount === 0) return 0;
+      // 按比例分配，确保每个有内容的段落至少有机会获得1个替换
+      const proportionalCount = (wordCount / totalWordCount) * totalTargetCount;
+      // 使用概率舍入：小数部分作为获得额外1个的概率
+      const baseCount = Math.floor(proportionalCount);
+      const remainder = proportionalCount - baseCount;
+      // 对于小段落，如果比例计算结果小于0.5但段落有足够单词，给予至少1个的机会
+      if (baseCount === 0 && wordCount >= 3 && remainder > 0.3) {
+        return 1;
+      }
+      return baseCount + (Math.random() < remainder ? 1 : 0);
+    });
+    
+    // 调整总数以匹配目标（可能因为舍入导致偏差）
+    let currentTotal = segmentTargetCounts.reduce((sum, count) => sum + count, 0);
+    const diff = totalTargetCount - currentTotal;
+    
+    if (diff > 0) {
+      // 需要增加一些，优先给单词多的段落
+      const sortedIndices = segmentWordCounts
+        .map((count, index) => ({ count, index }))
+        .sort((a, b) => b.count - a.count)
+        .map(item => item.index);
+      for (let i = 0; i < diff && i < sortedIndices.length; i++) {
+        segmentTargetCounts[sortedIndices[i]]++;
+      }
+    } else if (diff < 0) {
+      // 需要减少一些，优先从单词少的段落减
+      const sortedIndices = segmentWordCounts
+        .map((count, index) => ({ count, index }))
+        .sort((a, b) => a.count - b.count)
+        .map(item => item.index);
+      for (let i = 0; i < -diff && i < sortedIndices.length; i++) {
+        if (segmentTargetCounts[sortedIndices[i]] > 0) {
+          segmentTargetCounts[sortedIndices[i]]--;
+        }
+      }
+    }
+    
+    console.log(`[GlobalReplacementRate] 总单词数: ${totalWordCount}, 目标比例: ${replacementRate * 100}%, 总目标替换数: ${totalTargetCount}, 段落数: ${successfullyMarked.length}`);
+    // ========== 全局比例分配计算结束 ==========
+
     try {
       // 并行处理段落（但要控制并发数）
       const batchSize = 8; // 控制并发数，避免过载
@@ -143,13 +229,15 @@ export class ProcessingCoordinator {
 
       for (let i = 0; i < successfullyMarked.length; i += batchSize) {
         const batch = successfullyMarked.slice(i, i + batchSize);
-        const batchPromises = batch.map((segment) =>
+        const batchTargetCounts = segmentTargetCounts.slice(i, i + batchSize);
+        const batchPromises = batch.map((segment, batchIndex) =>
           this.processSingleSegment(
             segment,
             textReplacer,
             originalWordDisplayMode,
             translationPosition,
             showParentheses,
+            batchTargetCounts[batchIndex], // 传递该段落的目标替换数量
           ),
         );
         const batchResults = await Promise.allSettled(batchPromises);
@@ -242,6 +330,7 @@ export class ProcessingCoordinator {
     originalWordDisplayMode: OriginalWordDisplayMode,
     translationPosition: TranslationPosition,
     showParentheses: boolean,
+    targetReplacementCount?: number,
   ): Promise<SegmentProcessingResult> {
     try {
       // 为所有相关元素添加处理中的视觉反馈
@@ -249,8 +338,8 @@ export class ProcessingCoordinator {
         this.addProcessingFeedback(element);
       });
 
-      // 调用文本替换器进行处理
-      const result = await textReplacer.replaceText(segment.textContent);
+      // 调用文本替换器进行处理，传递目标替换数量
+      const result = await textReplacer.replaceText(segment.textContent, targetReplacementCount);
 
       if (result && result.replacements && result.replacements.length > 0) {
         // 应用替换到DOM

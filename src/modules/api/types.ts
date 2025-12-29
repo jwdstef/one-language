@@ -12,6 +12,7 @@ export interface ITranslationProvider {
   analyzeFullText(
     text: string,
     settings: UserSettings,
+    targetReplacementCount?: number,
   ): Promise<FullTextAnalysisResponse>;
 }
 
