@@ -14,10 +14,6 @@ const dailyQuerySchema = z.object({
   days: z.string().transform(Number).optional(),
 });
 
-const weeklyQuerySchema = z.object({
-  weeks: z.string().transform(Number).optional(),
-});
-
 // GET /api/stats/overview
 router.get('/overview', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -64,19 +60,22 @@ router.get('/weekly', async (req: Request, res: Response, next: NextFunction) =>
       throw new AppError('AUTH_REQUIRED', 'Authentication required', 401);
     }
 
-    const validation = weeklyQuerySchema.safeParse(req.query);
-    if (!validation.success) {
-      throw new AppError(
-        'VALIDATION_ERROR',
-        'Invalid query parameters',
-        400,
-        validation.error.flatten().fieldErrors
-      );
+    const stats = await statsService.getDailyStats(req.user.userId, 7);
+    sendSuccess(res, { dailyActivity: stats });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/stats/monthly
+router.get('/monthly', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new AppError('AUTH_REQUIRED', 'Authentication required', 401);
     }
 
-    const weeks = validation.data.weeks || 12;
-    const stats = await statsService.getWeeklyStats(req.user.userId, weeks);
-    sendSuccess(res, stats);
+    const stats = await statsService.getDailyStats(req.user.userId, 30);
+    sendSuccess(res, { dailyActivity: stats });
   } catch (error) {
     next(error);
   }

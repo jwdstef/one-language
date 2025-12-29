@@ -79,7 +79,7 @@ async function handleLogout() {
       ]"
     >
       <div class="flex h-16 items-center justify-between px-6 border-b border-[var(--border)]">
-        <span class="text-xl font-bold text-[var(--primary)]">illa-helper</span>
+        <span class="text-xl font-bold text-[var(--primary)]">one-language</span>
         <button class="lg:hidden" @click="sidebarOpen = false">
           <X class="h-5 w-5" />
         </button>

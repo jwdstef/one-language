@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "illa-helper"
+    "title": "one-language"
   },
   "common": {
     "tip": "💡",
@@ -357,11 +357,11 @@
     "daysAgo": "{days}일 전"
   },
   "about": {
-    "title": "몰입형 언어 학습 도우미 (illa-helper) 정보",
-    "logoAlt": "몰입형 언어 학습 도우미 illa-helper 로고",
-    "appName": "몰입형 언어 학습 도우미 (illa-helper)",
+    "title": "몰입형 언어 학습 도우미 (one-language) 정보",
+    "logoAlt": "몰입형 언어 학습 도우미 one-language 로고",
+    "appName": "몰입형 언어 학습 도우미 (one-language)",
     "version": "버전 {version}",
-    "description": "몰입형 언어 학습 도우미 (illa-helper)는 'i+1' 이해 가능 입력 이론에 기반한 브라우저 확장 프로그램으로, 몰입형 번역 및 발음 학습 생태계를 통해 일상적인 웹 서핑 중에 쉽고 효율적으로 외국어를 학습할 수 있도록 돕습니다.",
+    "description": "몰입형 언어 학습 도우미 (one-language)는 'i+1' 이해 가능 입력 이론에 기반한 브라우저 확장 프로그램으로, 몰입형 번역 및 발음 학습 생태계를 통해 일상적인 웹 서핑 중에 쉽고 효율적으로 외국어를 학습할 수 있도록 돕습니다.",
     "coreFeatures": "핵심 기능",
     "features": {
       "smartTranslation": {
@@ -442,7 +442,7 @@
     }
   },
   "options": {
-    "title": "몰입형 언어 학습 도우미 illa-helper",
+    "title": "몰입형 언어 학습 도우미 one-language",
     "toggleTheme": "테마 전환",
     "basic": "기본 설정",
     "translation": "번역 서비스",

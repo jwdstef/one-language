@@ -66,6 +66,11 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
 
+  // 如果有 token 但没有用户信息，尝试恢复用户状态
+  if (authStore.accessToken && !authStore.user) {
+    await authStore.checkAuth();
+  }
+
   if (to.meta.requiresAuth !== false && !authStore.isAuthenticated) {
     next({ name: 'login', query: { redirect: to.fullPath } });
   } else if (to.name === 'login' && authStore.isAuthenticated) {

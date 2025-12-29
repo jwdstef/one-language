@@ -16,11 +16,11 @@ const version = packageJson.version;
 export default defineConfig({
   modules: ['@wxt-dev/module-vue'],
   manifest: {
-    name: '浸入式学语言助手(illa-helper)',
+    name: '一站式学语言助手(one-language)',
     author: {
       email: 'xiao1932794922@gmail.com',
     },
-    description: `浸入式学语言助手(illa-helper) extension turns browsing into language learning. AI uses "i+1" theory, supports 20+ languages.`,
+    description: `一站式学语言助手(one-language) extension turns browsing into language learning. AI uses "i+1" theory, supports 20+ languages.`,
     version,
     permissions: ['storage', 'notifications', 'contextMenus', 'activeTab', 'webNavigation'],
     host_permissions: ['<all_urls>', 'https://api.github.com/*'],

@@ -64,7 +64,7 @@ export class NotificationService {
   ): Promise<void> {
     const notificationConfig: NotificationConfig = {
       type: 'basic',
-      title: '[浸入式学语言助手] API 配置错误',
+      title: '[一站式学语言助手] API 配置错误',
       message: 'API 密钥未设置。请点击扩展图标进入设置页面进行配置。',
       iconUrl: browser.runtime.getURL('/warning.png'),
     };

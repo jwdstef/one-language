@@ -116,7 +116,7 @@ export class InitializationService {
     // 主菜单项
     await browser.contextMenus.create({
       id: BACKGROUND_CONSTANTS.MENU_PARENT_ID,
-      title: '浸入式学语言助手',
+      title: '一站式学语言助手',
       contexts: ['page'],
     });
 

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "illa-helper"
+    "title": "one-language"
   },
   "common": {
     "tip": "💡",
@@ -357,11 +357,11 @@
     "daysAgo": "{days}日前"
   },
   "about": {
-    "title": "イマージョン言語学習アシスタント (illa-helper) について",
-    "logoAlt": "イマージョン言語学習アシスタント illa-helper ロゴ",
-    "appName": "イマージョン言語学習アシスタント (illa-helper)",
+    "title": "イマージョン言語学習アシスタント (one-language) について",
+    "logoAlt": "イマージョン言語学習アシスタント one-language ロゴ",
+    "appName": "イマージョン言語学習アシスタント (one-language)",
     "version": "バージョン {version}",
-    "description": "イマージョン言語学習アシスタント (illa-helper) は、「i+1」可解インプット理論に基づくブラウザ拡張機能です。没入型翻訳と発音学習エコシステムを通じて、日常のブラウジング中に簡単かつ効率的に外国語を学ぶお手伝いをします。",
+    "description": "イマージョン言語学習アシスタント (one-language) は、「i+1」可解インプット理論に基づくブラウザ拡張機能です。没入型翻訳と発音学習エコシステムを通じて、日常のブラウジング中に簡単かつ効率的に外国語を学ぶお手伝いをします。",
     "coreFeatures": "主な機能",
     "features": {
       "smartTranslation": {
@@ -442,7 +442,7 @@
     }
   },
   "options": {
-    "title": "イマージョン言語学習アシスタント illa-helper",
+    "title": "イマージョン言語学習アシスタント one-language",
     "toggleTheme": "テーマを切り替え",
     "basic": "基本設定",
     "translation": "翻訳サービス",

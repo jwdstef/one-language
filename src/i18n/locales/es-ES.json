@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "illa-helper"
+    "title": "one-language"
   },
   "common": {
     "tip": "💡",
@@ -357,11 +357,11 @@
     "daysAgo": "hace {days} días"
   },
   "about": {
-    "title": "Acerca de Asistente de Aprendizaje Inmersivo (illa-helper)",
-    "logoAlt": "Logo de Asistente de Aprendizaje Inmersivo illa-helper",
-    "appName": "Asistente de Aprendizaje Inmersivo (illa-helper)",
+    "title": "Acerca de Asistente de Aprendizaje Inmersivo (one-language)",
+    "logoAlt": "Logo de Asistente de Aprendizaje Inmersivo one-language",
+    "appName": "Asistente de Aprendizaje Inmersivo (one-language)",
     "version": "Versión {version}",
-    "description": "El Asistente de Aprendizaje Inmersivo (illa-helper) es una extensión de navegador basada en la teoría de entrada comprensible 'i+1', diseñada para ayudarte a aprender idiomas extranjeros de manera fácil y eficiente durante tu navegación diaria a través de un ecosistema inmersivo de traducción y aprendizaje de pronunciación.",
+    "description": "El Asistente de Aprendizaje Inmersivo (one-language) es una extensión de navegador basada en la teoría de entrada comprensible 'i+1', diseñada para ayudarte a aprender idiomas extranjeros de manera fácil y eficiente durante tu navegación diaria a través de un ecosistema inmersivo de traducción y aprendizaje de pronunciación.",
     "coreFeatures": "Características Principales",
     "features": {
       "smartTranslation": {
@@ -442,7 +442,7 @@
     }
   },
   "options": {
-    "title": "Asistente de Aprendizaje Inmersivo illa-helper",
+    "title": "Asistente de Aprendizaje Inmersivo one-language",
     "toggleTheme": "Cambiar Tema",
     "basic": "Básico",
     "translation": "Traducción",

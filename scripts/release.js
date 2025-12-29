@@ -192,7 +192,7 @@ class ReleaseManager {
       try {
         // 删除 GitHub Release
         console.log('💥 正在删除 GitHub Release...');
-        this.exec(`gh repo set-default xiao-zaiyi/illa-helper`);
+        this.exec(`gh repo set-default xiao-zaiyi/one-language`);
 
         try {
           execSync(`gh release delete ${tag} --yes`, {
@@ -309,10 +309,10 @@ class ReleaseManager {
 
     console.log('\n🔗 查看进度:');
     console.log(
-      '   GitHub Actions: https://github.com/xiao-zaiyi/illa-helper/actions',
+      '   GitHub Actions: https://github.com/xiao-zaiyi/one-language/actions',
     );
     console.log(
-      '   Releases: https://github.com/xiao-zaiyi/illa-helper/releases',
+      '   Releases: https://github.com/xiao-zaiyi/one-language/releases',
     );
   }
 

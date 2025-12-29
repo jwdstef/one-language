@@ -15,10 +15,10 @@ async function main() {
   const adminPassword = await bcrypt.hash('admin123456', 12);
   
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@illa-helper.com' },
+    where: { email: 'admin@one-language.com' },
     update: {},
     create: {
-      email: 'admin@illa-helper.com',
+      email: 'admin@one-language.com',
       passwordHash: adminPassword,
       name: 'Admin',
       role: 'admin',
@@ -38,18 +38,18 @@ async function main() {
     },
   });
 
-  console.log('âœ… Admin user created:');
-  console.log('   Email: admin@illa-helper.com');
+  console.log('âœ?Admin user created:');
+  console.log('   Email: admin@one-language.com');
   console.log('   Password: admin123456');
 
   // Create a demo user
   const userPassword = await bcrypt.hash('user123456', 12);
   
   const user = await prisma.user.upsert({
-    where: { email: 'demo@illa-helper.com' },
+    where: { email: 'demo@one-language.com' },
     update: {},
     create: {
-      email: 'demo@illa-helper.com',
+      email: 'demo@one-language.com',
       passwordHash: userPassword,
       name: 'Demo User',
       role: 'user',
@@ -69,8 +69,8 @@ async function main() {
     },
   });
 
-  console.log('âœ… Demo user created:');
-  console.log('   Email: demo@illa-helper.com');
+  console.log('âœ?Demo user created:');
+  console.log('   Email: demo@one-language.com');
   console.log('   Password: user123456');
 
   console.log('\nðŸŽ‰ Seeding completed!');
@@ -78,7 +78,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('âŒ Seeding failed:', e);
+    console.error('â?Seeding failed:', e);
     process.exit(1);
   })
   .finally(async () => {

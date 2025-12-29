@@ -209,11 +209,11 @@
           {{ $t('about.supportDescription') }}
         </p>
         <div class="mt-4 flex flex-wrap gap-2">
-          <a href="https://github.com/xiao-zaiyi/illa-helper" target="_blank">
+          <a href="https://github.com/xiao-zaiyi/one-language" target="_blank">
             <Button>⭐ {{ $t('about.starOnGitHub') }}</Button>
           </a>
           <a
-            href="https://github.com/xiao-zaiyi/illa-helper/issues"
+            href="https://github.com/xiao-zaiyi/one-language/issues"
             target="_blank"
           >
             <Button variant="outline">
@@ -222,7 +222,7 @@
             </Button>
           </a>
           <a
-            href="https://github.com/xiao-zaiyi/illa-helper/pulls"
+            href="https://github.com/xiao-zaiyi/one-language/pulls"
             target="_blank"
           >
             <Button variant="outline">

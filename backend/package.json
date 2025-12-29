@@ -1,7 +1,7 @@
 {
-  "name": "illa-helper-backend",
+  "name": "one-language-backend",
   "version": "1.0.0",
-  "description": "Backend API service for illa-helper SaaS platform",
+  "description": "Backend API service for one-language SaaS platform",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

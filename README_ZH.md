@@ -1,4 +1,4 @@
-# 浸入式学语言助手
+# 一站式学语言助手
 
 <div align="center">
 <img src="public/icon/128.png" width="100" height="100"  />

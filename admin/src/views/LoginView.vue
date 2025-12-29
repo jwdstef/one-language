@@ -66,7 +66,7 @@ async function handleSubmit() {
     <div class="w-full max-w-md">
       <div class="bg-[var(--card)] rounded-xl shadow-lg p-8">
         <div class="text-center mb-8">
-          <h1 class="text-2xl font-bold text-[var(--primary)]">illa-helper</h1>
+          <h1 class="text-2xl font-bold text-[var(--primary)]">one-language</h1>
           <p class="text-[var(--muted-foreground)] mt-2">{{ t('auth.loginSubtitle') }}</p>
         </div>
 

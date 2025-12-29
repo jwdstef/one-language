@@ -1,7 +1,7 @@
 {
-  "name": "illa-helper-admin",
+  "name": "one-language-admin",
   "version": "1.0.0",
-  "description": "Admin dashboard for illa-helper SaaS platform",
+  "description": "Admin dashboard for one-language SaaS platform",
   "type": "module",
   "scripts": {
     "dev": "vite",
