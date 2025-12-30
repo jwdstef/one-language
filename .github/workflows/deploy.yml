@@ -115,9 +115,7 @@ jobs:
     name: 部署到生产服务器
     runs-on: ubuntu-latest
     needs: [build-backend, build-admin]
-    environment:
-      name: production
-      url: https://${{ secrets.SERVER_DOMAIN }}
+    environment: production
 
     steps:
       - name: 检出代码
