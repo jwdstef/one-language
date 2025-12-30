@@ -29,5 +29,11 @@ web-ext.config.ts
 .output/
 .wxt/chrome-data
 .wxt/firefox-data
-.env.development
+
+# 本地环境变量 (包含敏感信息，不提交)
+.env
+.env.local
 .env.submit
+
+# 注意: .env.development 和 .env.production 会提交
+# 但不要在其中放置真实的 API Key

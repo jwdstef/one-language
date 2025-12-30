@@ -4,6 +4,8 @@
 
 ## 目录
 
+- [环境配置](#环境配置)
+- [GitHub Actions 自动部署](#github-actions-自动部署)
 - [系统要求](#系统要求)
 - [前置准备](#前置准备)
 - [服务器环境配置](#服务器环境配置)
@@ -15,6 +17,88 @@
 - [进程管理](#进程管理)
 - [监控与日志](#监控与日志)
 - [故障排查](#故障排查)
+
+## 环境配置
+
+项目使用不同的环境配置文件区分开发和生产环境：
+
+| 文件 | 用途 | 说明 |
+|------|------|------|
+| `.env` | 默认配置 | 被 `.gitignore` 忽略，本地使用 |
+| `.env.example` | 配置模板 | 提交到 Git，供参考 |
+| `.env.development` | 开发环境 | `npm run dev` 时自动加载 |
+| `.env.production` | 生产环境 | `npm run build` 时自动加载 |
+
+### 扩展环境变量
+
+```env
+# AI API 配置 (翻译服务)
+VITE_WXT_DEFAULT_API_ENDPOINT="https://api.siliconflow.cn/v1/chat/completions"
+VITE_WXT_DEFAULT_API_KEY="your-api-key-here"
+VITE_WXT_DEFAULT_MODEL="Qwen/Qwen3-Next-80B-A3B-Instruct"
+VITE_WXT_DEFAULT_TEMPERATURE="0.2"
+
+# 后端 API 地址
+# 开发环境: http://localhost:3011
+# 生产环境: https://admin.1zhizu.com
+VITE_BACKEND_API_ENDPOINT="https://admin.1zhizu.com"
+```
+
+### 构建命令
+
+```bash
+# 开发模式 (使用 .env.development)
+npm run dev
+
+# 生产构建 (使用 .env.production)
+npm run build
+npm run zip              # 打包 Chrome 扩展
+npm run zip:firefox      # 打包 Firefox 扩展
+npm run zip:all          # 打包所有浏览器
+```
+
+## GitHub Actions 自动部署
+
+项目配置了 GitHub Actions 自动部署，推送到 `master` 分支时自动部署到生产服务器。
+
+### 配置 GitHub Secrets
+
+在 GitHub 仓库 Settings → Secrets and variables → Actions 中添加：
+
+| Secret 名称 | 说明 | 示例 |
+|-------------|------|------|
+| `SSH_PRIVATE_KEY` | 服务器 SSH 私钥 | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `SSH_USER` | SSH 登录用户名 | `root` |
+| `SERVER_IP` | 服务器 IP 地址 | `120.26.90.169` |
+
+### 生成 SSH 密钥
+
+在服务器上执行：
+
+```bash
+# 生成密钥对
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/deploy_key
+
+# 将公钥添加到 authorized_keys
+cat ~/deploy_key.pub >> ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+
+# 查看私钥 (复制到 GitHub Secrets)
+cat ~/deploy_key
+```
+
+### 部署流程
+
+1. 推送代码到 `master` 分支
+2. GitHub Actions 自动触发
+3. 构建后端和管理后台
+4. 通过 SSH 部署到服务器
+5. 重启 PM2 和 Nginx
+
+### 手动触发部署
+
+在 GitHub Actions 页面点击 "Run workflow" 可手动触发部署。
 
 ## 系统要求
 
