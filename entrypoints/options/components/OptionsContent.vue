@@ -1,22 +1,20 @@
 <template>
-  <div class="flex-1 overflow-y-auto bg-background">
+  <div class="opt-content opt-scrollbar">
     <!-- 内容区域 -->
-    <div :class="['p-4 md:p-6', { 'pt-20': isMobile }]">
-      <div class="max-w-4xl mx-auto">
-        <Transition name="fade" mode="out-in">
-          <div
-            v-if="currentSection"
-            :id="currentSection"
-            class="anchor-section"
-          >
-            <component
-              :is="currentComponent"
-              :key="currentSection"
-              @save-message="handleSaveMessage"
-            />
-          </div>
-        </Transition>
-      </div>
+    <div class="opt-content-inner" :class="{ 'pt-4': isMobile }">
+      <Transition name="fade" mode="out-in">
+        <div
+          v-if="currentSection"
+          :id="currentSection"
+          class="opt-animate-slide-up"
+        >
+          <component
+            :is="currentComponent"
+            :key="currentSection"
+            @save-message="handleSaveMessage"
+          />
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -79,6 +77,18 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.opt-content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--opt-bg, #f8fafc);
+}
+
+.opt-content-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -89,15 +99,10 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-.anchor-section {
-  scroll-margin-top: 80px;
-  /* 考虑顶部导航栏高度 */
-}
-
 /* 移动端适配样式 */
 @media (max-width: 767px) {
-  .anchor-section {
-    scroll-margin-top: 60px;
+  .opt-content-inner {
+    padding: 16px;
   }
 }
 </style>

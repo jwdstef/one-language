@@ -100,7 +100,7 @@
               <p class="text-sm text-muted-foreground">{{ currentUser?.email }}</p>
               <div class="flex items-center gap-2 mt-1">
                 <span class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                  {{ getSubscriptionLabel(currentUser?.subscriptionTier) }}
+                  {{ getSubscriptionLabel(currentUser?.subscription) }}
                 </span>
               </div>
             </div>

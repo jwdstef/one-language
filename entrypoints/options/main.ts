@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import '../../assets/main.css';
+import './style.css';
 import { i18n, initializeLocale } from '@/src/i18n';
 
 const app = createApp(App);

@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-background text-foreground">
+  <div class="opt-page">
     <!-- 主容器 -->
-    <div class="flex flex-col md:flex-row h-screen">
+    <div class="opt-layout">
       <!-- 左侧导航栏 -->
       <OptionsNavigation
         :current-section="currentSection"
@@ -9,43 +9,42 @@
       />
 
       <!-- 右侧内容区域 -->
-      <div class="flex-1 flex flex-col">
+      <div class="opt-main">
         <!-- 顶部状态栏 -->
-        <div
-          class="h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6"
-          :class="{ 'mobile-header': isMobile }"
-        >
-          <div class="flex items-center space-x-4">
-            <h1 class="text-xl font-semibold" :class="{ 'ml-12': isMobile }">
-              {{ getSectionTitle(currentSection) }}
-            </h1>
-          </div>
-          <div class="flex items-center space-x-4">
-            <!-- 保存状态指示器 -->
-            <div
-              v-if="saveMessage"
-              class="hidden md:block text-sm text-muted-foreground"
-            >
-              {{ saveMessage }}
+        <header class="opt-header" :class="{ 'opt-header--mobile': isMobile }">
+          <div class="opt-header-inner">
+            <div class="opt-header-left">
+              <h1 class="opt-header-title" :class="{ 'ml-14': isMobile }">
+                {{ getSectionTitle(currentSection) }}
+              </h1>
             </div>
-            <!-- 主题切换按钮 -->
-            <button
-              @click="toggleTheme"
-              class="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-              :title="$t('options.toggleTheme')"
-            >
-              <component :is="isDark ? Sun : Moon" class="w-4 h-4" />
-            </button>
+            <div class="opt-header-actions">
+              <!-- 保存状态指示器 -->
+              <Transition name="fade">
+                <div v-if="saveMessage" class="opt-save-status">
+                  <CheckCircle class="w-4 h-4" />
+                  {{ saveMessage }}
+                </div>
+              </Transition>
+              <!-- 主题切换按钮 -->
+              <button
+                @click="toggleTheme"
+                class="opt-theme-btn"
+                :title="$t('options.toggleTheme')"
+              >
+                <component :is="isDark ? Sun : Moon" class="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
+        </header>
 
         <!-- 移动端保存状态提示 -->
-        <div
-          v-if="saveMessage && isMobile"
-          class="fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-primary text-primary-foreground rounded-md shadow-lg z-50"
-        >
-          {{ saveMessage }}
-        </div>
+        <Transition name="slide-up">
+          <div v-if="saveMessage && isMobile" class="opt-mobile-toast">
+            <CheckCircle class="w-4 h-4" />
+            {{ saveMessage }}
+          </div>
+        </Transition>
 
         <!-- 主内容区域 -->
         <OptionsContent
@@ -60,7 +59,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Sun, Moon } from 'lucide-vue-next';
+import { Sun, Moon, CheckCircle } from 'lucide-vue-next';
 import OptionsNavigation from './components/OptionsNavigation.vue';
 import OptionsContent from './components/OptionsContent.vue';
 
@@ -72,8 +71,8 @@ const currentSection = ref('basic');
 // 保存状态消息
 const saveMessage = ref('');
 
-// 主题状态
-const isDark = ref(false);
+// 主题状态 - 默认深色模式
+const isDark = ref(true);
 
 // 移动端状态
 const isMobile = ref(false);
@@ -184,21 +183,114 @@ const applyTheme = () => {
 </script>
 
 <style scoped>
-/* 移动端标题样式 */
-.mobile-header {
+/* Options Page Layout */
+.opt-page {
+  min-height: 100vh;
+  background: var(--opt-bg, #f8fafc);
+  color: var(--opt-text, #111827);
+}
+
+.opt-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.opt-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.opt-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.opt-header-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.opt-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.opt-header--mobile {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 30;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--opt-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .opt-header--mobile {
+  background: rgba(30, 41, 59, 0.95);
+}
+
+/* Mobile Toast */
+.opt-mobile-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--opt-primary, #0d9488) 0%, var(--opt-primary-hover, #0f766e) 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.35);
+  z-index: 100;
+}
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
 }
 
 @media (max-width: 767px) {
-  .min-h-screen {
+  .opt-page {
     height: 100vh;
     width: 100vw;
     overflow-x: hidden;
+  }
+
+  .opt-main {
+    padding-top: 64px;
   }
 }
 </style>
