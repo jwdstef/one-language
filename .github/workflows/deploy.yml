@@ -157,7 +157,7 @@ jobs:
       - name: 部署管理后台
         run: |
           rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            ./admin-build/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_PATH }}/admin/dist/
+            ./admin-build/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/www/wwwroot/admin.1zhizu.com/
 
       - name: 重启 Nginx
         run: |
