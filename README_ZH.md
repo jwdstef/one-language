@@ -46,6 +46,39 @@
 
 > 📚 **完整文档**: 查看 [架构与功能详解](./docs/ARCHITECTURE_AND_FEATURES.md) 了解技术架构、API接口、开发指南和故障排除。
 
+## 🏗️ 项目架构
+
+本项目由三个主要模块组成：
+
+### 📦 浏览器扩展（根目录）
+提供沉浸式语言学习功能的主扩展程序：
+- 智能翻译引擎，支持AI驱动的语言检测
+- 发音学习生态系统，配备交互式悬浮框
+- 视觉体验系统，提供多种翻译样式
+- 配置管理系统，支持智能设置
+- 网站管理功能，支持黑名单/白名单
+
+### 🔧 后端服务 (`backend/`)
+提供云端功能的SaaS平台API服务：
+- **用户认证**: 注册、登录，支持JWT令牌认证
+- **词汇管理**: 保存、分类和跟踪词汇掌握度
+- **学习记录**: 跟踪学习活动和统计数据
+- **复习系统**: 基于掌握度的智能复习推荐
+- **统计分析**: 全面的学习数据分析
+- **数据导出**: 支持JSON、CSV或Anki格式导出
+- **管理员功能**: 用户管理和系统统计
+
+### 📊 管理后台 (`admin/`)
+为用户和管理员提供的管理界面：
+- **用户仪表板**: 学习概览，快速访问功能
+- **词汇管理**: 列表、搜索、筛选、编辑和删除词汇
+- **复习系统**: 支持卡片/列表模式的复习队列
+- **统计分析**: 学习趋势、词汇增长、活动分析
+- **数据导出**: 导出设置和下载管理
+- **管理员面板**: 系统概览、用户管理、数据管理
+
+> 📖 **查看 [启动指南](./启动指南.md)** 了解所有三个模块的详细设置说明。
+
 ## 🚀 功能特性
 
 ### 🎯 核心翻译引擎
@@ -177,31 +210,35 @@
 
 ### 🔧 从源码构建（开发者）
 
-如果你想参与开发或需要从源码构建：
+本项目包含三个模块：浏览器扩展、后端服务和管理后台。
 
-#### 1. 先决条件
+#### 模块一：浏览器扩展（根目录）
+
+如果你想参与扩展开发或需要从源码构建：
+
+##### 1. 先决条件
 
 - [Node.js](https://nodejs.org/)（版本 18 或更高）
 - [npm](https://nodejs.org/) 或其他包管理器
 
-#### 2. 安装
+##### 2. 安装
 
 1.  **克隆仓库:**
-    
+
     ```bash
     git clone https://github.com/xiao-zaiyi/illa-helper.git
     cd illa-helper
     ```
-    
+
 2.  **安装依赖:**
-    
+
     ```bash
     npm install
     ```
-    
+
 > **提示**: 如果你只想使用这个扩展而不参与开发，请直接前往 [Releases](https://github.com/xiao-zaiyi/illa-helper/releases) 页面下载最新版本的打包文件。
 
-#### 3. 配置
+##### 3. 配置
 
 项目通过 `.env` 文件管理本地开发环境的配置。
 
@@ -222,23 +259,23 @@
     ```
     > **注意**: `.env` 文件已被添加到 `.gitignore` 中，所以你的密钥不会被意外提交。
 
-#### 4. 构建扩展
+##### 4. 构建扩展
 
 根据目标浏览器执行相应的构建命令：
 
-#### Chrome/Edge构建
+###### Chrome/Edge构建
 ```bash
 npm run build
 npm run zip
 ```
 
-#### Firefox构建
+###### Firefox构建
 ```bash
 npm run build:firefox
 npm run zip:firefox
 ```
 
-#### 5. 加载扩展
+##### 5. 加载扩展
 
 ##### Chrome/Edge安装
 1. 打开浏览器（Chrome、Edge等）
@@ -281,17 +318,147 @@ browser_specific_settings: {
 
 这确保了在Firefox中可以正常使用存储功能保存用户设置。
 
+#### 模块二：后端服务 (`backend/`)
+
+后端服务提供云端功能，包括用户认证、词汇管理和学习统计。
+
+##### 1. 进入后端目录
+```bash
+cd backend
+```
+
+##### 2. 安装依赖
+```bash
+npm install
+```
+
+##### 3. 配置环境变量
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件，配置以下内容：
+```env
+# 数据库配置
+DATABASE_URL="mysql://user:password@localhost:3306/one_language"
+
+# 服务器配置
+PORT=3000
+NODE_ENV=development
+
+# JWT配置
+JWT_SECRET="your-jwt-secret-at-least-32-characters-long"
+JWT_EXPIRES_IN="7d"
+REFRESH_TOKEN_EXPIRES_IN="30d"
+
+# API配置
+API_BASE_URL="http://localhost:3000"
+```
+
+##### 4. 数据库设置
+```bash
+# 生成 Prisma 客户端
+npm run db:generate
+
+# 运行数据库迁移
+npm run db:migrate
+
+# (可选) 填充种子数据
+npm run db:seed
+```
+
+##### 5. 启动后端服务
+```bash
+# 开发模式
+npm run dev
+
+# 生产模式
+npm run build
+npm run start
+```
+
+后端服务将在 `http://localhost:3000` 启动。
+
+##### 6. 数据库管理（可选）
+```bash
+# 打开 Prisma Studio 进行数据库管理
+npm run db:studio
+```
+
+#### 模块三：管理后台 (`admin/`)
+
+管理后台为用户提供网页界面，用于管理词汇、复习单词和查看学习统计。
+
+##### 1. 进入管理后台目录
+```bash
+cd admin
+```
+
+##### 2. 安装依赖
+```bash
+npm install
+```
+
+##### 3. 配置环境变量
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件，配置以下内容：
+```env
+# API配置
+VITE_API_BASE_URL="/api"
+
+# 开发模式（API将代理到后端）
+VITE_DEV_MODE=true
+```
+
+##### 4. 启动管理后台
+```bash
+# 开发模式
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 预览生产版本
+npm run preview
+```
+
+管理后台将在 `http://localhost:5173` 启动（开发模式）。
+
+> **注意**: 在开发模式下，管理后台会将 `/api` 请求代理到后端服务 `http://localhost:3000`。
+
 ### 🔧 核心技术栈
 
+#### 浏览器扩展
 - **框架**: [WXT](https://wxt.dev/) - 现代WebExtension开发框架
 - **前端**: Vue 3 + TypeScript + Vite
-- **UI库**: Tailwind CSS + Lucide Icons
+- **UI库**: Tailwind CSS + Lucide Icons + Reka UI
 - **构建**: ESLint + Prettier + TypeScript编译
 - **API集成**: OpenAI兼容接口 + Google Gemini + Dictionary API + 有道TTS
 - **架构模式**: Provider模式 + 模块化设计 + 事件驱动
 - **发音系统**: 工厂模式 + 多TTS服务 + 智能缓存
 - **存储管理**: 配置版本控制 + 跨浏览器兼容
 - **国际化**: Vue I18n支持多语言界面
+
+#### 后端服务
+- **框架**: Express.js
+- **数据库**: MySQL + Prisma ORM
+- **认证**: JWT（访问令牌 + 刷新令牌）
+- **API**: RESTful API
+- **安全**: Helmet、CORS、bcrypt密码加密
+- **验证**: Zod请求验证
+- **限流**: Express rate limiter
+
+#### 管理后台
+- **框架**: Vue 3 + TypeScript + Vite
+- **UI库**: Tailwind CSS + Reka UI
+- **状态管理**: Pinia
+- **路由**: Vue Router
+- **HTTP客户端**: Axios
+- **图表**: Chart.js + vue-chartjs
+- **国际化**: Vue I18n
 
 > 📖 **查看详细文档**: [架构与功能详解](./docs/ARCHITECTURE_AND_FEATURES.md) - 包含完整的技术架构、API参考和开发指南
 

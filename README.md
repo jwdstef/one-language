@@ -46,6 +46,39 @@ We firmly believe that the best way to learn a language is through extensive exp
 
 > 📚 **Complete Documentation**: See [Architecture & Features Guide](./docs/ARCHITECTURE_AND_FEATURES.md) for technical architecture, API reference, development guide, and troubleshooting.
 
+## 🏗️ Project Architecture
+
+This project consists of three main modules:
+
+### 📦 Browser Extension (Root Directory)
+The main browser extension that provides immersive language learning features:
+- Intelligent translation engine with AI-powered language detection
+- Pronunciation learning ecosystem with interactive tooltips
+- Visual experience system with multiple translation styles
+- Configuration management with smart settings
+- Website management with blacklist/whitelist support
+
+### 🔧 Backend Service (`backend/`)
+SaaS platform API service providing cloud-based features:
+- **User Authentication**: Registration, login with JWT tokens
+- **Vocabulary Management**: Save, categorize, and track vocabulary mastery
+- **Learning Records**: Track learning activities and statistics
+- **Review System**: Smart review recommendations based on mastery level
+- **Statistics & Analytics**: Comprehensive learning data analysis
+- **Data Export**: Export vocabulary in JSON, CSV, or Anki format
+- **Admin Features**: User management and system statistics
+
+### 📊 Admin Dashboard (`admin/`)
+Management interface for users and administrators:
+- **User Dashboard**: Learning overview, quick access to features
+- **Vocabulary Management**: List, search, filter, edit, and delete vocabulary
+- **Review System**: Review queue with card/list modes
+- **Statistics & Analytics**: Learning trends, vocabulary growth, activity analysis
+- **Data Export**: Export settings and download management
+- **Admin Panel**: System overview, user management, data management
+
+> 📖 **See [Startup Guide](./启动指南.md)** for detailed setup instructions for all three modules.
+
 ## 🚀 Features
 
 ### 🎯 Core Translation Engine
@@ -176,31 +209,35 @@ This extension is built with [Web Extension API](https://developer.mozilla.org/e
 
 ### 🔧 Build from Source (For Developers)
 
-If you want to participate in development or need to build from source:
+This project consists of three modules: Browser Extension, Backend Service, and Admin Dashboard.
 
-#### 1. Prerequisites
+#### Module 1: Browser Extension (Root Directory)
+
+If you want to participate in extension development or need to build from source:
+
+##### 1. Prerequisites
 
 - [Node.js](https://nodejs.org/) (version 18 or higher)
 - [npm](https://nodejs.org/) or other package managers
 
-#### 2. Installation
+##### 2. Installation
 
 1.  **Clone the repository:**
-    
+
     ```bash
     git clone https://github.com/xiao-zaiyi/illa-helper.git
     cd illa-helper
     ```
-    
+
 2.  **Install dependencies:**
-    
+
     ```bash
     npm install
     ```
-    
+
 > **Tip**: If you just want to use this extension without participating in development, please go directly to the [Releases](https://github.com/xiao-zaiyi/illa-helper/releases) page to download the latest packaged version.
 
-#### 3. Configuration
+##### 3. Configuration
 
 The project manages local development environment configuration through `.env` files.
 
@@ -221,23 +258,23 @@ The project manages local development environment configuration through `.env` f
     ```
     > **Note**: The `.env` file has been added to `.gitignore`, so your keys won't be accidentally committed.
 
-#### 4. Build Extension
+##### 4. Build Extension
 
 Execute the appropriate build commands based on your target browser:
 
-#### Chrome/Edge Build
+###### Chrome/Edge Build
 ```bash
 npm run build
 npm run zip
 ```
 
-#### Firefox Build
+###### Firefox Build
 ```bash
 npm run build:firefox
 npm run zip:firefox
 ```
 
-#### 5. Load Extension
+##### 5. Load Extension
 
 ##### Chrome/Edge Installation
 1. Open your browser (Chrome, Edge, etc.)
@@ -280,8 +317,120 @@ browser_specific_settings: {
 
 This ensures proper storage functionality for saving user settings in Firefox.
 
+#### Module 2: Backend Service (`backend/`)
+
+The backend service provides cloud-based features including user authentication, vocabulary management, and learning statistics.
+
+##### 1. Navigate to Backend Directory
+```bash
+cd backend
+```
+
+##### 2. Install Dependencies
+```bash
+npm install
+```
+
+##### 3. Configure Environment Variables
+```bash
+cp .env.example .env
+```
+
+Edit `.env` file with your configuration:
+```env
+# Database Configuration
+DATABASE_URL="mysql://user:password@localhost:3306/one_language"
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# JWT Configuration
+JWT_SECRET="your-jwt-secret-at-least-32-characters-long"
+JWT_EXPIRES_IN="7d"
+REFRESH_TOKEN_EXPIRES_IN="30d"
+
+# API Configuration
+API_BASE_URL="http://localhost:3000"
+```
+
+##### 4. Database Setup
+```bash
+# Generate Prisma Client
+npm run db:generate
+
+# Run Database Migrations
+npm run db:migrate
+
+# (Optional) Seed Database with Initial Data
+npm run db:seed
+```
+
+##### 5. Start Backend Service
+```bash
+# Development Mode
+npm run dev
+
+# Production Mode
+npm run build
+npm run start
+```
+
+The backend service will start on `http://localhost:3000`.
+
+##### 6. Database Management (Optional)
+```bash
+# Open Prisma Studio for Database Management
+npm run db:studio
+```
+
+#### Module 3: Admin Dashboard (`admin/`)
+
+The admin dashboard provides a web interface for users to manage vocabulary, review words, and view learning statistics.
+
+##### 1. Navigate to Admin Directory
+```bash
+cd admin
+```
+
+##### 2. Install Dependencies
+```bash
+npm install
+```
+
+##### 3. Configure Environment Variables
+```bash
+cp .env.example .env
+```
+
+Edit `.env` file with your configuration:
+```env
+# API Configuration
+VITE_API_BASE_URL="/api"
+
+# Development Mode (API will be proxied to backend)
+VITE_DEV_MODE=true
+```
+
+##### 4. Start Admin Dashboard
+```bash
+# Development Mode
+npm run dev
+
+# Build for Production
+npm run build
+
+# Preview Production Build
+npm run preview
+```
+
+The admin dashboard will start on `http://localhost:5173` (development mode).
+
+> **Note**: In development mode, the admin dashboard proxies `/api` requests to the backend service at `http://localhost:3000`.
+
 ### 🔧 Core Tech Stack
 
+#### Browser Extension
 - **Framework**: [WXT](https://wxt.dev/) - A modern WebExtension development framework
 - **Frontend**: Vue 3 + TypeScript + Vite
 - **UI Library**: Tailwind CSS + Lucide Icons + Reka UI
@@ -291,6 +440,24 @@ This ensures proper storage functionality for saving user settings in Firefox.
 - **Pronunciation System**: Factory Pattern + Multi-TTS services + Smart Caching
 - **Storage Management**: Configuration versioning + Cross-browser compatibility
 - **Internationalization**: Vue I18n support for multi-language interfaces
+
+#### Backend Service
+- **Framework**: Express.js
+- **Database**: MySQL + Prisma ORM
+- **Authentication**: JWT (Access Token + Refresh Token)
+- **API**: RESTful API
+- **Security**: Helmet, CORS, bcrypt for password hashing
+- **Validation**: Zod for request validation
+- **Rate Limiting**: Express rate limiter
+
+#### Admin Dashboard
+- **Framework**: Vue 3 + TypeScript + Vite
+- **UI Library**: Tailwind CSS + Reka UI
+- **State Management**: Pinia
+- **Routing**: Vue Router
+- **HTTP Client**: Axios
+- **Charts**: Chart.js + vue-chartjs
+- **Internationalization**: Vue I18n
 
 > 📖 **See Detailed Documentation**: [Architecture & Features Guide](./docs/ARCHITECTURE_AND_FEATURES.md) - Contains the complete technical architecture, API reference, and development guidelines.
 

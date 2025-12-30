@@ -142,13 +142,13 @@ const handleHashChange = () => {
 const handleSectionChange = (section: string) => {
   currentSection.value = section;
 
-  // 短暂延迟后滚动到对应的锚点位置，确保内容已渲染
+  // 滚动内容区域到顶部
   setTimeout(() => {
-    const element = document.getElementById(section);
-    if (element) {
-      element.scrollIntoView({
+    const contentElement = document.querySelector('.opt-content');
+    if (contentElement) {
+      contentElement.scrollTo({
+        top: 0,
         behavior: 'smooth',
-        block: 'start',
       });
     }
   }, 100);
@@ -209,6 +209,15 @@ const applyTheme = () => {
   align-items: center;
   padding: 0 24px;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--opt-border, rgba(0,0,0,0.06));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .opt-header {
+  background: rgba(30, 41, 59, 0.9);
 }
 
 .opt-header-inner {
@@ -222,6 +231,63 @@ const applyTheme = () => {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.opt-header-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--opt-text, #111827);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+:global(.dark) .opt-header-title {
+  color: #f1f5f9;
+}
+
+.opt-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.opt-theme-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--opt-border, rgba(0,0,0,0.06));
+  background: var(--opt-card-bg, #ffffff);
+  color: var(--opt-text-secondary, #6b7280);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:global(.dark) .opt-theme-btn {
+  background: rgba(30, 41, 59, 0.8);
+  color: #94a3b8;
+}
+
+.opt-theme-btn:hover {
+  background: rgba(13, 148, 136, 0.1);
+  border-color: rgba(13, 148, 136, 0.3);
+  color: var(--opt-primary, #0d9488);
+  transform: translateY(-2px);
+}
+
+.opt-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 20px;
 }
 
 .opt-header--mobile {

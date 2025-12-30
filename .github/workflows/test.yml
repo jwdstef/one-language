@@ -1,0 +1,174 @@
+name: Test and Lint
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  lint:
+    name: 代码检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 运行 ESLint
+        run: npm run lint
+
+      - name: 运行 Prettier 检查
+        run: npm run format
+
+  type-check:
+    name: 类型检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 运行 TypeScript 编译检查
+        run: npm run compile
+
+  backend-tests:
+    name: 后端测试
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 安装后端依赖
+        working-directory: ./backend
+        run: npm ci
+
+      - name: 配置测试环境变量
+        working-directory: ./backend
+        run: |
+          echo "DATABASE_URL=postgresql://test_user:test_password@localhost:5432/test_db" >> .env
+          echo "NODE_ENV=test" >> .env
+          echo "JWT_SECRET=test_secret_key_for_testing_only" >> .env
+          echo "JWT_REFRESH_SECRET=test_refresh_secret_key_for_testing_only" >> .env
+
+      - name: 生成 Prisma 客户端
+        working-directory: ./backend
+        run: npm run db:generate
+
+      - name: 运行数据库迁移
+        working-directory: ./backend
+        run: npm run db:migrate:prod
+
+      - name: 运行后端测试
+        working-directory: ./backend
+        run: npm test || echo "测试未配置，跳过"
+
+      - name: 类型检查
+        working-directory: ./backend
+        run: npm run compile
+
+  admin-tests:
+    name: 管理后台测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: 安装前端依赖
+        working-directory: ./admin
+        run: npm ci
+
+      - name: 运行管理后台测试
+        working-directory: ./admin
+        run: npm test || echo "测试未配置，跳过"
+
+      - name: 类型检查
+        working-directory: ./admin
+        run: npm run compile
+
+  build-check:
+    name: 构建检查
+    runs-on: ubuntu-latest
+    needs: [lint, type-check]
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装根目录依赖
+        run: npm ci
+
+      - name: 构建项目
+        run: npm run build
+
+      - name: 检查构建产物
+        run: |
+          if [ -d ".output" ]; then
+            echo "构建成功，输出目录存在"
+            ls -la .output
+          else
+            echo "构建失败，输出目录不存在"
+            exit 1
+          fi

@@ -1,0 +1,231 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18.x'
+  DEPLOY_PATH: /var/www/one-language
+
+jobs:
+  test:
+    name: 测试和代码检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装根目录依赖
+        run: npm ci
+
+      - name: 运行代码检查
+        run: npm run lint
+
+      - name: 类型检查
+        run: npm run compile
+
+  build-backend:
+    name: 构建后端
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 安装后端依赖
+        working-directory: ./backend
+        run: npm ci
+
+      - name: 类型检查
+        working-directory: ./backend
+        run: npm run compile
+
+      - name: 构建后端
+        working-directory: ./backend
+        run: npm run build
+
+      - name: 生成 Prisma 客户端
+        working-directory: ./backend
+        run: npm run db:generate
+
+      - name: 上传后端构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: |
+            backend/dist
+            backend/node_modules
+            backend/prisma
+          retention-days: 1
+
+  build-admin:
+    name: 构建管理后台
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: 安装前端依赖
+        working-directory: ./admin
+        run: npm ci
+
+      - name: 类型检查
+        working-directory: ./admin
+        run: npm run compile
+
+      - name: 构建管理后台
+        working-directory: ./admin
+        run: npm run build
+
+      - name: 上传前端构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-dist
+          path: admin/dist
+          retention-days: 1
+
+  deploy:
+    name: 部署到生产服务器
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-admin]
+    environment:
+      name: production
+      url: https://${{ secrets.SERVER_DOMAIN }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 下载后端构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-dist
+          path: ./backend-build
+
+      - name: 下载前端构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-dist
+          path: ./admin-build
+
+      - name: 配置 SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: 备份当前部署
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} \
+            "mkdir -p /var/backups/one-language && \
+             cp -r ${{ env.DEPLOY_PATH }} /var/backups/one-language/backup_$(date +%Y%m%d_%H%M%S) || true"
+
+      - name: 同步代码到服务器
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude 'dist' \
+            --exclude 'admin/dist' \
+            ./ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_PATH }}/
+
+      - name: 部署后端
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            cd ${{ env.DEPLOY_PATH }}/backend
+
+            # 备份当前的 dist 目录
+            if [ -d "dist" ]; then
+              cp -r dist dist.backup
+            fi
+
+            # 安装依赖
+            npm ci --production
+
+            # 运行数据库迁移
+            npm run db:migrate:prod
+
+            # 重启 PM2 服务
+            pm2 restart one-language-backend || pm2 start dist/index.js --name one-language-backend
+
+            # 检查服务状态
+            sleep 5
+            pm2 status
+
+            # 清理备份
+            rm -rf dist.backup
+          ENDSSH
+
+      - name: 部署管理后台
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./admin-build/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_PATH }}/admin/dist/
+
+      - name: 重启 Nginx
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} \
+            "sudo nginx -t && sudo systemctl reload nginx"
+
+      - name: 健康检查
+        run: |
+          sleep 10
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.SERVER_DOMAIN }}/api/health || echo "000")
+          if [ "$response" != "200" ]; then
+            echo "健康检查失败，HTTP 状态码: $response"
+            exit 1
+          fi
+          echo "健康检查通过"
+
+      - name: 清理 SSH 密钥
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+      - name: 发送部署通知
+        if: success()
+        run: |
+          echo "部署成功！访问 https://${{ secrets.SERVER_DOMAIN }} 查看应用"
+
+      - name: 部署失败回滚
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            # 回滚到最近的备份
+            latest_backup=$(ls -td /var/backups/one-language/backup_* | head -1)
+            if [ -n "$latest_backup" ]; then
+              echo "回滚到备份: $latest_backup"
+              pm2 stop one-language-backend || true
+              cp -r $latest_backup ${{ env.DEPLOY_PATH }}
+              cd ${{ env.DEPLOY_PATH }}/backend
+              pm2 restart one-language-backend || pm2 start dist/index.js --name one-language-backend
+              sudo systemctl reload nginx
+              echo "回滚完成"
+            fi
+          ENDSSH
