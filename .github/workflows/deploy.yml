@@ -164,7 +164,7 @@ jobs:
         run: |
           sleep 10
           # 尝试直接访问后端端口
-          response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_IP }}:3000/health || echo "000")
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_IP }}:3011/health || echo "000")
           if [ "$response" != "200" ]; then
             echo "健康检查返回: $response (后端可能未启动或端口不对)"
           else
