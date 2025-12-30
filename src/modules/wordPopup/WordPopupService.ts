@@ -285,7 +285,13 @@ export class WordPopupService {
     promises.push(phoneticPromise);
     
     // Fetch complete dictionary data from AI (including context sentence translation)
-    const aiPromise = this.fetchAIDictionaryData(word, nativeLanguage, basicData.contextSentence).then((aiData) => {
+    // Pass the exact word form used in the article for consistent translation
+    const aiPromise = this.fetchAIDictionaryData(
+      word, 
+      nativeLanguage, 
+      basicData.contextSentence,
+      basicData.originalText  // The original Chinese word that was translated
+    ).then((aiData) => {
       if (aiData) {
         completeData.meanings = aiData.meanings;
         if (aiData.morphology) {
@@ -309,8 +315,17 @@ export class WordPopupService {
   
   /**
    * Fetch dictionary data from AI with full meanings, examples, and morphology
+   * @param word - The English word to look up
+   * @param targetLanguage - The user's native language for definitions
+   * @param contextSentence - The original Chinese sentence containing the word
+   * @param originalChineseWord - The original Chinese word that was translated to this English word
    */
-  private async fetchAIDictionaryData(word: string, targetLanguage: string, contextSentence?: string): Promise<{
+  private async fetchAIDictionaryData(
+    word: string, 
+    targetLanguage: string, 
+    contextSentence?: string,
+    originalChineseWord?: string
+  ): Promise<{
     meanings: Meaning[];
     morphology?: MorphologyAnalysis;
     contextTranslation?: string;
@@ -318,11 +333,17 @@ export class WordPopupService {
     const langName = this.getLanguageName(targetLanguage);
     
     // Build the prompt with optional context sentence (Chinese sentence to be translated to English)
-    const contextPart = contextSentence 
-      ? `\n\n原句语境（中文）："${contextSentence}"\n请将这个中文原句翻译成英文，放在contextTrans字段中。`
-      : '';
+    // Include the exact English word form to use in the translation
+    let contextPart = '';
+    if (contextSentence) {
+      contextPart = `\n\n原句语境（中文）："${contextSentence}"`;
+      if (originalChineseWord) {
+        contextPart += `\n注意：原文中的"${originalChineseWord}"在文章中被翻译为"${word}"，请在翻译整句时，对应位置必须使用"${word}"这个词形（不要改变词形，如不要把summarize改成summarizing）。`;
+      }
+      contextPart += `\n请将这个中文原句翻译成英文，放在contextTrans字段中。`;
+    }
     
-    const systemPrompt = `你是一个专业的英语词典助手。请为单词提供详细的${langName}释义。${contextPart}
+    const systemPrompt = `你是一个专业的英语词典助手。请为单词"${word}"提供详细的${langName}释义。${contextPart}
 
 要求：
 1. 按词性分类，每个词性提供${langName}释义
@@ -344,7 +365,7 @@ export class WordPopupService {
     "root": {"text": "词根", "meaning": "含义"},
     "suffix": {"text": "后缀", "meaning": "含义"}
   },
-  "contextTrans": "中文原句的英文翻译（如果提供了原句）"
+  "contextTrans": "中文原句的英文翻译（如果提供了原句，必须在对应位置使用${word}）"
 }
 
 注意：
@@ -515,9 +536,15 @@ export class WordPopupService {
     // This is stored in the sibling .wxt-original-word element
     const originalPageWord = this.getOriginalPageWord(element);
     
+    console.log('[WordPopupService] originalPageWord:', originalPageWord);
+    
     // Extract the Chinese sentence containing the original word (语境强化)
     // Use the original Chinese word to search in the original Chinese text
-    const originalChineseWord = originalPageWord || originalText || '';
+    // Prefer originalText (from data-original-text attribute) as it's more reliable
+    const originalChineseWord = originalText || originalPageWord || '';
+    
+    console.log('[WordPopupService] Using originalChineseWord for sentence extraction:', originalChineseWord);
+    
     const contextSentence = this.extractSentence(element, originalChineseWord);
     
     // Create basic word data
@@ -607,11 +634,99 @@ export class WordPopupService {
     }
     
     // Find the sentence containing the original word
-    const sentence = this.extractSentenceWithWord(originalText, originalWord);
+    // First try with the exact word
+    let sentence = this.extractSentenceWithWord(originalText, originalWord);
+    
+    // If not found, try to find the sentence by locating the element's position in the DOM
+    if (!sentence) {
+      console.log('[WordPopupService] Word not found in text, trying position-based extraction');
+      sentence = this.extractSentenceByPosition(element, container, originalText);
+    }
     
     console.log('[WordPopupService] Extracted sentence:', sentence?.substring(0, 100));
     
     return sentence || '';
+  }
+  
+  /**
+   * Extract sentence by finding the element's approximate position in the container
+   * This is a fallback when the word cannot be found directly in the extracted text
+   */
+  private extractSentenceByPosition(element: HTMLElement, container: HTMLElement, fullText: string): string {
+    // Get all text nodes and translation elements in order
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+      {
+        acceptNode: (node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as HTMLElement;
+            if (el.classList.contains('wxt-translation-term') || 
+                el.classList.contains('wxt-original-word')) {
+              return NodeFilter.FILTER_ACCEPT;
+            }
+          }
+          return NodeFilter.FILTER_SKIP;
+        }
+      }
+    );
+    
+    // Find the position of the clicked element relative to text content
+    let textBeforeElement = '';
+    let node: Node | null;
+    let foundElement = false;
+    
+    while ((node = walker.nextNode())) {
+      if (node === element || (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).contains(element))) {
+        foundElement = true;
+        break;
+      }
+      
+      if (node.nodeType === Node.TEXT_NODE) {
+        textBeforeElement += node.textContent || '';
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as HTMLElement;
+        if (el.classList.contains('wxt-original-word')) {
+          let text = el.textContent || '';
+          text = text.replace(/^\s*\(|\)\s*$/g, '').trim();
+          textBeforeElement += text;
+        }
+        // Skip translation terms as they're not part of original text
+      }
+    }
+    
+    if (!foundElement) {
+      console.log('[WordPopupService] Element not found in container tree');
+      return '';
+    }
+    
+    console.log('[WordPopupService] Text before element length:', textBeforeElement.length);
+    
+    // Now find which sentence in fullText corresponds to this position
+    // Split fullText into sentences and find the one at the approximate position
+    const sentences = fullText.split(/(?<=[。！？.!?])\s*/);
+    let currentPos = 0;
+    
+    for (const sentence of sentences) {
+      const trimmed = sentence.trim();
+      if (!trimmed) continue;
+      
+      const sentenceEnd = currentPos + trimmed.length;
+      
+      // Check if the element position falls within this sentence
+      // Use a tolerance range since positions might not match exactly
+      if (textBeforeElement.length >= currentPos && textBeforeElement.length <= sentenceEnd + 10) {
+        console.log('[WordPopupService] Found sentence by position:', trimmed.substring(0, 50));
+        return trimmed;
+      }
+      
+      currentPos = sentenceEnd + 1; // +1 for the punctuation
+    }
+    
+    return '';
   }
   
   /**
@@ -622,11 +737,24 @@ export class WordPopupService {
     // Clone to avoid modifying DOM
     const clone = container.cloneNode(true) as HTMLElement;
     
-    // Remove all translation term elements (keep only original text)
-    clone.querySelectorAll('.wxt-translation-term').forEach(el => el.remove());
+    console.log('[WordPopupService] Container HTML before processing:', clone.innerHTML.substring(0, 500));
+    
+    // The DOM structure for translated words is typically:
+    // <span class="wxt-original-word">(原文)</span><span class="wxt-translation-term" data-original-text="原文">translation</span>
+    // We need to keep only ONE copy of the original text
+    
+    // Strategy: Remove translation terms completely (they are duplicates of original-word content)
+    // The original text is already preserved in .wxt-original-word elements
+    clone.querySelectorAll('.wxt-translation-term').forEach(el => {
+      el.remove();
+    });
     
     // Unwrap original word wrappers (keep their text content as plain text)
+    // But first, ensure we handle hidden original words correctly
     clone.querySelectorAll('.wxt-original-word').forEach(wrapper => {
+      // Remove display:none style if present (for hidden mode)
+      (wrapper as HTMLElement).style.display = '';
+      
       let text = wrapper.textContent || '';
       // Remove parentheses if present
       text = text.replace(/^\s*\(|\)\s*$/g, '').trim();
@@ -639,6 +767,8 @@ export class WordPopupService {
     text = text.replace(/\s*\(\s*\)\s*/g, ''); // Remove empty parentheses
     text = text.replace(/\s+/g, ' ').trim();
     
+    console.log('[WordPopupService] getOriginalTextFromContainer result:', text.substring(0, 200));
+    
     return text;
   }
   
@@ -648,18 +778,26 @@ export class WordPopupService {
   private extractSentenceWithWord(text: string, word: string): string {
     if (!word) return '';
     
+    console.log('[WordPopupService] extractSentenceWithWord - searching for:', word, 'in text length:', text.length);
+    
     // Split by common sentence-ending punctuation (both Chinese and English)
     // Use more comprehensive punctuation: 。！？；.!?; and also handle comma-separated clauses for long text
     const sentences = text.split(/(?<=[。！？.!?])\s*/);
     
+    console.log('[WordPopupService] Split into', sentences.length, 'sentences');
+    
     // Find sentence containing the word
     const wordLower = word.toLowerCase();
-    for (const sentence of sentences) {
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i];
       const trimmed = sentence.trim();
       if (!trimmed) continue;
       
       // Check if this sentence contains the word
-      if (trimmed.includes(word) || trimmed.toLowerCase().includes(wordLower)) {
+      const containsWord = trimmed.includes(word) || trimmed.toLowerCase().includes(wordLower);
+      console.log('[WordPopupService] Sentence', i, ':', trimmed.substring(0, 50), '... contains word:', containsWord);
+      
+      if (containsWord) {
         // If sentence is still too long (>120 chars), try to split by secondary punctuation
         if (trimmed.length > 120) {
           const clauses = trimmed.split(/(?<=[，,；;：:])\s*/);
@@ -686,6 +824,7 @@ export class WordPopupService {
       }
     }
     
+    console.log('[WordPopupService] Word not found in any sentence');
     return '';
   }
   
