@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { Pronunciation, Meaning, ExampleSentence, MasteryLevel } from '../types/index.js';
@@ -188,9 +189,9 @@ export async function addWord(
       userId,
       word: input.word,
       originalText: input.originalText,
-      pronunciation: input.pronunciation || undefined,
-      meanings: input.meanings || undefined,
-      exampleSentences: input.exampleSentences || undefined,
+      pronunciation: input.pronunciation ? (input.pronunciation as Prisma.InputJsonValue) : Prisma.JsonNull,
+      meanings: input.meanings ? (input.meanings as Prisma.InputJsonValue) : Prisma.JsonNull,
+      exampleSentences: input.exampleSentences ? (input.exampleSentences as Prisma.InputJsonValue) : Prisma.JsonNull,
       sourceUrl: input.sourceUrl,
       context: input.context,
       tags: input.tags || [],
@@ -280,9 +281,9 @@ export async function syncWords(
         where: { id: existing.id },
         data: {
           originalText: wordInput.originalText,
-          pronunciation: wordInput.pronunciation || undefined,
-          meanings: wordInput.meanings || undefined,
-          exampleSentences: wordInput.exampleSentences || undefined,
+          pronunciation: wordInput.pronunciation ? (wordInput.pronunciation as Prisma.InputJsonValue) : undefined,
+          meanings: wordInput.meanings ? (wordInput.meanings as Prisma.InputJsonValue) : undefined,
+          exampleSentences: wordInput.exampleSentences ? (wordInput.exampleSentences as Prisma.InputJsonValue) : undefined,
           sourceUrl: wordInput.sourceUrl,
           context: wordInput.context,
           tags: wordInput.tags || parseTags(existing.tags),
@@ -296,9 +297,9 @@ export async function syncWords(
           userId,
           word: wordInput.word,
           originalText: wordInput.originalText,
-          pronunciation: wordInput.pronunciation || undefined,
-          meanings: wordInput.meanings || undefined,
-          exampleSentences: wordInput.exampleSentences || undefined,
+          pronunciation: wordInput.pronunciation ? (wordInput.pronunciation as Prisma.InputJsonValue) : Prisma.JsonNull,
+          meanings: wordInput.meanings ? (wordInput.meanings as Prisma.InputJsonValue) : Prisma.JsonNull,
+          exampleSentences: wordInput.exampleSentences ? (wordInput.exampleSentences as Prisma.InputJsonValue) : Prisma.JsonNull,
           sourceUrl: wordInput.sourceUrl,
           context: wordInput.context,
           tags: wordInput.tags || [],
