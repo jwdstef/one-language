@@ -5,9 +5,7 @@ node_modules
 dist
 
 # Local env files
-.env
-.env.local
-.env.*.local
+
 
 # Editor directories and files
 .vscode/*

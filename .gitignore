@@ -25,11 +25,9 @@ web-ext.config.ts
 *.sw?
 
 # Environment variables
-.env
 .output/*
 .output/
 .wxt/chrome-data
 .wxt/firefox-data
-.env
 .env.development
 .env.submit
