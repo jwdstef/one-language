@@ -45,8 +45,8 @@ const currentLocaleName = computed(() => {
 });
 
 function isActive(href: string) {
-  if (href === '/') {
-    return route.path === '/';
+  if (href === '/' || href === '/admin') {
+    return route.path === href;
   }
   return route.path.startsWith(href);
 }

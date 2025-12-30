@@ -24,7 +24,7 @@ const MAX_RETRY_COUNT = 3;
 const RETRY_DELAY_BASE = 1000;
 
 // Default API endpoint
-const DEFAULT_API_ENDPOINT = 'https://api.one-language.com';
+const DEFAULT_API_ENDPOINT = import.meta.env.VITE_BACKEND_API_ENDPOINT || 'https://admin.1zhizu.com';
 
 /**
  * OfflineQueueManager class

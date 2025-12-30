@@ -304,7 +304,7 @@ const name = ref('');
 
 const stats = ref({ wordsCollected: 0, daysStreak: 0 });
 const lastSyncTime = ref('从未同步');
-const API_ENDPOINT = 'http://localhost:3001';
+const API_ENDPOINT = import.meta.env.VITE_BACKEND_API_ENDPOINT || 'https://admin.1zhizu.com';
 
 const fetchUserStats = async () => {
   try {

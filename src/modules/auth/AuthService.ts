@@ -25,7 +25,7 @@ import { AuthEventType } from './types';
 const USER_STORAGE_KEY = 'auth_user';
 
 // Default API endpoint (can be configured)
-const DEFAULT_API_ENDPOINT = 'http://localhost:3001';
+const DEFAULT_API_ENDPOINT = import.meta.env.VITE_BACKEND_API_ENDPOINT || 'https://admin.1zhizu.com';
 
 /**
  * AuthService class for managing user authentication

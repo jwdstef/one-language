@@ -27,7 +27,7 @@ import { VocabularyEventType, DEFAULT_VOCABULARY_STORAGE } from './types';
 const VOCABULARY_STORAGE_KEY = 'vocabulary_data';
 
 // Default API endpoint
-const DEFAULT_API_ENDPOINT = 'http://localhost:3001';
+const DEFAULT_API_ENDPOINT = import.meta.env.VITE_BACKEND_API_ENDPOINT || 'https://admin.1zhizu.com';
 
 /**
  * Helper function to make API requests through background script
