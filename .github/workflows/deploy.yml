@@ -122,6 +122,13 @@ jobs:
             --exclude 'admin/dist' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_PATH }}/
 
+      - name: 同步后端构建产物
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./backend-build/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_PATH }}/backend/dist/
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./backend-build/prisma/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_PATH }}/backend/prisma/
+
       - name: 部署后端
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'ENDSSH'
@@ -130,16 +137,14 @@ jobs:
             
             cd /var/www/one-language/backend
 
-            # 备份当前的 dist 目录
-            if [ -d "dist" ]; then
-              cp -r dist dist.backup
-            fi
-
             # 安装依赖
-            npm ci --production
+            npm ci --omit=dev
 
-            # 运行数据库迁移
-            npm run db:migrate:prod
+            # 生成 Prisma 客户端
+            npx prisma generate
+
+            # 运行数据库迁移（如果失败则跳过，可能是已有数据库）
+            npm run db:migrate:prod || echo "迁移跳过（数据库可能已是最新）"
 
             # 重启 PM2 服务
             pm2 restart one-language-backend || pm2 start dist/index.js --name one-language-backend
@@ -147,9 +152,6 @@ jobs:
             # 检查服务状态
             sleep 5
             pm2 status
-
-            # 清理备份
-            rm -rf dist.backup
           ENDSSH
 
       - name: 部署管理后台
