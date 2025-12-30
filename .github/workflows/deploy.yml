@@ -125,7 +125,10 @@ jobs:
       - name: 部署后端
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'ENDSSH'
-            cd ${{ env.DEPLOY_PATH }}/backend
+            # 确保 PATH 包含标准路径
+            export PATH="/usr/bin:/usr/local/bin:$PATH"
+            
+            cd /var/www/one-language/backend
 
             # 备份当前的 dist 目录
             if [ -d "dist" ]; then
@@ -184,13 +187,16 @@ jobs:
         if: failure()
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            # 确保 PATH 包含标准路径
+            export PATH="/usr/bin:/usr/local/bin:$PATH"
+            
             # 回滚到最近的备份
             latest_backup=$(ls -td /var/backups/one-language/backup_* | head -1)
             if [ -n "$latest_backup" ]; then
               echo "回滚到备份: $latest_backup"
               pm2 stop one-language-backend || true
-              cp -r $latest_backup ${{ env.DEPLOY_PATH }}
-              cd ${{ env.DEPLOY_PATH }}/backend
+              cp -r $latest_backup /var/www/one-language
+              cd /var/www/one-language/backend
               pm2 restart one-language-backend || pm2 start dist/index.js --name one-language-backend
               /www/server/nginx/sbin/nginx -s reload
               echo "回滚完成"
