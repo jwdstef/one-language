@@ -385,3 +385,122 @@ async function updateStreak(userId: string): Promise<void> {
     });
   }
 }
+
+
+// 生成包含单词的优美句子
+export async function generateBeautifulSentence(
+  word: string,
+  meaning?: string
+): Promise<{ sentence: string; translation: string }> {
+  // 使用配置的 AI API 生成句子
+  const apiEndpoint = process.env.AI_API_ENDPOINT || 'https://api.siliconflow.cn/v1/chat/completions';
+  const apiKey = process.env.AI_API_KEY;
+  const model = process.env.AI_MODEL || 'Qwen/Qwen3-8B';
+
+  if (!apiKey) {
+    // 如果没有配置 API，返回默认句子
+    return getDefaultSentence(word, meaning);
+  }
+
+  const prompt = `Generate a beautiful, inspiring English sentence that naturally uses the word "${word}"${meaning ? ` (meaning: ${meaning})` : ''}. 
+The sentence should be:
+- Elegant and memorable
+- Suitable for sharing on social media
+- Between 10-20 words
+- Grammatically correct
+
+Also provide a Chinese translation.
+
+Respond in JSON format:
+{
+  "sentence": "your English sentence here",
+  "translation": "中文翻译"
+}`;
+
+  try {
+    const response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a creative writer who generates beautiful, inspiring sentences. Always respond in valid JSON format.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.8,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('AI API error:', response.status, response.statusText);
+      return getDefaultSentence(word, meaning);
+    }
+
+    const data = await response.json() as { choices?: { message?: { content?: string } }[] };
+    const content = data.choices?.[0]?.message?.content;
+
+    if (!content) {
+      return getDefaultSentence(word, meaning);
+    }
+
+    // 解析 JSON 响应
+    try {
+      // 尝试提取 JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.sentence && parsed.translation) {
+          return {
+            sentence: parsed.sentence,
+            translation: parsed.translation,
+          };
+        }
+      }
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', parseError);
+    }
+
+    return getDefaultSentence(word, meaning);
+  } catch (error) {
+    console.error('Failed to generate sentence:', error);
+    return getDefaultSentence(word, meaning);
+  }
+}
+
+// 默认句子模板
+function getDefaultSentence(word: string, _meaning?: string): { sentence: string; translation: string } {
+  const templates = [
+    {
+      sentence: `Every journey of learning begins with a single word like "${word}".`,
+      translation: `每一段学习之旅都始于像"${word}"这样的一个单词。`,
+    },
+    {
+      sentence: `The word "${word}" opens doors to new worlds of understanding.`,
+      translation: `"${word}"这个词打开了通往新理解世界的大门。`,
+    },
+    {
+      sentence: `In the garden of language, "${word}" blooms with meaning.`,
+      translation: `在语言的花园里，"${word}"绽放着意义。`,
+    },
+    {
+      sentence: `Let "${word}" be the bridge between cultures and hearts.`,
+      translation: `让"${word}"成为连接文化与心灵的桥梁。`,
+    },
+    {
+      sentence: `With each word like "${word}", we paint our thoughts in new colors.`,
+      translation: `每一个像"${word}"这样的词，都为我们的思想涂上新的色彩。`,
+    },
+  ];
+
+  return templates[Math.floor(Math.random() * templates.length)];
+}

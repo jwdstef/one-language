@@ -278,5 +278,16 @@ export default {
     meanings: '释义',
     exampleSentences: '例句',
     context: '上下文',
+    shareCard: '生成卡片',
+  },
+  wordCard: {
+    title: '生成分享卡片',
+    selectTheme: '选择主题',
+    sentence: '优美句子',
+    download: '下载卡片',
+    regenerate: '重新生成',
+    generatingSentence: '正在生成优美句子...',
+    generatingCard: '正在生成卡片...',
+    tip: '点击重新生成可以获得不同的句子和卡片效果',
   },
 };

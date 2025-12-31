@@ -278,5 +278,16 @@ export default {
     meanings: 'Meanings',
     exampleSentences: 'Example Sentences',
     context: 'Context',
+    shareCard: 'Share Card',
+  },
+  wordCard: {
+    title: 'Generate Share Card',
+    selectTheme: 'Select Theme',
+    sentence: 'Beautiful Sentence',
+    download: 'Download Card',
+    regenerate: 'Regenerate',
+    generatingSentence: 'Generating beautiful sentence...',
+    generatingCard: 'Generating card...',
+    tip: 'Click regenerate to get different sentences and card styles',
   },
 };

@@ -10,9 +10,11 @@ import {
   RotateCcw, 
   Trophy,
   BookOpen,
-  Target
+  Target,
+  Share2
 } from 'lucide-vue-next';
 import type { ReviewWord, MasteryLevel } from '@/types';
+import WordCardGenerator from '@/components/WordCardGenerator.vue';
 
 const { t } = useI18n();
 const reviewStore = useReviewStore();
@@ -20,6 +22,7 @@ const reviewStore = useReviewStore();
 const isRevealed = ref(false);
 const lastResult = ref<{ known: boolean; newLevel: MasteryLevel } | null>(null);
 const sessionStats = ref({ reviewed: 0, known: 0, needsReview: 0 });
+const showCardGenerator = ref(false);
 
 const masteryColors: Record<MasteryLevel, string> = {
   new: 'bg-blue-100 text-blue-700',
@@ -162,9 +165,18 @@ function playAudio(audioUrl?: string) {
         >
           {{ masteryLabels[currentWord.masteryLevel] }}
         </span>
-        <span class="text-sm text-[var(--muted-foreground)]">
-          {{ t('review.reviewedTimes', { count: currentWord.reviewCount }) }}
-        </span>
+        <div class="flex items-center gap-3">
+          <button
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm rounded-lg hover:opacity-90 transition-opacity"
+            @click="showCardGenerator = true"
+          >
+            <Share2 class="h-4 w-4" />
+            {{ t('wordDetail.shareCard') }}
+          </button>
+          <span class="text-sm text-[var(--muted-foreground)]">
+            {{ t('review.reviewedTimes', { count: currentWord.reviewCount }) }}
+          </span>
+        </div>
       </div>
 
       <!-- Card Content -->
@@ -283,5 +295,15 @@ function playAudio(audioUrl?: string) {
         </div>
       </div>
     </div>
+
+    <!-- Word Card Generator -->
+    <WordCardGenerator
+      v-if="currentWord"
+      :word="currentWord.word"
+      :phonetic="currentWord.pronunciation?.phonetic"
+      :meaning="currentWord.meanings?.[0]?.definition"
+      :visible="showCardGenerator"
+      @close="showCardGenerator = false"
+    />
   </div>
 </template>

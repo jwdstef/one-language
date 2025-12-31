@@ -3,7 +3,8 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useVocabularyStore } from '@/stores/vocabulary';
-import { ArrowLeft, Volume2, Tag, ExternalLink, Loader2, X, Plus } from 'lucide-vue-next';
+import { ArrowLeft, Volume2, Tag, ExternalLink, Loader2, X, Plus, Share2 } from 'lucide-vue-next';
+import WordCardGenerator from '@/components/WordCardGenerator.vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -13,6 +14,7 @@ const vocabularyStore = useVocabularyStore();
 const newTag = ref('');
 const showTagInput = ref(false);
 const audioRef = ref<HTMLAudioElement | null>(null);
+const showCardGenerator = ref(false);
 
 const masteryColors: Record<string, string> = {
   new: 'bg-blue-100 text-blue-700',
@@ -109,14 +111,23 @@ function formatDate(dateString: string) {
               </button>
             </div>
           </div>
-          <span
-            :class="[
-              'px-3 py-1 text-sm font-medium rounded-full',
-              masteryColors[vocabularyStore.currentWord.masteryLevel],
-            ]"
-          >
-            {{ t(`vocabulary.levels.${vocabularyStore.currentWord.masteryLevel}`) }}
-          </span>
+          <div class="flex items-center gap-2">
+            <button
+              class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+              @click="showCardGenerator = true"
+            >
+              <Share2 class="h-4 w-4" />
+              {{ t('wordDetail.shareCard') }}
+            </button>
+            <span
+              :class="[
+                'px-3 py-1 text-sm font-medium rounded-full',
+                masteryColors[vocabularyStore.currentWord.masteryLevel],
+              ]"
+            >
+              {{ t(`vocabulary.levels.${vocabularyStore.currentWord.masteryLevel}`) }}
+            </span>
+          </div>
         </div>
 
         <!-- Tags -->
@@ -250,5 +261,15 @@ function formatDate(dateString: string) {
 
     <!-- Hidden Audio Element -->
     <audio ref="audioRef" class="hidden" />
+
+    <!-- Word Card Generator -->
+    <WordCardGenerator
+      v-if="vocabularyStore.currentWord"
+      :word="vocabularyStore.currentWord.word"
+      :phonetic="vocabularyStore.currentWord.pronunciation?.phonetic"
+      :meaning="vocabularyStore.currentWord.meanings?.[0]?.definition"
+      :visible="showCardGenerator"
+      @close="showCardGenerator = false"
+    />
   </div>
 </template>

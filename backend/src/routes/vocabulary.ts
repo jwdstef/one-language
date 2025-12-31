@@ -230,4 +230,23 @@ router.get('/export', async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
+// POST /api/vocabulary/generate-sentence - 生成包含单词的优美句子
+router.post('/generate-sentence', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new AppError('AUTH_REQUIRED', 'Authentication required', 401);
+    }
+
+    const { word, meaning } = req.body;
+    if (!word) {
+      throw new AppError('VALIDATION_ERROR', 'Word is required', 400);
+    }
+
+    const result = await vocabularyService.generateBeautifulSentence(word, meaning);
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
