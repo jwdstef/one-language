@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/services/api';
-import type { UserOverview, DailyActivity } from '@/types';
+import type { UserOverview, DailyActivity, StreakInfo, UserLevel, DailyProgress, UserGoal, UserAchievementStatus } from '@/types';
 import { Line, Doughnut } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -16,7 +16,7 @@ import {
   ArcElement,
   Filler,
 } from 'chart.js';
-import { Loader2, TrendingUp, Calendar, Globe } from 'lucide-vue-next';
+import { Loader2, TrendingUp, Calendar, Globe, Flame, Trophy, Target, Star, Settings, Check } from 'lucide-vue-next';
 
 const { t } = useI18n();
 
@@ -35,21 +35,46 @@ ChartJS.register(
 const overview = ref<UserOverview | null>(null);
 const weeklyStats = ref<DailyActivity[]>([]);
 const monthlyStats = ref<DailyActivity[]>([]);
+const streakInfo = ref<StreakInfo | null>(null);
+const userLevel = ref<UserLevel | null>(null);
+const dailyProgress = ref<DailyProgress | null>(null);
+const userGoal = ref<UserGoal | null>(null);
+const achievements = ref<UserAchievementStatus | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const activeTab = ref<'weekly' | 'monthly'>('weekly');
+const showGoalSettings = ref(false);
+const goalForm = ref({ dailyWordGoal: 10, dailyReviewGoal: 20 });
+const savingGoal = ref(false);
 
 onMounted(async () => {
   try {
-    const [overviewRes, weeklyRes, monthlyRes] = await Promise.all([
+    const [overviewRes, weeklyRes, monthlyRes, streakRes, levelRes, progressRes, goalRes, achievementsRes] = await Promise.all([
       api.get('/stats/overview'),
       api.get('/stats/weekly'),
       api.get('/stats/monthly'),
+      api.get('/stats/streak'),
+      api.get('/achievements/level'),
+      api.get('/goals/progress'),
+      api.get('/goals'),
+      api.get('/achievements'),
     ]);
 
     overview.value = overviewRes.data.data;
     weeklyStats.value = weeklyRes.data.data.dailyActivity || [];
     monthlyStats.value = monthlyRes.data.data.dailyActivity || [];
+    streakInfo.value = streakRes.data.data;
+    userLevel.value = levelRes.data.data;
+    dailyProgress.value = progressRes.data.data;
+    userGoal.value = goalRes.data.data;
+    achievements.value = achievementsRes.data.data;
+    
+    if (userGoal.value) {
+      goalForm.value = {
+        dailyWordGoal: userGoal.value.dailyWordGoal,
+        dailyReviewGoal: userGoal.value.dailyReviewGoal,
+      };
+    }
   } catch (err) {
     error.value = t('admin.loadError');
     console.error(err);
@@ -138,6 +163,29 @@ const masteryChartOptions = {
     },
   },
 };
+
+// 打卡日历数据
+const calendarDays = computed(() => {
+  if (!streakInfo.value) return [];
+  return streakInfo.value.streakHistory;
+});
+
+// 保存目标设置
+async function saveGoalSettings() {
+  savingGoal.value = true;
+  try {
+    await api.put('/goals', goalForm.value);
+    if (userGoal.value) {
+      userGoal.value.dailyWordGoal = goalForm.value.dailyWordGoal;
+      userGoal.value.dailyReviewGoal = goalForm.value.dailyReviewGoal;
+    }
+    showGoalSettings.value = false;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    savingGoal.value = false;
+  }
+}
 </script>
 
 <template>
@@ -153,6 +201,58 @@ const masteryChartOptions = {
     </div>
 
     <div v-else class="space-y-6">
+      <!-- Today's Learning Card -->
+      <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold">{{ t('statistics.todayLearning') }}</h2>
+          <div class="flex items-center gap-2">
+            <span v-if="dailyProgress?.isAllComplete" class="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-sm">
+              <Check class="h-4 w-4" />
+              {{ t('statistics.goalComplete') }}
+            </span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white/10 rounded-lg p-4">
+            <p class="text-white/70 text-sm">{{ t('statistics.wordsToday') }}</p>
+            <p class="text-3xl font-bold">{{ dailyProgress?.wordsToday || 0 }}</p>
+            <div class="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div class="h-full bg-white rounded-full transition-all" :style="{ width: `${dailyProgress?.wordProgress || 0}%` }" />
+            </div>
+            <p class="text-xs text-white/60 mt-1">{{ dailyProgress?.wordsToday || 0 }} / {{ dailyProgress?.wordGoal || 10 }}</p>
+          </div>
+          <div class="bg-white/10 rounded-lg p-4">
+            <p class="text-white/70 text-sm">{{ t('statistics.reviewsToday') }}</p>
+            <p class="text-3xl font-bold">{{ dailyProgress?.reviewsToday || 0 }}</p>
+            <div class="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div class="h-full bg-white rounded-full transition-all" :style="{ width: `${dailyProgress?.reviewProgress || 0}%` }" />
+            </div>
+            <p class="text-xs text-white/60 mt-1">{{ dailyProgress?.reviewsToday || 0 }} / {{ dailyProgress?.reviewGoal || 20 }}</p>
+          </div>
+          <div class="bg-white/10 rounded-lg p-4">
+            <p class="text-white/70 text-sm">{{ t('statistics.currentStreak') }}</p>
+            <div class="flex items-center gap-2">
+              <Flame class="h-8 w-8 text-orange-300" />
+              <p class="text-3xl font-bold">{{ overview?.currentStreak || 0 }}</p>
+            </div>
+            <p class="text-xs text-white/60 mt-1">{{ t('statistics.longestStreak') }}: {{ overview?.longestStreak || 0 }} {{ t('statistics.days') }}</p>
+          </div>
+          <div class="bg-white/10 rounded-lg p-4">
+            <p class="text-white/70 text-sm">{{ t('statistics.level') }}</p>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">{{ userLevel?.icon || '🌱' }}</span>
+              <div>
+                <p class="text-xl font-bold">{{ userLevel?.name || '初学者' }}</p>
+                <p class="text-xs text-white/60">Lv.{{ userLevel?.level || 1 }}</p>
+              </div>
+            </div>
+            <div class="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div class="h-full bg-yellow-300 rounded-full transition-all" :style="{ width: `${userLevel?.progress || 0}%` }" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Overview Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-[var(--card)] rounded-xl p-6 border border-[var(--border)]">
@@ -187,6 +287,176 @@ const masteryChartOptions = {
             <div>
               <p class="text-sm text-[var(--muted-foreground)]">{{ t('statistics.thisWeek') }}</p>
               <p class="text-2xl font-bold">{{ overview?.wordsThisWeek || 0 }} {{ t('statistics.words') }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Check-in Calendar & Daily Goal -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Check-in Calendar -->
+        <div class="bg-[var(--card)] rounded-xl p-6 border border-[var(--border)]">
+          <h2 class="text-lg font-semibold mb-4">{{ t('statistics.checkInCalendar') }}</h2>
+          <div class="grid grid-cols-7 gap-2">
+            <div v-for="(day, index) in calendarDays" :key="index" class="aspect-square">
+              <div
+                :class="[
+                  'w-full h-full rounded-md flex items-center justify-center text-xs',
+                  day.active
+                    ? 'bg-green-500 text-white'
+                    : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                ]"
+                :title="day.date"
+              >
+                {{ new Date(day.date).getDate() }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 mt-4 text-sm text-[var(--muted-foreground)]">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded bg-green-500" />
+              <span>{{ t('statistics.checkedIn') }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded bg-[var(--muted)]" />
+              <span>{{ t('statistics.notCheckedIn') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Goal Settings -->
+        <div class="bg-[var(--card)] rounded-xl p-6 border border-[var(--border)]">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">{{ t('statistics.dailyGoal') }}</h2>
+            <button
+              @click="showGoalSettings = !showGoalSettings"
+              class="p-2 rounded-lg hover:bg-[var(--muted)] transition-colors"
+            >
+              <Settings class="h-5 w-5 text-[var(--muted-foreground)]" />
+            </button>
+          </div>
+          
+          <div v-if="showGoalSettings" class="space-y-4 mb-4 p-4 bg-[var(--muted)] rounded-lg">
+            <div>
+              <label class="block text-sm mb-1">{{ t('statistics.wordGoal') }}</label>
+              <input
+                v-model.number="goalForm.dailyWordGoal"
+                type="number"
+                min="1"
+                max="100"
+                class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)]"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-1">{{ t('statistics.reviewGoal') }}</label>
+              <input
+                v-model.number="goalForm.dailyReviewGoal"
+                type="number"
+                min="1"
+                max="200"
+                class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)]"
+              />
+            </div>
+            <button
+              @click="saveGoalSettings"
+              :disabled="savingGoal"
+              class="w-full px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+            >
+              {{ savingGoal ? t('common.loading') : t('statistics.saveGoal') }}
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-sm mb-2">
+                <span class="flex items-center gap-2">
+                  <Target class="h-4 w-4 text-blue-500" />
+                  {{ t('statistics.wordGoal') }}
+                </span>
+                <span :class="dailyProgress?.isWordGoalComplete ? 'text-green-500' : ''">
+                  {{ dailyProgress?.wordsToday || 0 }} / {{ dailyProgress?.wordGoal || 10 }}
+                  <span v-if="dailyProgress?.isWordGoalComplete">✓</span>
+                </span>
+              </div>
+              <div class="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-blue-500 rounded-full transition-all"
+                  :style="{ width: `${dailyProgress?.wordProgress || 0}%` }"
+                />
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-2">
+                <span class="flex items-center gap-2">
+                  <Star class="h-4 w-4 text-yellow-500" />
+                  {{ t('statistics.reviewGoal') }}
+                </span>
+                <span :class="dailyProgress?.isReviewGoalComplete ? 'text-green-500' : ''">
+                  {{ dailyProgress?.reviewsToday || 0 }} / {{ dailyProgress?.reviewGoal || 20 }}
+                  <span v-if="dailyProgress?.isReviewGoalComplete">✓</span>
+                </span>
+              </div>
+              <div class="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-yellow-500 rounded-full transition-all"
+                  :style="{ width: `${dailyProgress?.reviewProgress || 0}%` }"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements Section -->
+      <div class="bg-[var(--card)] rounded-xl p-6 border border-[var(--border)]">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <Trophy class="h-5 w-5 text-yellow-500" />
+            {{ t('statistics.achievements') }}
+          </h2>
+          <span class="text-sm text-[var(--muted-foreground)]">
+            {{ t('statistics.achievementsUnlocked') }}: {{ achievements?.unlocked.length || 0 }}
+          </span>
+        </div>
+        
+        <!-- Recent Achievements -->
+        <div v-if="achievements?.recentUnlocks.length" class="mb-6">
+          <h3 class="text-sm font-medium text-[var(--muted-foreground)] mb-3">{{ t('statistics.recentAchievements') }}</h3>
+          <div class="flex flex-wrap gap-3">
+            <div
+              v-for="achievement in achievements.recentUnlocks"
+              :key="achievement.id"
+              class="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg"
+            >
+              <span class="text-2xl">{{ achievement.icon }}</span>
+              <div>
+                <p class="font-medium text-sm">{{ achievement.name }}</p>
+                <p class="text-xs text-[var(--muted-foreground)]">{{ achievement.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- All Achievements Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div
+            v-for="achievement in [...(achievements?.unlocked || []), ...(achievements?.locked || [])]"
+            :key="achievement.id"
+            :class="[
+              'p-3 rounded-lg border text-center transition-all',
+              achievement.unlockedAt
+                ? 'bg-[var(--background)] border-[var(--border)]'
+                : 'bg-[var(--muted)] border-transparent opacity-50'
+            ]"
+            :title="achievement.description"
+          >
+            <span class="text-3xl block mb-1">{{ achievement.icon }}</span>
+            <p class="text-xs font-medium truncate">{{ achievement.name }}</p>
+            <div v-if="!achievement.unlockedAt && achievement.progress !== undefined" class="mt-2">
+              <div class="h-1 bg-[var(--border)] rounded-full overflow-hidden">
+                <div class="h-full bg-[var(--primary)] rounded-full" :style="{ width: `${achievement.progress}%` }" />
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)] mt-1">{{ achievement.progress }}%</p>
             </div>
           </div>
         </div>

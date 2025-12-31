@@ -5,6 +5,8 @@ import statsRoutes from './stats.js';
 import adminRoutes from './admin.js';
 import reviewRoutes from './review.js';
 import listsRoutes from './lists.js';
+import achievementsRoutes from './achievements.js';
+import goalsRoutes from './goals.js';
 
 const router = Router();
 
@@ -14,5 +16,7 @@ router.use('/stats', statsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/review', reviewRoutes);
 router.use('/lists', listsRoutes);
+router.use('/achievements', achievementsRoutes);
+router.use('/goals', goalsRoutes);
 
 export default router;

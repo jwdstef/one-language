@@ -5,3 +5,5 @@ export * as exportService from './export.service.js';
 export * as reviewService from './review.service.js';
 export * as listService from './list.service.js';
 export * as adminService from './admin.service.js';
+export * as achievementService from './achievement.service.js';
+export * as goalService from './goal.service.js';

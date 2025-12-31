@@ -145,3 +145,29 @@ model VocabularyListWord {
   @@index([wordId])
   @@map("vocabulary_list_words")
 }
+
+// User achievements table
+model UserAchievement {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  achievementId String  @map("achievement_id")
+  unlockedAt   DateTime @default(now()) @map("unlocked_at")
+  
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+// User daily goals table
+model UserGoal {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  dailyWordGoal   Int      @default(10) @map("daily_word_goal")
+  dailyReviewGoal Int      @default(20) @map("daily_review_goal")
+  reminderEnabled Boolean  @default(false) @map("reminder_enabled")
+  reminderTime    String?  @map("reminder_time")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@map("user_goals")
+}

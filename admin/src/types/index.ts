@@ -177,3 +177,65 @@ export interface VocabularyStats {
   wordsByMastery: { level: string; count: number }[];
   topSources: { domain: string; count: number }[];
 }
+
+// Achievement types
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  threshold: number;
+  unlockedAt?: string;
+  progress?: number;
+}
+
+export interface UserAchievementStatus {
+  unlocked: Achievement[];
+  locked: Achievement[];
+  recentUnlocks: Achievement[];
+}
+
+export interface UserLevel {
+  level: number;
+  name: string;
+  icon: string;
+  nextLevel: number;
+  progress: number;
+  totalWords: number;
+}
+
+// Goal types
+export interface UserGoal {
+  dailyWordGoal: number;
+  dailyReviewGoal: number;
+  reminderEnabled: boolean;
+  reminderTime: string | null;
+}
+
+export interface DailyProgress {
+  wordsToday: number;
+  reviewsToday: number;
+  wordGoal: number;
+  reviewGoal: number;
+  wordProgress: number;
+  reviewProgress: number;
+  isWordGoalComplete: boolean;
+  isReviewGoalComplete: boolean;
+  isAllComplete: boolean;
+}
+
+export interface TodayStats {
+  wordsToday: number;
+  reviewsToday: number;
+  currentStreak: number;
+  longestStreak: number;
+  hasCheckedInToday: boolean;
+}
+
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate: string | null;
+  streakHistory: { date: string; active: boolean }[];
+}
