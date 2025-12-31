@@ -120,6 +120,8 @@ export default {
     enableUser: 'Enable User',
     deleteUser: 'Delete User',
     deleteConfirm: 'Are you sure you want to delete this user? This action cannot be undone.',
+    loadError: 'Failed to load users',
+    updateStatusError: 'Failed to update user status',
   },
   statistics: {
     title: 'Statistics',

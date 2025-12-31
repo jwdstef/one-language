@@ -51,7 +51,7 @@ onMounted(async () => {
     weeklyStats.value = weeklyRes.data.data.dailyActivity || [];
     monthlyStats.value = monthlyRes.data.data.dailyActivity || [];
   } catch (err) {
-    error.value = 'Failed to load statistics';
+    error.value = t('admin.loadError');
     console.error(err);
   } finally {
     loading.value = false;
@@ -108,7 +108,12 @@ const masteryChartData = computed(() => {
   if (!overview.value) return { labels: [], datasets: [] };
 
   return {
-    labels: ['New', 'Learning', 'Familiar', 'Mastered'],
+    labels: [
+      t('vocabulary.levels.new'),
+      t('vocabulary.levels.learning'),
+      t('vocabulary.levels.familiar'),
+      t('vocabulary.levels.mastered'),
+    ],
     datasets: [
       {
         data: [

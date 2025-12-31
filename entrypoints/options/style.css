@@ -1024,6 +1024,19 @@
   margin-top: 12px;
 }
 
+.opt-preview-box {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid var(--opt-border);
+  border-radius: 14px;
+}
+
+.dark .opt-preview-box {
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .opt-preview-label {
   font-size: 11px;
   font-weight: 700;
@@ -1037,6 +1050,59 @@
   font-size: 14px;
   color: var(--opt-text);
   line-height: 1.6;
+}
+
+.opt-preview-original {
+  display: inline-block;
+  padding: 2px 10px;
+  background: var(--opt-card-bg);
+  border: 1px solid var(--opt-border);
+  border-radius: 6px;
+  font-size: 14px;
+  margin: 0 4px;
+}
+
+.dark .opt-preview-original {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+
+/* 预览区域翻译样式的深色模式适配 */
+.dark .opt-preview-content .wxt-style-default {
+  border-bottom-color: #5eead4;
+  color: #5eead4;
+}
+
+.dark .opt-preview-content .wxt-style-subtle {
+  color: #94a3b8;
+}
+
+.dark .opt-preview-content .wxt-style-bold {
+  color: #5eead4;
+}
+
+.dark .opt-preview-content .wxt-style-italic {
+  color: #5eead4;
+}
+
+.dark .opt-preview-content .wxt-style-underlined {
+  color: #5eead4;
+  border-bottom-color: #f9a8d4;
+}
+
+.dark .opt-preview-content .wxt-style-highlighted {
+  color: #1e293b;
+  background-color: #fde047;
+}
+
+.dark .opt-preview-content .wxt-style-dotted {
+  background-image: linear-gradient(to right, #5eead4 0%, #5eead4 50%, transparent 50%, transparent 100%);
+  color: #5eead4;
+}
+
+.dark .opt-preview-content .wxt-translation-term--learning {
+  color: #5eead4;
 }
 
 /* ========================================
@@ -2111,4 +2177,37 @@
     border: 1px solid #ddd !important;
     break-inside: avoid !important;
   }
+}
+
+
+/* 验证码输入行 */
+.opt-verification-row {
+  display: flex;
+  gap: 8px;
+}
+
+.opt-input--code {
+  flex: 1;
+  letter-spacing: 4px;
+  font-weight: 600;
+}
+
+.opt-btn--send-code {
+  white-space: nowrap;
+  min-width: 100px;
+}
+
+.opt-btn--secondary {
+  background: var(--muted);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.opt-btn--secondary:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+.opt-btn--secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

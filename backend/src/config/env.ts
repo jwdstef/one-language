@@ -23,6 +23,14 @@ const envSchema = z.object({
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('100'),
+
+  // SMTP Email
+  SMTP_HOST: z.string().default('smtp.qq.com'),
+  SMTP_PORT: z.string().transform(Number).default('465'),
+  SMTP_SECURE: z.string().transform((v) => v === 'true').default('true'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

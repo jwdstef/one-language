@@ -241,7 +241,7 @@ function clearTagFilter() {
                     masteryColors[word.masteryLevel],
                   ]"
                 >
-                  {{ word.masteryLevel }}
+                  {{ t(`vocabulary.levels.${word.masteryLevel}`) }}
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-[var(--muted-foreground)]">

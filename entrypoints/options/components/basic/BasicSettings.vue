@@ -900,49 +900,16 @@ watch(
   margin-top: 8px;
 }
 
-/* Preview Box */
-.opt-preview-box {
-  margin-top: 20px;
-  padding: 20px;
-  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid var(--opt-border, rgba(0,0,0,0.06));
-  border-radius: 14px;
-}
-
-:global(.dark) .opt-preview-box {
-  background: linear-gradient(145deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.5) 100%);
-}
-
+/* Preview Box - 使用全局样式 */
 .opt-preview-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--opt-text-muted, #9ca3af);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 12px;
 }
 
 .opt-preview-content {
   font-size: 15px;
-  color: var(--opt-text, #111827);
   line-height: 1.8;
-}
-
-:global(.dark) .opt-preview-content {
-  color: #f1f5f9;
-}
-
-.opt-preview-original {
-  display: inline-block;
-  padding: 2px 10px;
-  background: var(--opt-card-bg, #ffffff);
-  border: 1px solid var(--opt-border, rgba(0,0,0,0.06));
-  border-radius: 6px;
-  font-size: 14px;
-  margin: 0 4px;
 }
 
 /* Slider */

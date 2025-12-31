@@ -53,7 +53,7 @@ async function fetchUsers() {
       sortOrder: 'desc',
     });
   } catch (err) {
-    error.value = 'Failed to load users';
+    error.value = t('users.loadError');
     console.error(err);
   } finally {
     loading.value = false;
@@ -81,7 +81,7 @@ async function updateStatus(userId: string, status: 'active' | 'suspended' | 'de
     }
   } catch (err) {
     console.error(err);
-    alert('Failed to update user status');
+    alert(t('users.updateStatusError'));
   } finally {
     actionLoading.value = false;
   }
@@ -187,10 +187,10 @@ function getStatusColor(status: string): string {
               </td>
               <td class="px-4 py-3">
                 <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusColor(user.status)]">
-                  {{ user.status }}
+                  {{ t(`users.statuses.${user.status}`) }}
                 </span>
               </td>
-              <td class="px-4 py-3 capitalize">{{ user.role }}</td>
+              <td class="px-4 py-3">{{ t(`users.roles.${user.role}`) }}</td>
               <td class="px-4 py-3">{{ user.wordCount.toLocaleString() }}</td>
               <td class="px-4 py-3 text-sm">{{ formatDate(user.createdAt) }}</td>
               <td class="px-4 py-3 text-sm">{{ formatDate(user.lastLoginAt) }}</td>

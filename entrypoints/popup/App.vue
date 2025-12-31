@@ -29,6 +29,8 @@ import {
   XCircle,
 } from 'lucide-vue-next';
 import { testApiConnection, ApiTestResult } from '@/src/utils';
+import { authService } from '@/src/modules/auth/AuthService';
+import type { User } from '@/src/modules/auth/types';
 
 // 使用 i18n
 const { t } = useI18n();
@@ -38,6 +40,7 @@ const storageService = StorageService.getInstance();
 
 const settings = ref<UserSettings>({ ...DEFAULT_SETTINGS });
 const hasUpdate = ref(false);
+const currentUser = ref<User | null>(null);
 
 onMounted(async () => {
   const loadedSettings = await storageService.getUserSettings();
@@ -72,6 +75,16 @@ onMounted(async () => {
 
   // 检查是否有更新
   await checkForUpdates();
+
+  // 检查用户登录状态
+  try {
+    const user = await authService.getCurrentUser();
+    if (user) {
+      currentUser.value = user;
+    }
+  } catch (error) {
+    console.error('Failed to get current user:', error);
+  }
 });
 
 // API测试状态
@@ -179,6 +192,11 @@ const handleTranslate = async () => {
 
 const openAdvancedSettings = () => {
   const url = browser.runtime.getURL('/options.html#about');
+  window.open(url);
+};
+
+const openAccountPage = () => {
+  const url = browser.runtime.getURL('/options.html#account');
   window.open(url);
 };
 
@@ -296,6 +314,26 @@ const nativeLanguageOptions = computed(() =>
         </div>
       </div>
       <div class="header-actions">
+        <!-- 用户头像/登录按钮 -->
+        <button
+          v-if="currentUser"
+          @click="openAccountPage"
+          class="user-avatar-btn"
+          :title="currentUser.name"
+        >
+          <span class="user-avatar">{{ currentUser.name?.charAt(0).toUpperCase() }}</span>
+        </button>
+        <button
+          v-else
+          @click="openAccountPage"
+          class="login-btn"
+          :title="$t('auth.login') || '登录'"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </button>
         <button
           @click="handleTranslate"
           class="manual-translate-btn"
@@ -742,12 +780,21 @@ const nativeLanguageOptions = computed(() =>
 header {
   margin-bottom: 20px;
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .header-content {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .logo {
@@ -775,10 +822,56 @@ header {
   letter-spacing: -0.02em;
 }
 
+/* User Avatar Button */
+.user-avatar-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  border: 2px solid var(--primary-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+}
+
+.user-avatar {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Login Button */
+.login-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.login-btn:hover {
+  background: var(--primary-lighter);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 .manual-translate-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
   color: white;
   border: none;

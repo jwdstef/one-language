@@ -120,6 +120,8 @@ export default {
     enableUser: '启用用户',
     deleteUser: '删除用户',
     deleteConfirm: '确定要删除这个用户吗？此操作不可恢复。',
+    loadError: '加载用户失败',
+    updateStatusError: '更新用户状态失败',
   },
   statistics: {
     title: '数据统计',

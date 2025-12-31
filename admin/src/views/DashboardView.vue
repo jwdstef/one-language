@@ -41,14 +41,14 @@ const stats = computed(() => [
     key: 'currentStreak',
     icon: Flame,
     color: 'bg-orange-500',
-    suffix: ` ${t('dashboard.last7Days').includes('天') ? '天' : ' days'}`,
+    suffix: ` ${t('statistics.days')}`,
   },
   {
     name: t('vocabulary.levels.mastered'),
     key: 'longestStreak',
     icon: Trophy,
     color: 'bg-purple-500',
-    suffix: ` ${t('dashboard.last7Days').includes('天') ? '天' : ' days'}`,
+    suffix: ` ${t('statistics.days')}`,
   },
 ]);
 </script>

@@ -66,6 +66,7 @@ export interface RegisterData {
   email: string;
   password: string;
   name: string;
+  verificationCode?: string;
 }
 
 // Auth event types

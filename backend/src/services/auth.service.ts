@@ -256,3 +256,38 @@ export async function getCurrentUser(userId: string): Promise<UserResponse | nul
     createdAt: user.createdAt,
   };
 }
+
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  // Find user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError('USER_NOT_FOUND', 'User not found', 404);
+  }
+
+  // Verify current password
+  const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isValidPassword) {
+    throw new AppError('AUTH_INVALID_PASSWORD', 'Current password is incorrect', 400);
+  }
+
+  // Hash new password
+  const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+  // Update password
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: newPasswordHash },
+  });
+
+  // Invalidate all refresh tokens for this user (force re-login on other devices)
+  await prisma.refreshToken.deleteMany({
+    where: { userId },
+  });
+}

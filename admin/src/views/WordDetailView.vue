@@ -115,7 +115,7 @@ function formatDate(dateString: string) {
               masteryColors[vocabularyStore.currentWord.masteryLevel],
             ]"
           >
-            {{ vocabularyStore.currentWord.masteryLevel }}
+            {{ t(`vocabulary.levels.${vocabularyStore.currentWord.masteryLevel}`) }}
           </span>
         </div>
 

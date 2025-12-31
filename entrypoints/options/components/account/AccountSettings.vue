@@ -50,6 +50,37 @@
             </div>
           </Transition>
 
+          <!-- 验证码（仅注册） -->
+          <Transition name="slide-down">
+            <div v-if="isRegisterMode" class="opt-form-group">
+              <div class="opt-form-label">
+                <ShieldCheck class="w-4 h-4" />
+                <Label for="verificationCode">{{ $t('auth.verificationCode') || '验证码' }}</Label>
+              </div>
+              <div class="opt-verification-row">
+                <Input
+                  id="verificationCode"
+                  v-model="verificationCode"
+                  type="text"
+                  maxlength="6"
+                  :placeholder="$t('auth.verificationCodePlaceholder') || '请输入6位验证码'"
+                  :disabled="isLoading"
+                  class="opt-input opt-input--code"
+                />
+                <Button
+                  type="button"
+                  class="opt-btn opt-btn--secondary opt-btn--send-code"
+                  :disabled="isLoading || isSendingCode || codeCooldown > 0 || !email"
+                  @click="handleSendCode"
+                >
+                  <Loader2 v-if="isSendingCode" class="w-4 h-4 animate-spin" />
+                  <span v-else-if="codeCooldown > 0">{{ codeCooldown }}s</span>
+                  <span v-else>{{ $t('auth.sendCode') || '发送验证码' }}</span>
+                </Button>
+              </div>
+            </div>
+          </Transition>
+
           <!-- 密码 -->
           <div class="opt-form-group">
             <div class="opt-form-label">
@@ -171,13 +202,95 @@
               <Settings class="w-4 h-4" />
               编辑资料
             </Button>
-            <Button variant="outline" size="sm" class="opt-btn">
+            <Button variant="outline" size="sm" class="opt-btn" @click="showChangePasswordDialog = true">
               <Key class="w-4 h-4" />
               修改密码
             </Button>
           </div>
         </div>
       </div>
+
+      <!-- 修改密码对话框 -->
+      <Teleport to="body">
+        <Transition name="modal">
+          <div v-if="showChangePasswordDialog" class="opt-modal-overlay" @click.self="closeChangePasswordDialog">
+            <div class="opt-modal opt-modal--sm">
+              <div class="opt-modal-header">
+                <h3>{{ $t('auth.changePassword') || '修改密码' }}</h3>
+                <button @click="closeChangePasswordDialog" class="opt-modal-close">
+                  <X class="w-5 h-5" />
+                </button>
+              </div>
+              <div class="opt-modal-content">
+                <!-- 当前密码 -->
+                <div class="opt-form-group">
+                  <div class="opt-form-label">
+                    <Lock class="w-4 h-4" />
+                    <Label for="currentPassword">{{ $t('auth.currentPassword') || '当前密码' }}</Label>
+                  </div>
+                  <Input
+                    id="currentPassword"
+                    v-model="currentPassword"
+                    type="password"
+                    :placeholder="$t('auth.currentPasswordPlaceholder') || '请输入当前密码'"
+                    :disabled="isChangingPassword"
+                    class="opt-input"
+                  />
+                </div>
+
+                <!-- 新密码 -->
+                <div class="opt-form-group">
+                  <div class="opt-form-label">
+                    <Lock class="w-4 h-4" />
+                    <Label for="newPassword">{{ $t('auth.newPassword') || '新密码' }}</Label>
+                  </div>
+                  <Input
+                    id="newPassword"
+                    v-model="newPassword"
+                    type="password"
+                    :placeholder="$t('auth.newPasswordPlaceholder') || '请输入新密码（至少6位）'"
+                    :disabled="isChangingPassword"
+                    class="opt-input"
+                  />
+                </div>
+
+                <!-- 确认新密码 -->
+                <div class="opt-form-group">
+                  <div class="opt-form-label">
+                    <Lock class="w-4 h-4" />
+                    <Label for="confirmPassword">{{ $t('auth.confirmPassword') || '确认新密码' }}</Label>
+                  </div>
+                  <Input
+                    id="confirmPassword"
+                    v-model="confirmPassword"
+                    type="password"
+                    :placeholder="$t('auth.confirmPasswordPlaceholder') || '请再次输入新密码'"
+                    :disabled="isChangingPassword"
+                    class="opt-input"
+                  />
+                </div>
+
+                <!-- 错误提示 -->
+                <Transition name="fade">
+                  <div v-if="changePasswordError" class="opt-error-box">
+                    <AlertCircle class="w-4 h-4" />
+                    <span>{{ changePasswordError }}</span>
+                  </div>
+                </Transition>
+              </div>
+              <div class="opt-modal-footer">
+                <Button variant="outline" @click="closeChangePasswordDialog" class="opt-btn">
+                  {{ $t('common.cancel') || '取消' }}
+                </Button>
+                <Button @click="handleChangePassword" :disabled="isChangingPassword" class="opt-btn opt-btn--primary">
+                  <Loader2 v-if="isChangingPassword" class="w-4 h-4 animate-spin" />
+                  {{ $t('common.confirm') || '确认修改' }}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
 
       <!-- 学习统计卡片 -->
       <div class="opt-card opt-animate-slide-up" style="animation-delay: 0.1s;">
@@ -277,7 +390,7 @@ import { useI18n } from 'vue-i18n';
 import {
   User, UserCircle, Mail, Lock, Loader2, LogOut, BarChart3, RefreshCw,
   Sparkles, Cloud, Smartphone, Shield, Crown, Settings, Key, BookOpen,
-  Flame, Info, AlertCircle,
+  Flame, Info, AlertCircle, ShieldCheck, X,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -301,10 +414,87 @@ const errorMessage = ref('');
 const email = ref('');
 const password = ref('');
 const name = ref('');
+const verificationCode = ref('');
+const isSendingCode = ref(false);
+const codeCooldown = ref(0);
+let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
 const stats = ref({ wordsCollected: 0, daysStreak: 0 });
 const lastSyncTime = ref('从未同步');
 const API_ENDPOINT = import.meta.env.VITE_BACKEND_API_ENDPOINT || 'https://admin.1zhizu.com';
+
+// 修改密码相关
+const showChangePasswordDialog = ref(false);
+const currentPassword = ref('');
+const newPassword = ref('');
+const confirmPassword = ref('');
+const isChangingPassword = ref(false);
+const changePasswordError = ref('');
+
+const closeChangePasswordDialog = () => {
+  showChangePasswordDialog.value = false;
+  currentPassword.value = '';
+  newPassword.value = '';
+  confirmPassword.value = '';
+  changePasswordError.value = '';
+};
+
+const handleChangePassword = async () => {
+  changePasswordError.value = '';
+  
+  // 验证
+  if (!currentPassword.value) {
+    changePasswordError.value = t('auth.currentPasswordRequired') || '请输入当前密码';
+    return;
+  }
+  if (!newPassword.value) {
+    changePasswordError.value = t('auth.newPasswordRequired') || '请输入新密码';
+    return;
+  }
+  if (newPassword.value.length < 6) {
+    changePasswordError.value = t('auth.passwordTooShort') || '密码长度至少6位';
+    return;
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    changePasswordError.value = t('auth.passwordMismatch') || '两次输入的密码不一致';
+    return;
+  }
+
+  isChangingPassword.value = true;
+  
+  try {
+    const token = await authService.getAccessToken();
+    if (!token) {
+      changePasswordError.value = t('auth.notLoggedIn') || '请先登录';
+      return;
+    }
+
+    const response = await fetch(`${API_ENDPOINT}/api/auth/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        currentPassword: currentPassword.value,
+        newPassword: newPassword.value,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      emit('saveMessage', t('auth.passwordChanged') || '密码修改成功');
+      closeChangePasswordDialog();
+    } else {
+      changePasswordError.value = data.error?.message || t('auth.changePasswordFailed') || '密码修改失败';
+    }
+  } catch (error) {
+    changePasswordError.value = t('auth.networkError') || '网络错误，请稍后重试';
+  } finally {
+    isChangingPassword.value = false;
+  }
+};
 
 const fetchUserStats = async () => {
   try {
@@ -343,7 +533,52 @@ const validateForm = (): boolean => {
   if (!password.value) { errorMessage.value = t('auth.passwordRequired'); return false; }
   if (password.value.length < 6) { errorMessage.value = t('auth.passwordTooShort'); return false; }
   if (isRegisterMode.value && !name.value) { errorMessage.value = t('auth.nameRequired'); return false; }
+  if (isRegisterMode.value && !verificationCode.value) { errorMessage.value = t('auth.verificationCodeRequired') || '请输入验证码'; return false; }
+  if (isRegisterMode.value && verificationCode.value.length !== 6) { errorMessage.value = t('auth.verificationCodeInvalid') || '验证码必须是6位数字'; return false; }
   return true;
+};
+
+const handleSendCode = async () => {
+  if (!email.value) {
+    errorMessage.value = t('auth.emailRequired');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    errorMessage.value = t('auth.invalidEmail');
+    return;
+  }
+
+  isSendingCode.value = true;
+  errorMessage.value = '';
+
+  try {
+    const response = await fetch(`${API_ENDPOINT}/api/auth/send-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.value }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      emit('saveMessage', t('auth.codeSent') || '验证码已发送');
+      // 开始倒计时
+      codeCooldown.value = 60;
+      cooldownTimer = setInterval(() => {
+        codeCooldown.value--;
+        if (codeCooldown.value <= 0) {
+          if (cooldownTimer) clearInterval(cooldownTimer);
+          cooldownTimer = null;
+        }
+      }, 1000);
+    } else {
+      errorMessage.value = data.error?.message || t('auth.sendCodeFailed') || '发送验证码失败';
+    }
+  } catch (error) {
+    errorMessage.value = t('auth.networkError');
+  } finally {
+    isSendingCode.value = false;
+  }
 };
 
 const handleSubmit = async () => {
@@ -352,13 +587,18 @@ const handleSubmit = async () => {
   errorMessage.value = '';
   try {
     const result = isRegisterMode.value
-      ? await authService.register({ email: email.value, password: password.value, name: name.value })
+      ? await authService.register({ 
+          email: email.value, 
+          password: password.value, 
+          name: name.value,
+          verificationCode: verificationCode.value,
+        })
       : await authService.login({ email: email.value, password: password.value });
     if (result.success && result.user) {
       currentUser.value = result.user;
       isLoggedIn.value = true;
       emit('saveMessage', isRegisterMode.value ? '注册成功' : '登录成功');
-      email.value = ''; password.value = ''; name.value = '';
+      email.value = ''; password.value = ''; name.value = ''; verificationCode.value = '';
       await fetchUserStats();
     } else {
       errorMessage.value = result.error || t('auth.unknownError');
@@ -694,11 +934,24 @@ onMounted(async () => {
 }
 
 .opt-stat-card--teal {
-  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  background: linear-gradient(145deg, rgba(13, 148, 136, 0.08) 0%, rgba(13, 148, 136, 0.03) 100%);
+  border: 1px solid rgba(13, 148, 136, 0.2);
 }
 
 .opt-stat-card--orange {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  background: linear-gradient(145deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.03) 100%);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+/* 深色模式下的统计卡片 */
+:global(.dark) .opt-stat-card--teal {
+  background: linear-gradient(145deg, rgba(13, 148, 136, 0.15) 0%, rgba(13, 148, 136, 0.08) 100%);
+  border-color: rgba(13, 148, 136, 0.3);
+}
+
+:global(.dark) .opt-stat-card--orange {
+  background: linear-gradient(145deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.08) 100%);
+  border-color: rgba(249, 115, 22, 0.3);
 }
 
 .opt-stat-icon {
@@ -712,12 +965,25 @@ onMounted(async () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+:global(.dark) .opt-stat-icon {
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 .opt-stat-card--teal .opt-stat-icon {
   color: #0d9488;
 }
 
 .opt-stat-card--orange .opt-stat-icon {
   color: #f97316;
+}
+
+:global(.dark) .opt-stat-card--teal .opt-stat-icon {
+  color: #2dd4bf;
+}
+
+:global(.dark) .opt-stat-card--orange .opt-stat-icon {
+  color: #fb923c;
 }
 
 .opt-stat-content {
@@ -728,18 +994,39 @@ onMounted(async () => {
 .opt-stat-value {
   font-size: 28px;
   font-weight: 800;
-  color: var(--opt-text, #111827);
+  color: #0f766e;
   line-height: 1;
 }
 
+.opt-stat-card--orange .opt-stat-value {
+  color: #ea580c;
+}
+
 :global(.dark) .opt-stat-value {
-  color: #f1f5f9;
+  color: #5eead4 !important;
+}
+
+:global(.dark) .opt-stat-card--orange .opt-stat-value {
+  color: #fdba74 !important;
 }
 
 .opt-stat-label {
   font-size: 13px;
-  color: var(--opt-text-muted, #9ca3af);
+  color: #115e59;
   margin-top: 4px;
+  font-weight: 500;
+}
+
+.opt-stat-card--orange .opt-stat-label {
+  color: #c2410c;
+}
+
+:global(.dark) .opt-stat-label {
+  color: #99f6e4 !important;
+}
+
+:global(.dark) .opt-stat-card--orange .opt-stat-label {
+  color: #fed7aa !important;
 }
 
 /* Sync Status */
@@ -984,6 +1271,104 @@ onMounted(async () => {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Modal Styles */
+.opt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.opt-modal {
+  background: var(--opt-card-bg, #ffffff);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+:global(.dark) .opt-modal {
+  background: #1e293b;
+}
+
+.opt-modal--sm {
+  max-width: 400px;
+}
+
+.opt-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--opt-border, rgba(0,0,0,0.06));
+}
+
+.opt-modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--opt-text, #111827);
+  margin: 0;
+}
+
+:global(.dark) .opt-modal-header h3 {
+  color: #f1f5f9;
+}
+
+.opt-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--opt-text-muted, #9ca3af);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.opt-modal-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.opt-modal-content {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.opt-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--opt-border, rgba(0,0,0,0.06));
+}
+
+/* Modal Transition */
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .opt-modal,
+.modal-leave-to .opt-modal {
+  transform: scale(0.95) translateY(20px);
 }
 
 /* Animations */
