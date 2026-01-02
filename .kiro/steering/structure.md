@@ -65,6 +65,14 @@
 ```
 src/
 ├── routes/          # Express route handlers
+│   ├── auth.ts      # Authentication routes
+│   ├── vocabulary.ts # Vocabulary CRUD
+│   ├── lists.ts     # Vocabulary lists management
+│   ├── review.ts    # Review system
+│   ├── stats.ts     # Statistics
+│   ├── achievements.ts # Achievement system
+│   ├── goals.ts     # Daily goals
+│   └── admin.ts     # Admin routes
 ├── services/        # Business logic
 ├── middleware/      # Auth, error handling
 ├── config/          # Environment config
@@ -72,12 +80,35 @@ src/
 └── types/           # TypeScript types
 ```
 
+### Database Models (Prisma)
+- `User` - User accounts with roles
+- `FavoriteWord` - Saved vocabulary with mastery tracking
+- `VocabularyList` - Custom word lists
+- `VocabularyListWord` - List-word associations
+- `LearningActivity` - Activity tracking
+- `UserStreak` - Learning streaks
+- `UserAchievement` - Unlocked achievements
+- `UserGoal` - Daily learning goals
+- `RefreshToken` - JWT refresh tokens
+
 ## Admin Structure (`admin/src/`)
 
 ```
 src/
 ├── views/           # Page components
+│   ├── DashboardView.vue      # User dashboard
+│   ├── VocabularyView.vue     # Vocabulary list
+│   ├── WordDetailView.vue     # Word details
+│   ├── ReviewView.vue         # Review system
+│   ├── StatisticsView.vue     # Statistics
+│   ├── ExportView.vue         # Data export
+│   ├── AdminDashboardView.vue # Admin dashboard
+│   └── AdminUsersView.vue     # User management
 ├── stores/          # Pinia stores
+│   ├── auth.ts      # Authentication state
+│   ├── vocabulary.ts # Vocabulary state
+│   ├── review.ts    # Review state
+│   └── admin.ts     # Admin state
 ├── services/        # API client
 ├── router/          # Vue Router config
 ├── i18n/            # Translations
