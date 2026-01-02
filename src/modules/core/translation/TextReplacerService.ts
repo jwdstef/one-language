@@ -135,22 +135,32 @@ export class TextReplacerService {
    */
   public async replaceText(text: string, targetReplacementCount?: number): Promise<FullTextAnalysisResponse> {
     try {
+      console.log(`[TextReplacerService] replaceText called, 文本长度: ${text.length}, 目标替换数: ${targetReplacementCount}`);
+      console.log(`[TextReplacerService] 当前配置 useGptApi: ${this.config.useGptApi}`);
+      
       // 获取当前用户设置
       const storageService = StorageService.getInstance();
       const settings = await storageService.getUserSettings();
 
+      console.log(`[TextReplacerService] 用户设置 useGptApi: ${settings.useGptApi}`);
+
       // 如果不使用API，直接返回原文
-      if (!this.config.useGptApi) {
+      // 注意：优先使用用户设置中的 useGptApi，而不是初始化时的配置
+      const shouldUseApi = settings.useGptApi !== false;
+      if (!shouldUseApi) {
+        console.log(`[TextReplacerService] useGptApi=false, 返回空结果`);
         return this.createEmptyResult(text);
       }
 
       // 构建用户设置对象（已包含动态语言检测逻辑）
       const settingsForApi = this.buildUserSettings(settings);
 
+      console.log(`[TextReplacerService] 调用API, 目标语言: ${settingsForApi.multilingualConfig.targetLanguage}`);
+      
       // 处理翻译
       return await this.processTranslation(text, settingsForApi, targetReplacementCount);
     } catch (error) {
-      console.error('文本替换失败:', error);
+      console.error('[TextReplacerService] 文本替换失败:', error);
       return this.createEmptyResult(text);
     }
   }
@@ -312,19 +322,23 @@ export class TextReplacerService {
     // 检查缓存
     const cachedResult = this.getCachedResult(cacheKey);
     if (cachedResult) {
+      console.log(`[TextReplacerService] 命中缓存, 替换数: ${cachedResult.replacements?.length || 0}`);
       return cachedResult;
     }
 
     try {
+      console.log(`[TextReplacerService] 未命中缓存, 调用API...`);
       // 获取API结果
       const apiResult = await this.callTranslationAPI(text, settings, targetReplacementCount);
 
+      console.log(`[TextReplacerService] API返回, 替换数: ${apiResult.replacements?.length || 0}`);
+      
       // 存入缓存
       this.setCachedResult(cacheKey, apiResult);
 
       return apiResult;
     } catch (error) {
-      console.error('翻译失败:', error);
+      console.error('[TextReplacerService] 翻译失败:', error);
       return await this.handleTranslationError(text, settings, error);
     }
   }
@@ -343,8 +357,11 @@ export class TextReplacerService {
     );
 
     if (!activeConfig) {
+      console.error('[TextReplacerService] 没有找到活跃的API配置, activeApiConfigId:', settings.activeApiConfigId);
       throw new Error('没有找到活跃的API配置');
     }
+
+    console.log(`[TextReplacerService] 使用API配置: ${activeConfig.name}, endpoint: ${activeConfig.config.apiEndpoint}, model: ${activeConfig.config.model}`);
 
     // 使用工厂方法创建正确的提供商实例
     const translationProvider = ApiServiceFactory.createProvider(activeConfig);

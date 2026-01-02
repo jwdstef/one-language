@@ -26,6 +26,8 @@ export class OpenAIProvider extends BaseProvider {
     text: string,
     settings: UserSettings,
   ): Promise<FullTextAnalysisResponse> {
+    console.log(`[OpenAIProvider] doAnalyzeFullText called, 文本长度: ${text.length}`);
+    
     // 简化后统一使用智能模式
     const systemPrompt = getSystemPromptByConfig({
       targetLanguage: settings.multilingualConfig.targetLanguage,
@@ -51,6 +53,8 @@ export class OpenAIProvider extends BaseProvider {
 
     requestBody = mergeCustomParams(requestBody, this.config.customParams);
 
+    console.log(`[OpenAIProvider] 发送API请求, model: ${this.config.model}, endpoint: ${this.config.apiEndpoint}`);
+
     const rateLimiter = rateLimitManager.getLimiter(
       this.config.apiEndpoint,
       this.config.requestsPerSecond || 0,
@@ -65,11 +69,13 @@ export class OpenAIProvider extends BaseProvider {
     const [response] = await rateLimiter.executeBatch([apiRequestFunction]);
 
     if (!response.ok) {
-      console.error(`API 请求失败: ${response.status} ${response.statusText}`);
+      console.error(`[OpenAIProvider] API 请求失败: ${response.status} ${response.statusText}`);
       throw new Error(
         `API 请求失败: ${response.status} ${response.statusText}`,
       );
     }
+
+    console.log(`[OpenAIProvider] API 请求成功`);
 
     const data = await response.json();
     return this.extractReplacements(data, text);

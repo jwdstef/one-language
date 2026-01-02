@@ -488,6 +488,21 @@ export class StorageService {
         validatedSettings.lazyLoading = DEFAULT_SETTINGS.lazyLoading;
       }
 
+      // 确保悬浮球配置存在
+      if (!validatedSettings.floatingBall) {
+        validatedSettings.floatingBall = DEFAULT_SETTINGS.floatingBall;
+      }
+
+      // 确保发音快捷键配置存在
+      if (!validatedSettings.pronunciationHotkey) {
+        validatedSettings.pronunciationHotkey = DEFAULT_SETTINGS.pronunciationHotkey;
+      }
+
+      // 确保 useGptApi 字段存在且默认为 true
+      if (validatedSettings.useGptApi === undefined) {
+        validatedSettings.useGptApi = DEFAULT_SETTINGS.useGptApi;
+      }
+
       return validatedSettings;
     } catch (error) {
       console.error(`设置验证异常: ${error}`);

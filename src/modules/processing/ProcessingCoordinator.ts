@@ -338,10 +338,16 @@ export class ProcessingCoordinator {
         this.addProcessingFeedback(element);
       });
 
+      console.log(`[ProcessingCoordinator] 处理段落, 目标替换数: ${targetReplacementCount}, 文本长度: ${segment.textContent.length}`);
+      
       // 调用文本替换器进行处理，传递目标替换数量
       const result = await textReplacer.replaceText(segment.textContent, targetReplacementCount);
 
+      console.log(`[ProcessingCoordinator] API返回结果:`, result ? `${result.replacements?.length || 0} 个替换` : 'null');
+
       if (result && result.replacements && result.replacements.length > 0) {
+        console.log(`[ProcessingCoordinator] 开始应用 ${result.replacements.length} 个替换到DOM`);
+        
         // 应用替换到DOM
         this.applyReplacements(
           segment,
@@ -351,6 +357,8 @@ export class ProcessingCoordinator {
           translationPosition,
           showParentheses,
         );
+
+        console.log(`[ProcessingCoordinator] DOM替换完成`);
 
         // 立即为该段落的翻译内容添加发音功能
         if (this.pronunciationService) {
@@ -368,6 +376,7 @@ export class ProcessingCoordinator {
           replacementCount: result.replacements.length,
         };
       } else {
+        console.log(`[ProcessingCoordinator] 没有替换结果`);
         // 没有替换但处理成功
         this.markTextNodesProcessed(segment.textNodes);
 
@@ -378,6 +387,7 @@ export class ProcessingCoordinator {
         };
       }
     } catch (error) {
+      console.error(`[ProcessingCoordinator] 处理段落失败:`, error);
       return {
         segment,
         success: false,

@@ -194,11 +194,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { StorageService } from '@/src/modules/core/storage';
 import { UserSettings } from '@/src/modules/shared/types/storage';
-import { DEFAULT_SETTINGS } from '@/src/modules/shared/constants/defaults';
+import { DEFAULT_SETTINGS, DEFAULT_FLOATING_BALL_CONFIG, DEFAULT_PRONUNCIATION_HOTKEY } from '@/src/modules/shared/constants/defaults';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -219,7 +219,11 @@ import {
 
 const { t } = useI18n();
 
-const settings = ref<UserSettings>(DEFAULT_SETTINGS);
+const settings = ref<UserSettings>({
+  ...DEFAULT_SETTINGS,
+  floatingBall: { ...DEFAULT_FLOATING_BALL_CONFIG },
+  pronunciationHotkey: { ...DEFAULT_PRONUNCIATION_HOTKEY },
+});
 const storageService = StorageService.getInstance();
 
 const emit = defineEmits<{
@@ -227,7 +231,15 @@ const emit = defineEmits<{
 }>();
 
 onMounted(async () => {
-  settings.value = await storageService.getUserSettings();
+  const loadedSettings = await storageService.getUserSettings();
+  // 确保 floatingBall 和 pronunciationHotkey 存在
+  if (!loadedSettings.floatingBall) {
+    loadedSettings.floatingBall = { ...DEFAULT_FLOATING_BALL_CONFIG };
+  }
+  if (!loadedSettings.pronunciationHotkey) {
+    loadedSettings.pronunciationHotkey = { ...DEFAULT_PRONUNCIATION_HOTKEY };
+  }
+  settings.value = loadedSettings;
 });
 
 watch(

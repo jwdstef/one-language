@@ -199,6 +199,12 @@ export class WordPopupService {
     console.log('[WordPopupService] handleWordClick called');
     const target = e.target as HTMLElement;
     
+    // 忽略悬浮球和悬浮菜单的点击
+    if (target.closest('.wxt-floating-ball') || target.closest('.wxt-floating-menu')) {
+      console.log('[WordPopupService] Floating ball/menu click, ignoring');
+      return;
+    }
+    
     console.log('[WordPopupService] Click detected on:', target, 'tagName:', target.tagName, 'className:', target.className);
     
     // Check if clicked element is a translated word

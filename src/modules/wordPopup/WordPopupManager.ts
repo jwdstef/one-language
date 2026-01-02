@@ -69,17 +69,21 @@ export class WordPopupManager {
   }
 
   public show(element: HTMLElement, wordData: WordData): void {
+    console.log('[WordPopupManager] show called, word:', wordData.word);
     this.currentTargetElement = element;
     this.currentWordData = wordData;
     this.state.wordData = wordData;
     this.state.visible = true;
     if (!this.popupElement) {
+      console.log('[WordPopupManager] Creating popup element');
       this.createPopupElement();
     }
     this.updateContent(wordData);
     const position = this.calculatePosition(element);
+    console.log('[WordPopupManager] Calculated position:', position);
     this.setPosition(position);
     this.popupElement?.classList.add(CSS_CLASSES.POPUP_VISIBLE);
+    console.log('[WordPopupManager] Popup should be visible now, element:', this.popupElement);
     this.addDismissalListeners();
   }
 
