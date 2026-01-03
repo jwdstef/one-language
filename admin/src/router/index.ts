@@ -45,6 +45,11 @@ const router = createRouter({
           name: 'export',
           component: () => import('@/views/ExportView.vue'),
         },
+        {
+          path: 'upgrade',
+          name: 'upgrade',
+          component: () => import('@/views/UpgradeView.vue'),
+        },
         // Admin routes
         {
           path: 'admin',
