@@ -107,10 +107,17 @@ export class TranslationUsageService {
    */
   public async recordTranslationUsage(paragraphCount: number = 1): Promise<UsageLimitResult | null> {
     try {
+      console.log(`[TranslationUsageService] Recording translation usage: ${paragraphCount} paragraphs`);
+      
       const result = await subscriptionService.recordUsage('translation', paragraphCount);
       
-      if (result && !result.allowed) {
-        console.log('[TranslationUsageService] Translation limit reached:', result);
+      if (result) {
+        console.log('[TranslationUsageService] Usage recorded successfully:', result);
+        if (!result.allowed) {
+          console.log('[TranslationUsageService] Translation limit reached:', result);
+        }
+      } else {
+        console.log('[TranslationUsageService] No result from recordUsage (user may not be logged in)');
       }
       
       return result;

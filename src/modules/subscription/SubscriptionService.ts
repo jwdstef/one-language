@@ -384,10 +384,13 @@ export class SubscriptionService {
   public async recordUsage(type: UsageType, count: number = 1): Promise<UsageLimitResult | null> {
     const token = await authService.getAccessToken();
     if (!token) {
+      console.log('[SubscriptionService] No token, skipping usage recording');
       return null;
     }
 
     try {
+      console.log(`[SubscriptionService] Recording usage: type=${type}, count=${count}`);
+      
       const response = await backgroundFetch(`${this.apiEndpoint}/api/usage/record`, {
         method: 'POST',
         headers: {
@@ -402,18 +405,23 @@ export class SubscriptionService {
         return null;
       }
 
-      const result: SubscriptionApiResponse<UsageLimitResult> = await response.json();
+      const result = await response.json();
+      console.log('[SubscriptionService] Record usage response:', result);
       
+      // Backend returns { success: true, data: { recorded: true, usage: UsageLimitResult } }
       if (result.success && result.data) {
         // Invalidate usage cache since it changed
         this.cache.usageCachedAt = null;
         
+        // Extract the usage limit result from the response
+        const usageResult: UsageLimitResult = result.data.usage || result.data;
+        
         // Check if limit was reached
-        if (!result.data.allowed) {
+        if (usageResult && !usageResult.allowed) {
           this.emitEvent(SubscriptionEventType.LIMIT_REACHED, undefined, undefined, type);
         }
         
-        return result.data;
+        return usageResult;
       }
 
       return null;
