@@ -11,6 +11,7 @@ import {
   OriginalWordDisplayMode,
   TranslationPosition,
 } from '../shared/types/core';
+import { translationUsageService } from '../subscription';
 
 /**
  * 处理结果接口
@@ -310,6 +311,16 @@ export class ProcessingCoordinator {
 
     // 更新统计信息
     this.updateStats(processedCount, skippedCount, errorCount, duration);
+
+    // 记录翻译使用量（单词翻译模式）
+    if (totalReplacements > 0) {
+      try {
+        await translationUsageService.recordTranslationUsage(totalReplacements);
+        console.log(`[ProcessingCoordinator] 记录翻译使用量: ${totalReplacements} 个单词`);
+      } catch (error) {
+        console.error('[ProcessingCoordinator] 记录翻译使用量失败:', error);
+      }
+    }
 
     return {
       success: errorCount === 0,
