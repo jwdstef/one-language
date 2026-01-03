@@ -2,12 +2,14 @@
  * Vocabulary Service
  * Manages word favorites, local cache, and sync operations
  * 
- * Requirements: 3.1, 3.2, 3.3, 7.1, 7.2, 7.3, 7.4, 7.5
+ * Requirements: 3.1, 3.2, 3.3, 7.1, 7.2, 7.3, 7.4, 7.5, 4.1, 4.2, 4.3
  */
 
 import { browser } from 'wxt/browser';
 import { authService } from '../auth/AuthService';
 import { offlineQueueManager } from './OfflineQueueManager';
+import { featureGateService } from '../subscription/FeatureGateService';
+import { upgradePromptService } from '../subscription/UpgradePromptService';
 import type {
   FavoriteWord,
   FavoriteWordInput,
@@ -19,7 +21,6 @@ import type {
   VocabularyEventData,
   VocabularyEventListener,
   SyncConflict,
-  SyncDirection,
 } from './types';
 import { VocabularyEventType, DEFAULT_VOCABULARY_STORAGE } from './types';
 
@@ -193,7 +194,7 @@ export class VocabularyService {
 
   /**
    * Favorite a word
-   * Requirements: 3.1, 3.2, 9.3
+   * Requirements: 3.1, 3.2, 9.3, 4.1, 4.2, 4.3
    */
   public async favoriteWord(wordData: FavoriteWordInput): Promise<FavoriteWord> {
     await this.ensureInitialized();
@@ -209,6 +210,20 @@ export class VocabularyService {
     if (existingWord) {
       // Word already favorited, return existing
       return existingWord;
+    }
+
+    // Check collection limit before adding word (Requirements: 4.1, 4.2)
+    const usageLimit = await featureGateService.canUse('collection');
+    if (!usageLimit.allowed) {
+      // Show upgrade prompt (Requirements: 4.4)
+      upgradePromptService.showPrompt('collection_limit', {
+        current: usageLimit.current,
+        limit: usageLimit.limit,
+      });
+      throw this.createError(
+        'VOCAB_QUOTA_EXCEEDED',
+        `Vocabulary collection limit reached (${usageLimit.current}/${usageLimit.limit}). Upgrade to premium for unlimited collections.`
+      );
     }
 
     // Extract domain from sourceUrl for auto-categorization (Requirement 9.3)
@@ -316,8 +331,42 @@ export class VocabularyService {
   }
 
   /**
+   * Check if user can add more words to collection
+   * Requirements: 4.1, 4.2, 4.5
+   * 
+   * @returns Object with allowed status, current count, limit, and remaining
+   */
+  public async canAddMoreWords(): Promise<{
+    allowed: boolean;
+    current: number;
+    limit: number;
+    remaining: number;
+  }> {
+    await this.ensureInitialized();
+    
+    const usageLimit = await featureGateService.canUse('collection');
+    return {
+      allowed: usageLimit.allowed,
+      current: usageLimit.current,
+      limit: usageLimit.limit,
+      remaining: usageLimit.remaining,
+    };
+  }
+
+  /**
+   * Check if user can use advanced tags feature
+   * Requirements: 10.3
+   * 
+   * @returns boolean - True if user can use tags
+   */
+  public async canUseTags(): Promise<boolean> {
+    await this.ensureInitialized();
+    return featureGateService.canAccess('tags');
+  }
+
+  /**
    * Add tag to a word
-   * Requirements: 9.1
+   * Requirements: 9.1, 10.3
    */
   public async addTag(wordId: string, tag: string): Promise<void> {
     await this.ensureInitialized();
@@ -326,6 +375,19 @@ export class VocabularyService {
     const user = await authService.getCurrentUser();
     if (!user) {
       throw this.createError('VOCAB_AUTH_REQUIRED', 'Please log in to manage tags');
+    }
+
+    // Check if user has access to advanced tags feature (Requirements: 10.3)
+    const canUseTags = await featureGateService.canAccess('tags');
+    if (!canUseTags) {
+      // Show upgrade prompt for feature locked
+      upgradePromptService.showPrompt('feature_locked', {
+        feature: 'Advanced Tags',
+      });
+      throw this.createError(
+        'VOCAB_QUOTA_EXCEEDED',
+        'Advanced tags feature requires premium subscription. Upgrade to organize your vocabulary with custom tags.'
+      );
     }
 
     const cache = await this.getCache();
@@ -358,7 +420,7 @@ export class VocabularyService {
 
   /**
    * Remove tag from a word
-   * Requirements: 9.1
+   * Requirements: 9.1, 10.3
    */
   public async removeTag(wordId: string, tag: string): Promise<void> {
     await this.ensureInitialized();
@@ -367,6 +429,15 @@ export class VocabularyService {
     const user = await authService.getCurrentUser();
     if (!user) {
       throw this.createError('VOCAB_AUTH_REQUIRED', 'Please log in to manage tags');
+    }
+
+    // Check if user has access to advanced tags feature (Requirements: 10.3)
+    const canUseTags = await featureGateService.canAccess('tags');
+    if (!canUseTags) {
+      throw this.createError(
+        'VOCAB_QUOTA_EXCEEDED',
+        'Advanced tags feature requires premium subscription. Upgrade to organize your vocabulary with custom tags.'
+      );
     }
 
     const cache = await this.getCache();
@@ -430,7 +501,7 @@ export class VocabularyService {
 
   /**
    * Update all tags for a word
-   * Requirements: 9.1
+   * Requirements: 9.1, 10.3
    */
   public async updateTags(wordId: string, tags: string[]): Promise<void> {
     await this.ensureInitialized();
@@ -439,6 +510,15 @@ export class VocabularyService {
     const user = await authService.getCurrentUser();
     if (!user) {
       throw this.createError('VOCAB_AUTH_REQUIRED', 'Please log in to manage tags');
+    }
+
+    // Check if user has access to advanced tags feature (Requirements: 10.3)
+    const canUseTags = await featureGateService.canAccess('tags');
+    if (!canUseTags) {
+      throw this.createError(
+        'VOCAB_QUOTA_EXCEEDED',
+        'Advanced tags feature requires premium subscription. Upgrade to organize your vocabulary with custom tags.'
+      );
     }
 
     const cache = await this.getCache();

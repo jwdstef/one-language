@@ -210,6 +210,126 @@
         </div>
       </div>
 
+      <!-- 会员状态卡片 (Requirements: 2.3, 17.2) -->
+      <div class="opt-card opt-animate-slide-up" style="animation-delay: 0.05s;">
+        <div class="opt-card-header">
+          <div class="opt-card-title">
+            <div class="opt-card-title-icon-wrapper opt-card-title-icon-wrapper--gold">
+              <Crown class="opt-card-title-icon" />
+            </div>
+            <div>
+              <h2>{{ $t('subscription.memberStatus') || '会员状态' }}</h2>
+              <p class="opt-card-subtitle">{{ $t('subscription.currentPlan') || '当前版本' }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="opt-card-content">
+          <!-- Loading State -->
+          <div v-if="isLoadingSubscription" class="opt-subscription-loading">
+            <Loader2 class="w-5 h-5 animate-spin" />
+            <span>{{ $t('subscription.loading') || '加载中...' }}</span>
+          </div>
+          
+          <!-- Subscription Details -->
+          <div v-else-if="subscriptionStatus" class="opt-subscription-details">
+            <!-- Plan Info -->
+            <div class="opt-subscription-plan">
+              <div class="opt-plan-badge" :class="isPremiumUser() ? 'opt-plan-badge--premium' : 'opt-plan-badge--free'">
+                <Crown v-if="isPremiumUser()" class="w-5 h-5" />
+                <User v-else class="w-5 h-5" />
+                <span>{{ isPremiumUser() ? ($t('subscription.premium') || '高级版') : ($t('subscription.free') || '免费版') }}</span>
+              </div>
+              <div v-if="isPremiumUser() && subscriptionStatus.subscription.endDate" class="opt-plan-expiry">
+                <span class="opt-plan-expiry-label">{{ $t('subscription.expiresAt') || '到期时间' }}:</span>
+                <span class="opt-plan-expiry-date">{{ formatExpirationDate() }}</span>
+              </div>
+            </div>
+            
+            <!-- Usage Statistics -->
+            <div v-if="usageStatus" class="opt-usage-section">
+              <h4 class="opt-usage-title">{{ $t('subscription.usageStats') || '使用统计' }}</h4>
+              <div class="opt-usage-grid">
+                <!-- Translation Usage -->
+                <div class="opt-usage-item">
+                  <div class="opt-usage-header">
+                    <span class="opt-usage-label">{{ $t('subscription.translationUsage') || '翻译' }}</span>
+                    <span class="opt-usage-value">
+                      {{ usageStatus.translation.current }} / {{ usageStatus.translation.limit === 0 ? ($t('subscription.unlimited') || '无限') : usageStatus.translation.limit }}
+                    </span>
+                  </div>
+                  <div class="opt-usage-bar">
+                    <div 
+                      class="opt-usage-bar-fill" 
+                      :style="{ width: usageStatus.translation.limit === 0 ? '0%' : Math.min(100, (usageStatus.translation.current / usageStatus.translation.limit) * 100) + '%' }"
+                      :class="{ 'opt-usage-bar-fill--warning': usageStatus.translation.limit > 0 && usageStatus.translation.current >= usageStatus.translation.limit * 0.8 }"
+                    ></div>
+                  </div>
+                </div>
+                
+                <!-- Review Usage -->
+                <div class="opt-usage-item">
+                  <div class="opt-usage-header">
+                    <span class="opt-usage-label">{{ $t('subscription.reviewUsage') || '复习' }}</span>
+                    <span class="opt-usage-value">
+                      {{ usageStatus.review.current }} / {{ usageStatus.review.limit === 0 ? ($t('subscription.unlimited') || '无限') : usageStatus.review.limit }}
+                    </span>
+                  </div>
+                  <div class="opt-usage-bar">
+                    <div 
+                      class="opt-usage-bar-fill" 
+                      :style="{ width: usageStatus.review.limit === 0 ? '0%' : Math.min(100, (usageStatus.review.current / usageStatus.review.limit) * 100) + '%' }"
+                      :class="{ 'opt-usage-bar-fill--warning': usageStatus.review.limit > 0 && usageStatus.review.current >= usageStatus.review.limit * 0.8 }"
+                    ></div>
+                  </div>
+                </div>
+                
+                <!-- Collection Usage -->
+                <div class="opt-usage-item opt-usage-item--full">
+                  <div class="opt-usage-header">
+                    <span class="opt-usage-label">{{ $t('subscription.collectionUsage') || '收藏' }}</span>
+                    <span class="opt-usage-value">
+                      {{ usageStatus.collection.current }} / {{ usageStatus.collection.limit === 0 ? ($t('subscription.unlimited') || '无限') : usageStatus.collection.limit }}
+                    </span>
+                  </div>
+                  <div class="opt-usage-bar">
+                    <div 
+                      class="opt-usage-bar-fill" 
+                      :style="{ width: usageStatus.collection.limit === 0 ? '0%' : Math.min(100, (usageStatus.collection.current / usageStatus.collection.limit) * 100) + '%' }"
+                      :class="{ 'opt-usage-bar-fill--warning': usageStatus.collection.limit > 0 && usageStatus.collection.current >= usageStatus.collection.limit * 0.8 }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Upgrade Button for Free Users -->
+            <Button 
+              v-if="!isPremiumUser()" 
+              class="opt-btn opt-btn--upgrade opt-btn--full"
+              @click="openUpgradePage"
+            >
+              <Sparkles class="w-4 h-4" />
+              {{ $t('subscription.upgradeToPremium') || '升级到高级版' }}
+            </Button>
+            
+            <!-- Renew Button for Premium Users -->
+            <Button 
+              v-else-if="subscriptionStatus.subscription.endDate" 
+              class="opt-btn opt-btn--primary opt-btn--full"
+              @click="openUpgradePage"
+            >
+              <RefreshCw class="w-4 h-4" />
+              续费会员
+            </Button>
+          </div>
+          
+          <!-- No Subscription Data -->
+          <div v-else class="opt-subscription-empty">
+            <p>{{ $t('subscription.loginToView') || '无法加载会员信息' }}</p>
+          </div>
+        </div>
+      </div>
+
       <!-- 修改密码对话框 -->
       <Teleport to="body">
         <Transition name="modal">
@@ -397,6 +517,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authService } from '@/src/modules/auth/AuthService';
 import type { User as UserType } from '@/src/modules/auth/types';
+import { subscriptionService } from '@/src/modules/subscription/SubscriptionService';
+import type { SubscriptionStatus, UsageStatus } from '@/src/modules/subscription/types';
 
 const { t } = useI18n();
 
@@ -422,6 +544,11 @@ let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 const stats = ref({ wordsCollected: 0, daysStreak: 0 });
 const lastSyncTime = ref('从未同步');
 const API_ENDPOINT = import.meta.env.VITE_BACKEND_API_ENDPOINT || 'https://admin.1zhizu.com';
+
+// Subscription status (Requirements: 2.3, 17.2)
+const subscriptionStatus = ref<SubscriptionStatus | null>(null);
+const usageStatus = ref<UsageStatus | null>(null);
+const isLoadingSubscription = ref(false);
 
 // 修改密码相关
 const showChangePasswordDialog = ref(false);
@@ -513,6 +640,43 @@ const fetchUserStats = async () => {
   } catch (error) {
     console.error('Failed to fetch user stats:', error);
   }
+};
+
+// Load subscription status (Requirements: 2.3, 17.2)
+const loadSubscriptionStatus = async () => {
+  isLoadingSubscription.value = true;
+  try {
+    const status = await subscriptionService.getSubscriptionStatus();
+    subscriptionStatus.value = status;
+    
+    const usage = await subscriptionService.getUsage();
+    usageStatus.value = usage;
+  } catch (error) {
+    console.error('Failed to load subscription status:', error);
+    subscriptionStatus.value = null;
+    usageStatus.value = null;
+  } finally {
+    isLoadingSubscription.value = false;
+  }
+};
+
+// Check if user is premium
+const isPremiumUser = () => {
+  return subscriptionStatus.value?.subscription?.isPremium && subscriptionStatus.value?.subscription?.isActive;
+};
+
+// Format expiration date
+const formatExpirationDate = () => {
+  if (!subscriptionStatus.value?.subscription?.endDate) {
+    return t('subscription.unlimited') || '永久';
+  }
+  const date = new Date(subscriptionStatus.value.subscription.endDate);
+  return date.toLocaleDateString();
+};
+
+// Open upgrade page
+const openUpgradePage = () => {
+  window.open(`${API_ENDPOINT}/pricing`, '_blank');
 };
 
 const getSubscriptionLabel = (tier?: string) => {
@@ -637,6 +801,8 @@ onMounted(async () => {
       currentUser.value = user;
       isLoggedIn.value = true;
       await fetchUserStats();
+      // Load subscription status (Requirements: 2.3, 17.2)
+      await loadSubscriptionStatus();
     }
   } catch (error) {
     console.error('Failed to get current user:', error);
@@ -1432,6 +1598,220 @@ onMounted(async () => {
   
   .opt-profile-actions {
     justify-content: center;
+  }
+}
+
+/* ========================================
+   Subscription Status Card (Requirements: 2.3, 17.2)
+   ======================================== */
+
+.opt-card-title-icon-wrapper--gold {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.opt-card-title-icon-wrapper--gold .opt-card-title-icon {
+  color: #d97706;
+}
+
+.opt-subscription-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: var(--opt-text-muted, #9ca3af);
+  font-size: 14px;
+}
+
+.opt-subscription-details {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.opt-subscription-plan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.opt-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.opt-plan-badge--free {
+  background: var(--opt-bg-subtle, #f8fafc);
+  color: var(--opt-text-secondary, #6b7280);
+  border: 1px solid var(--opt-border, rgba(0,0,0,0.06));
+}
+
+.opt-plan-badge--premium {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+:global(.dark) .opt-plan-badge--free {
+  background: rgba(30, 41, 59, 0.5);
+  color: #94a3b8;
+}
+
+:global(.dark) .opt-plan-badge--premium {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.opt-plan-expiry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.opt-plan-expiry-label {
+  font-size: 12px;
+  color: var(--opt-text-muted, #9ca3af);
+}
+
+.opt-plan-expiry-date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--opt-text, #111827);
+}
+
+:global(.dark) .opt-plan-expiry-date {
+  color: #f1f5f9;
+}
+
+.opt-usage-section {
+  background: var(--opt-bg-subtle, #f8fafc);
+  border: 1px solid var(--opt-border, rgba(0,0,0,0.06));
+  border-radius: 16px;
+  padding: 20px;
+}
+
+:global(.dark) .opt-usage-section {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+.opt-usage-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--opt-text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 16px 0;
+}
+
+:global(.dark) .opt-usage-title {
+  color: #94a3b8;
+}
+
+.opt-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.opt-usage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opt-usage-item--full {
+  grid-column: 1 / -1;
+}
+
+.opt-usage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.opt-usage-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--opt-text-secondary, #6b7280);
+}
+
+:global(.dark) .opt-usage-label {
+  color: #94a3b8;
+}
+
+.opt-usage-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--opt-text, #111827);
+}
+
+:global(.dark) .opt-usage-value {
+  color: #f1f5f9;
+}
+
+.opt-usage-bar {
+  height: 6px;
+  background: var(--opt-border, rgba(0,0,0,0.1));
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+:global(.dark) .opt-usage-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.opt-usage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--opt-primary, #0d9488) 0%, #0f766e 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.opt-usage-bar-fill--warning {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.opt-btn--upgrade {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.opt-btn--upgrade:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: white;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+.opt-subscription-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--opt-text-muted, #9ca3af);
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .opt-usage-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .opt-subscription-plan {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .opt-plan-expiry {
+    align-items: flex-start;
   }
 }
 </style>

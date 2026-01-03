@@ -59,6 +59,31 @@
     "passwordChanged": "Password changed successfully",
     "changePasswordFailed": "Failed to change password"
   },
+  "subscription": {
+    "memberStatus": "Membership Status",
+    "currentPlan": "Current Plan",
+    "free": "Free",
+    "premium": "Premium",
+    "todayUsage": "Today's Usage",
+    "translationUsage": "Translations",
+    "reviewUsage": "Reviews",
+    "collectionUsage": "Collections",
+    "unlimited": "Unlimited",
+    "paragraphs": "paragraphs",
+    "words": "words",
+    "times": "times",
+    "upgrade": "Upgrade",
+    "upgradeToPremium": "Upgrade to Premium",
+    "upgradeDesc": "Unlock unlimited translations, more languages and premium features",
+    "expiresAt": "Expires",
+    "loginToView": "Login to view membership status",
+    "loading": "Loading...",
+    "usageStats": "Usage Statistics",
+    "dailyLimit": "Daily Limit",
+    "totalLimit": "Total Limit",
+    "remaining": "Remaining",
+    "used": "Used"
+  },
   "errors": {
     "getExtensionVersion": "Failed to get extension version",
     "apiTestFailed": "API test failed",
@@ -87,7 +112,10 @@
     "selectLanguageFirst": "Please select a language first",
     "save": "Settings saved",
     "saveFailed": "Failed to save",
-    "switchConfigFailed": "Failed to switch configuration"
+    "switchConfigFailed": "Failed to switch configuration",
+    "premiumFeature": "Premium Feature",
+    "premiumRequired": "Premium subscription required",
+    "floatingBallPremiumDesc": "Floating ball is available for premium users only. Upgrade to unlock this feature."
   },
   "actions": {
     "translate": "Translate"
@@ -203,7 +231,15 @@
     "blacklistCount": "Blacklist: {count}",
     "whitelistCount": "Whitelist: {count}",
     "confirmDeleteRule": "Are you sure you want to delete this rule?",
-    "confirmDeleteSelected": "Are you sure you want to delete the selected {count} rules?"
+    "confirmDeleteSelected": "Are you sure you want to delete the selected {count} rules?",
+    "rulesUsed": "Rules used",
+    "unlimited": "Unlimited",
+    "ruleLimitReached": "Rule Limit Reached",
+    "ruleLimitDesc": "Free users can add up to {limit} website rules. Upgrade to Premium for unlimited rules.",
+    "whitelistPremiumOnly": "Whitelist is Premium Feature",
+    "whitelistPremiumDesc": "Whitelist functionality is only available for Premium users. Upgrade to unlock this feature.",
+    "later": "Later",
+    "upgradeToPremium": "Upgrade to Premium"
   },
   "websiteRuleDialog": {
     "editTitle": "Edit Website Rule",

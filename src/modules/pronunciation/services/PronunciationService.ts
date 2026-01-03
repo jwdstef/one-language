@@ -20,6 +20,7 @@ import { DEFAULT_API_CONFIG } from '../../shared/constants/defaults';
 import { StorageService } from '../../core/storage';
 import { OriginalWordDisplayMode } from '../../shared/types/core';
 import { safeSetInnerHTML } from '@/src/utils';
+import { featureGateService } from '../../subscription';
 
 /**
  * 定时器管理器 - 统一管理所有定时器
@@ -330,11 +331,22 @@ export class PronunciationService {
   /**
    * 朗读文本
    * 支持回退策略：主TTS提供者失败时自动回退到Web Speech API
+   * 免费用户只能使用 Web Speech API，高级用户可使用有道 TTS
+   * Requirements: 10.2
    */
   async speakText(text: string): Promise<TTSResult> {
     try {
       // 停止当前播放
       this.stopSpeaking();
+
+      // 检查是否有权限使用有道 TTS（高级功能）
+      const canUseYoudaoTTS = await featureGateService.canAccess('youdaoTTS');
+      
+      // 如果主 TTS 是有道但用户没有权限，直接使用 Web Speech
+      if (this.ttsProvider.name === 'youdao' && !canUseYoudaoTTS) {
+        console.info('[TTS] 免费用户，使用 Web Speech API');
+        return await this.fallbackTTSProvider.speak(text);
+      }
 
       // 首先尝试主TTS提供者
       const primaryResult = await this.ttsProvider.speak(text);
@@ -418,6 +430,8 @@ export class PronunciationService {
 
   /**
    * 使用指定口音朗读文本
+   * 免费用户只能使用 Web Speech API，高级用户可使用有道 TTS
+   * Requirements: 10.2
    */
   async speakTextWithAccent(text: string, lang: string): Promise<TTSResult> {
     try {
@@ -433,8 +447,13 @@ export class PronunciationService {
       };
 
       const accent = accentMap[lang];
+      
+      // 检查是否有权限使用有道 TTS（高级功能）
+      const canUseYoudaoTTS = await featureGateService.canAccess('youdaoTTS');
+      
       // 首先尝试主TTS提供者（有道TTS支持口音）
-      if (accent && this.ttsProvider.name === 'youdao') {
+      // 只有高级用户才能使用有道 TTS
+      if (accent && this.ttsProvider.name === 'youdao' && canUseYoudaoTTS) {
         const youdaoConfig = {
           accent: accent,
           rate: this.config.ttsConfig.rate,
@@ -451,6 +470,8 @@ export class PronunciationService {
         console.warn(
           `有道TTS口音朗读失败: ${primaryResult.error}，尝试Web Speech`,
         );
+      } else if (!canUseYoudaoTTS) {
+        console.info('[TTS] 免费用户，使用 Web Speech API 进行口音朗读');
       }
 
       // 回退到Web Speech API
@@ -694,9 +715,20 @@ export class PronunciationService {
 
   /**
    * 检查快捷键是否满足要求
+   * 免费用户禁用快捷键功能，直接显示悬浮框
+   * Requirements: 10.1
    */
   private async checkHotkey(): Promise<boolean> {
     try {
+      // 检查是否有权限使用发音快捷键功能（高级功能）
+      // Requirements: 10.1
+      const canUsePronunciationHotkey = await featureGateService.canAccess('pronunciationHotkey');
+      
+      // 如果用户没有权限使用快捷键功能，直接允许显示悬浮框（不需要按快捷键）
+      if (!canUsePronunciationHotkey) {
+        return true;
+      }
+
       // 使用直接导入的StorageService
       const userSettings = await this.storageService.getUserSettings();
       const hotkey = userSettings.pronunciationHotkey;
@@ -761,6 +793,10 @@ export class PronunciationService {
         const needPhonetic = !elementData.phonetic;
         // 检查是否需要获取AI翻译
         const needMeaning = !elementData.phonetic?.aiTranslation;
+        
+        // 检查是否有权限使用 AI 词义解释（高级功能）
+        // Requirements: 10.1
+        const canUseAiDefinition = await featureGateService.canAccess('aiDefinition');
 
         // 如果没有任何数据，创建基础结构以支持加载状态显示
         if (!elementData.phonetic) {
@@ -771,7 +807,8 @@ export class PronunciationService {
         }
 
         // 立即显示悬浮框（包含加载状态）
-        this.showTooltip(elementData);
+        // 传递 AI 词义权限状态给悬浮框
+        this.showTooltip(elementData, canUseAiDefinition);
 
         // 并行异步获取音标和翻译数据
         const promises: Promise<void>[] = [];
@@ -831,8 +868,9 @@ export class PronunciationService {
           promises.push(phoneticPromise);
         }
 
-        // 异步获取AI翻译数据
-        if (needMeaning) {
+        // 异步获取AI翻译数据（仅高级用户）
+        // Requirements: 10.1
+        if (needMeaning && canUseAiDefinition) {
           const meaningPromise = this.aiTranslationProvider
             .getMeaning(elementData.word)
             .then((meaningResult) => {
@@ -898,8 +936,10 @@ export class PronunciationService {
 
   /**
    * 显示工具提示
+   * @param elementData 元素数据
+   * @param canUseAiDefinition 是否有权限使用 AI 词义解释（高级功能）
    */
-  private showTooltip(elementData: PronunciationElementData): void {
+  private showTooltip(elementData: PronunciationElementData, canUseAiDefinition: boolean = true): void {
     // 只清理其他元素的悬浮框，保留当前元素的定时器
     this.cleanupOtherTooltips(elementData.element);
 
@@ -924,8 +964,8 @@ export class PronunciationService {
       elementData.tooltip.remove();
     }
 
-    // 创建工具提示
-    const tooltip = this.createTooltip(elementData);
+    // 创建工具提示，传递 AI 词义权限状态
+    const tooltip = this.createTooltip(elementData, canUseAiDefinition);
     elementData.tooltip = tooltip;
     document.body.appendChild(tooltip);
 
@@ -1013,15 +1053,17 @@ export class PronunciationService {
 
   /**
    * 创建工具提示
+   * @param elementData 元素数据
+   * @param canUseAiDefinition 是否有权限使用 AI 词义解释（高级功能）
    */
-  private createTooltip(elementData: PronunciationElementData): HTMLElement {
+  private createTooltip(elementData: PronunciationElementData, canUseAiDefinition: boolean = true): HTMLElement {
     const tooltip = document.createElement('div');
     tooltip.className = 'wxt-pronunciation-tooltip';
 
-    // 使用TooltipRenderer生成HTML内容
+    // 使用TooltipRenderer生成HTML内容，传递 AI 词义权限状态
     safeSetInnerHTML(
       tooltip,
-      this.tooltipRenderer.createMainTooltipHTML(elementData),
+      this.tooltipRenderer.createMainTooltipHTML(elementData, canUseAiDefinition),
     );
 
     // 添加主悬浮框事件处理

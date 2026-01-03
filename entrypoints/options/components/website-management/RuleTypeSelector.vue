@@ -15,6 +15,7 @@
             ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
             : 'border-border hover:bg-accent/50',
           option.color,
+          isOptionLocked(option.value) ? 'opacity-60 cursor-not-allowed' : '',
         ]"
       >
         <!-- 选中指示器 -->
@@ -25,10 +26,24 @@
           <Check class="w-2.5 h-2.5 text-primary-foreground" />
         </div>
 
+        <!-- Premium 锁定指示器 -->
+        <div
+          v-if="isOptionLocked(option.value)"
+          class="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 rounded-full"
+        >
+          <Lock class="w-3 h-3 text-amber-600" />
+          <span class="text-xs font-medium text-amber-600">Premium</span>
+        </div>
+
         <!-- 图标和标题 -->
         <div class="flex items-start space-x-3">
           <div class="flex-shrink-0 mt-0.5">
+            <Lock
+              v-if="isOptionLocked(option.value)"
+              class="w-5 h-5 text-amber-500"
+            />
             <component
+              v-else
               :is="getIcon(option.icon)"
               class="w-5 h-5"
               :class="
@@ -53,6 +68,7 @@
           type="radio"
           :value="option.value"
           :checked="selectedType === option.value"
+          :disabled="isOptionLocked(option.value)"
           class="sr-only"
         />
       </div>
@@ -63,16 +79,19 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Check, Shield, Heart } from 'lucide-vue-next';
+import { Check, Shield, Heart, Lock } from 'lucide-vue-next';
 import { RuleTypeOption } from '@/src/modules/options/website-management/types';
 
 const { t } = useI18n();
 
 interface Props {
   modelValue: 'blacklist' | 'whitelist';
+  canUseWhitelist?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  canUseWhitelist: true,
+});
 
 const emit = defineEmits<{
   'update:modelValue': [value: 'blacklist' | 'whitelist'];
@@ -100,7 +119,18 @@ const ruleTypeOptions = computed<RuleTypeOption[]>(() => [
   },
 ]);
 
+const isOptionLocked = (type: 'blacklist' | 'whitelist'): boolean => {
+  if (type === 'whitelist' && !props.canUseWhitelist) {
+    return true;
+  }
+  return false;
+};
+
 const selectType = (type: 'blacklist' | 'whitelist') => {
+  // Don't allow selecting locked options
+  if (isOptionLocked(type)) {
+    return;
+  }
   selectedType.value = type;
 };
 

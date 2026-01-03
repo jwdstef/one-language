@@ -6,6 +6,7 @@
  * - 30+ 主流语言支持
  * - 语言验证和标准化
  * - 性能优化缓存
+ * - 订阅级别语言过滤 (Requirements: 7.1, 7.2)
  */
 
 import { LanguageOption } from '../../shared/types/api';
@@ -328,6 +329,37 @@ export class LanguageService {
   public getNativeLanguageOptions(): LanguageOption[] {
     // 复用现有的目标语言选项
     return this.getTargetLanguageOptions();
+  }
+
+  /**
+   * 获取基于订阅级别过滤的目标语言选项
+   * Requirements: 7.1, 7.2
+   * 
+   * @param allowedLanguages - 订阅允许的语言代码数组
+   * @returns 过滤后的语言选项数组，包含锁定状态
+   */
+  public getFilteredTargetLanguageOptions(allowedLanguages: string[]): (LanguageOption & { isLocked: boolean })[] {
+    const allOptions = this.getTargetLanguageOptions();
+    const allowedSet = new Set(allowedLanguages.map(code => this.normalizeLanguageCode(code)));
+    
+    return allOptions.map(option => ({
+      ...option,
+      isLocked: !allowedSet.has(this.normalizeLanguageCode(option.code)),
+    }));
+  }
+
+  /**
+   * 检查语言是否被订阅允许
+   * Requirements: 7.1, 7.2
+   * 
+   * @param languageCode - 要检查的语言代码
+   * @param allowedLanguages - 订阅允许的语言代码数组
+   * @returns 是否允许使用该语言
+   */
+  public isLanguageAllowed(languageCode: string, allowedLanguages: string[]): boolean {
+    const normalizedCode = this.normalizeLanguageCode(languageCode);
+    const allowedSet = new Set(allowedLanguages.map(code => this.normalizeLanguageCode(code)));
+    return allowedSet.has(normalizedCode);
   }
 }
 

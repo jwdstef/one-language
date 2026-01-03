@@ -22,6 +22,7 @@ import {
 import { StorageService } from '@/src/modules/core/storage';
 import { notifySettingsChanged } from '@/src/modules/core/messaging';
 import { languageService } from '@/src/modules/core/translation/LanguageService';
+import { featureGateService } from '@/src/modules/subscription';
 import {
   ExternalLink,
   Zap as ZapIcon,
@@ -33,6 +34,9 @@ import {
 import { testApiConnection, ApiTestResult } from '@/src/utils';
 import { authService } from '@/src/modules/auth/AuthService';
 import type { User } from '@/src/modules/auth/types';
+import { subscriptionService } from '@/src/modules/subscription/SubscriptionService';
+import type { SubscriptionStatus, UsageStatus } from '@/src/modules/subscription/types';
+import { Crown as CrownIcon, Sparkles as SparklesIcon } from 'lucide-vue-next';
 
 // 使用 i18n
 const { t } = useI18n();
@@ -95,10 +99,15 @@ onMounted(async () => {
     const user = await authService.getCurrentUser();
     if (user) {
       currentUser.value = user;
+      // Load subscription status after user is loaded (Requirements: 2.3, 17.1)
+      await loadSubscriptionStatus();
     }
   } catch (error) {
     console.error('Failed to get current user:', error);
   }
+
+  // Load subscription-based language limits (Requirements: 7.1, 7.2)
+  await loadLanguageLimits();
 });
 
 // 主题切换
@@ -248,9 +257,126 @@ const showApiSettings = ref(true);
 const toggleApiSettings = () =>
   (showApiSettings.value = !showApiSettings.value);
 
-const targetLanguageOptions = computed(() =>
-  languageService.getTargetLanguageOptions(),
-);
+// Subscription-based language filtering (Requirements: 7.1, 7.2)
+const allowedLanguages = ref<string[]>([]);
+const isPremiumUser = ref(false);
+const allowedStyles = ref<string[]>([]); // Requirements: 8.1, 8.2
+const allowedLevels = ref<string[]>([]); // Requirements: 1.4.2
+
+// Subscription status for membership display (Requirements: 2.3, 17.1)
+const subscriptionStatus = ref<SubscriptionStatus | null>(null);
+const usageStatus = ref<UsageStatus | null>(null);
+const isLoadingSubscription = ref(false);
+
+const targetLanguageOptions = computed(() => {
+  if (allowedLanguages.value.length === 0) {
+    // If no subscription info, show all languages
+    return languageService.getTargetLanguageOptions().map(opt => ({ ...opt, isLocked: false }));
+  }
+  return languageService.getFilteredTargetLanguageOptions(allowedLanguages.value);
+});
+
+// Load subscription-based language limits
+const loadLanguageLimits = async () => {
+  try {
+    const languages = await featureGateService.getAvailableOptions('language');
+    allowedLanguages.value = languages;
+    isPremiumUser.value = await featureGateService.isPremium();
+    
+    // Load allowed styles (Requirements: 8.1, 8.2)
+    const styles = await featureGateService.getAvailableOptions('style');
+    allowedStyles.value = styles;
+    
+    // Load allowed levels (Requirements: 1.4.2)
+    const levels = await featureGateService.getAvailableOptions('level');
+    allowedLevels.value = levels;
+  } catch (error) {
+    console.warn('[Popup] Failed to load language limits:', error);
+    // Default to free tier
+    allowedLanguages.value = ['zh', 'en', 'ja', 'ko', 'es'];
+    allowedStyles.value = ['default', 'subtle', 'bold'];
+    allowedLevels.value = ['a1', 'b1', 'b2'];
+    isPremiumUser.value = false;
+  }
+};
+
+// Load subscription status for membership display (Requirements: 2.3, 17.1)
+const loadSubscriptionStatus = async () => {
+  if (!currentUser.value) {
+    subscriptionStatus.value = null;
+    usageStatus.value = null;
+    return;
+  }
+  
+  isLoadingSubscription.value = true;
+  try {
+    // Load subscription status
+    const status = await subscriptionService.getSubscriptionStatus();
+    subscriptionStatus.value = status;
+    
+    // Load usage statistics
+    const usage = await subscriptionService.getUsage();
+    usageStatus.value = usage;
+  } catch (error) {
+    console.warn('[Popup] Failed to load subscription status:', error);
+    subscriptionStatus.value = null;
+    usageStatus.value = null;
+  } finally {
+    isLoadingSubscription.value = false;
+  }
+};
+
+// Open upgrade page
+const openUpgradePage = () => {
+  // Open the admin dashboard or a dedicated upgrade page
+  const upgradeUrl = import.meta.env.VITE_BACKEND_API_ENDPOINT || 'https://admin.1zhizu.com';
+  window.open(`${upgradeUrl}/pricing`, '_blank');
+};
+
+// Handle target language change with subscription check (Requirements: 7.1, 7.3)
+const handleTargetLanguageChange = (event: Event) => {
+  const select = event.target as HTMLSelectElement;
+  const selectedCode = select.value;
+  
+  // Check if the selected language is allowed
+  if (allowedLanguages.value.length > 0 && !languageService.isLanguageAllowed(selectedCode, allowedLanguages.value)) {
+    // Revert to previous value and show upgrade prompt
+    showSavedMessage('此语言需要升级到高级版');
+    // Reset to a default allowed language
+    settings.value.multilingualConfig.targetLanguage = allowedLanguages.value[0] || 'en';
+  }
+};
+
+// Handle style change with subscription check (Requirements: 8.1, 8.2)
+const handleStyleChange = (event: Event) => {
+  const select = event.target as HTMLSelectElement;
+  const selectedStyle = select.value as TranslationStyle;
+  
+  // Check if the selected style is allowed
+  if (allowedStyles.value.length > 0 && !allowedStyles.value.includes(selectedStyle)) {
+    // Revert to previous value and show upgrade prompt
+    showSavedMessage('此样式需要升级到高级版');
+    // Reset to a default allowed style
+    settings.value.translationStyle = (allowedStyles.value[0] as TranslationStyle) || TranslationStyle.DEFAULT;
+  }
+};
+
+// Handle level change with subscription check (Requirements: 1.4.2)
+const handleLevelChange = (event: Event) => {
+  const select = event.target as HTMLSelectElement;
+  const selectedLevel = Number(select.value);
+  const levelCodeMap: Record<number, string> = { 1: 'a1', 2: 'a2', 3: 'b1', 4: 'b2', 5: 'c1', 6: 'c2' };
+  const levelCode = levelCodeMap[selectedLevel];
+  
+  // Check if the selected level is allowed
+  if (allowedLevels.value.length > 0 && levelCode && !allowedLevels.value.includes(levelCode)) {
+    // Revert to previous value and show upgrade prompt
+    showSavedMessage('此等级需要升级到高级版');
+    // Reset to a default allowed level
+    const levelValueMap: Record<string, number> = { 'a1': 1, 'a2': 2, 'b1': 3, 'b2': 4, 'c1': 5, 'c2': 6 };
+    settings.value.userLevel = levelValueMap[allowedLevels.value[0]] || 1;
+  }
+};
 
 // 多配置支持
 const activeConfig = computed(() => {
@@ -273,26 +399,48 @@ const handleActiveConfigChange = async () => {
   }
 };
 
-const levelOptions = computed(() => [
-  { value: 1, label: t('languageLevel.a1') },
-  { value: 2, label: t('languageLevel.a2') },
-  { value: 3, label: t('languageLevel.b1') },
-  { value: 4, label: t('languageLevel.b2') },
-  { value: 5, label: t('languageLevel.c1') },
-  { value: 6, label: t('languageLevel.c2') },
-]);
+const levelOptions = computed(() => {
+  const allLevels = [
+    { value: 1, label: t('languageLevel.a1'), code: 'a1' },
+    { value: 2, label: t('languageLevel.a2'), code: 'a2' },
+    { value: 3, label: t('languageLevel.b1'), code: 'b1' },
+    { value: 4, label: t('languageLevel.b2'), code: 'b2' },
+    { value: 5, label: t('languageLevel.c1'), code: 'c1' },
+    { value: 6, label: t('languageLevel.c2'), code: 'c2' },
+  ];
+  
+  if (allowedLevels.value.length === 0) {
+    return allLevels.map(opt => ({ ...opt, isLocked: false }));
+  }
+  const allowedSet = new Set(allowedLevels.value);
+  return allLevels.map(opt => ({
+    ...opt,
+    isLocked: !allowedSet.has(opt.code),
+  }));
+});
 
-const styleOptions = computed(() => [
-  { value: TranslationStyle.DEFAULT, label: t('translation.default') },
-  { value: TranslationStyle.SUBTLE, label: t('translation.subtle') },
-  { value: TranslationStyle.BOLD, label: t('translation.bold') },
-  { value: TranslationStyle.ITALIC, label: t('translation.italic') },
-  { value: TranslationStyle.UNDERLINED, label: t('translation.underlined') },
-  { value: TranslationStyle.HIGHLIGHTED, label: t('translation.highlighted') },
-  { value: TranslationStyle.DOTTED, label: t('translation.dotted') },
-  { value: TranslationStyle.LEARNING, label: t('translation.learning') },
-  { value: TranslationStyle.CUSTOM, label: t('translation.custom') },
-]);
+const styleOptions = computed(() => {
+  const allStyles = [
+    { value: TranslationStyle.DEFAULT, label: t('translation.default') },
+    { value: TranslationStyle.SUBTLE, label: t('translation.subtle') },
+    { value: TranslationStyle.BOLD, label: t('translation.bold') },
+    { value: TranslationStyle.ITALIC, label: t('translation.italic') },
+    { value: TranslationStyle.UNDERLINED, label: t('translation.underlined') },
+    { value: TranslationStyle.HIGHLIGHTED, label: t('translation.highlighted') },
+    { value: TranslationStyle.DOTTED, label: t('translation.dotted') },
+    { value: TranslationStyle.LEARNING, label: t('translation.learning') },
+    { value: TranslationStyle.CUSTOM, label: t('translation.custom') },
+  ];
+  
+  if (allowedStyles.value.length === 0) {
+    return allStyles.map(opt => ({ ...opt, isLocked: false }));
+  }
+  const allowedSet = new Set(allowedStyles.value);
+  return allStyles.map(opt => ({
+    ...opt,
+    isLocked: !allowedSet.has(opt.value),
+  }));
+});
 
 const triggerOptions = computed(() => [
   { value: TriggerMode.AUTOMATIC, label: t('trigger.automatic') },
@@ -374,6 +522,103 @@ const nativeLanguageOptions = computed(() =>
 
     <!-- Main Content -->
     <div class="popup-content">
+      <!-- Membership Status Card (Requirements: 2.3, 17.1) -->
+      <div v-if="currentUser" class="popup-card popup-membership-card">
+        <div class="popup-membership-header">
+          <div class="popup-membership-title">
+            <CrownIcon class="w-4 h-4" :class="{ 'premium-icon': isPremiumUser }" />
+            <span>{{ $t('subscription.memberStatus') }}</span>
+          </div>
+          <div class="popup-plan-badge" :class="isPremiumUser ? 'premium' : 'free'">
+            {{ isPremiumUser ? $t('subscription.premium') : $t('subscription.free') }}
+          </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div v-if="isLoadingSubscription" class="popup-membership-loading">
+          <div class="spinner"></div>
+          <span>{{ $t('subscription.loading') }}</span>
+        </div>
+        
+        <!-- Usage Statistics -->
+        <div v-else-if="usageStatus" class="popup-usage-stats">
+          <div class="popup-usage-title">{{ $t('subscription.todayUsage') }}</div>
+          <div class="popup-usage-grid">
+            <!-- Translation Usage -->
+            <div class="popup-usage-item">
+              <div class="popup-usage-label">{{ $t('subscription.translationUsage') }}</div>
+              <div class="popup-usage-value">
+                <span class="popup-usage-current">{{ usageStatus.translation.current }}</span>
+                <span class="popup-usage-separator">/</span>
+                <span class="popup-usage-limit">{{ usageStatus.translation.limit === 0 ? $t('subscription.unlimited') : usageStatus.translation.limit }}</span>
+              </div>
+              <div class="popup-usage-bar">
+                <div 
+                  class="popup-usage-bar-fill" 
+                  :style="{ width: usageStatus.translation.limit === 0 ? '0%' : Math.min(100, (usageStatus.translation.current / usageStatus.translation.limit) * 100) + '%' }"
+                  :class="{ 'warning': usageStatus.translation.limit > 0 && usageStatus.translation.current >= usageStatus.translation.limit * 0.8 }"
+                ></div>
+              </div>
+            </div>
+            
+            <!-- Review Usage -->
+            <div class="popup-usage-item">
+              <div class="popup-usage-label">{{ $t('subscription.reviewUsage') }}</div>
+              <div class="popup-usage-value">
+                <span class="popup-usage-current">{{ usageStatus.review.current }}</span>
+                <span class="popup-usage-separator">/</span>
+                <span class="popup-usage-limit">{{ usageStatus.review.limit === 0 ? $t('subscription.unlimited') : usageStatus.review.limit }}</span>
+              </div>
+              <div class="popup-usage-bar">
+                <div 
+                  class="popup-usage-bar-fill" 
+                  :style="{ width: usageStatus.review.limit === 0 ? '0%' : Math.min(100, (usageStatus.review.current / usageStatus.review.limit) * 100) + '%' }"
+                  :class="{ 'warning': usageStatus.review.limit > 0 && usageStatus.review.current >= usageStatus.review.limit * 0.8 }"
+                ></div>
+              </div>
+            </div>
+            
+            <!-- Collection Usage -->
+            <div class="popup-usage-item popup-usage-full">
+              <div class="popup-usage-label">{{ $t('subscription.collectionUsage') }}</div>
+              <div class="popup-usage-value">
+                <span class="popup-usage-current">{{ usageStatus.collection.current }}</span>
+                <span class="popup-usage-separator">/</span>
+                <span class="popup-usage-limit">{{ usageStatus.collection.limit === 0 ? $t('subscription.unlimited') : usageStatus.collection.limit }}</span>
+              </div>
+              <div class="popup-usage-bar">
+                <div 
+                  class="popup-usage-bar-fill" 
+                  :style="{ width: usageStatus.collection.limit === 0 ? '0%' : Math.min(100, (usageStatus.collection.current / usageStatus.collection.limit) * 100) + '%' }"
+                  :class="{ 'warning': usageStatus.collection.limit > 0 && usageStatus.collection.current >= usageStatus.collection.limit * 0.8 }"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Upgrade Button for Free Users -->
+        <button 
+          v-if="!isPremiumUser" 
+          class="popup-upgrade-btn"
+          @click="openUpgradePage"
+        >
+          <SparklesIcon class="w-4 h-4" />
+          <span>{{ $t('subscription.upgradeToPremium') }}</span>
+        </button>
+      </div>
+      
+      <!-- Login Prompt for Non-logged Users -->
+      <div v-else class="popup-card popup-login-prompt">
+        <div class="popup-login-prompt-content">
+          <CrownIcon class="w-5 h-5" />
+          <span>{{ $t('subscription.loginToView') }}</span>
+        </div>
+        <button class="popup-login-btn-small" @click="openAccountPage">
+          {{ $t('auth.login') }}
+        </button>
+      </div>
+
       <!-- Settings Card -->
       <div class="popup-card">
         <div class="popup-settings-grid">
@@ -410,7 +655,7 @@ const nativeLanguageOptions = computed(() =>
 
           <div class="popup-setting-group">
             <label>{{ $t('language.targetLanguage') }}</label>
-            <select v-model="settings.multilingualConfig.targetLanguage">
+            <select v-model="settings.multilingualConfig.targetLanguage" @change="handleTargetLanguageChange">
               <option value="" disabled>
                 {{ $t('language.selectTargetLanguage') }}
               </option>
@@ -421,8 +666,10 @@ const nativeLanguageOptions = computed(() =>
                   )"
                   :key="option.code"
                   :value="option.code"
+                  :disabled="option.isLocked"
+                  :class="{ 'popup-option-locked': option.isLocked }"
                 >
-                  {{ option.name }} - {{ option.nativeName }}
+                  {{ option.name }} - {{ option.nativeName }}{{ option.isLocked ? ' 🔒' : '' }}
                 </option>
               </optgroup>
               <optgroup :label="$t('language.otherLanguages')">
@@ -432,37 +679,52 @@ const nativeLanguageOptions = computed(() =>
                   )"
                   :key="option.code"
                   :value="option.code"
+                  :disabled="option.isLocked"
+                  :class="{ 'popup-option-locked': option.isLocked }"
                 >
-                  {{ option.name }} - {{ option.nativeName }}
+                  {{ option.name }} - {{ option.nativeName }}{{ option.isLocked ? ' 🔒' : '' }}
                 </option>
               </optgroup>
             </select>
+            <p v-if="!isPremiumUser" class="popup-premium-hint">
+              升级高级版解锁更多语言
+            </p>
           </div>
 
           <div class="popup-setting-group">
             <label>{{ $t('language.languageLevel') }}</label>
-            <select v-model="settings.userLevel">
+            <select v-model="settings.userLevel" @change="handleLevelChange">
               <option
                 v-for="option in levelOptions"
                 :key="option.value"
                 :value="option.value"
+                :disabled="option.isLocked"
+                :class="{ 'popup-option-locked': option.isLocked }"
               >
-                {{ option.label }}
+                {{ option.label }}{{ option.isLocked ? ' 🔒' : '' }}
               </option>
             </select>
+            <p v-if="!isPremiumUser && allowedLevels.length < 6" class="popup-premium-hint">
+              升级高级版解锁更多等级
+            </p>
           </div>
 
           <div class="popup-setting-group">
             <label>{{ $t('translation.style') }}</label>
-            <select v-model="settings.translationStyle">
+            <select v-model="settings.translationStyle" @change="handleStyleChange">
               <option
                 v-for="option in styleOptions"
                 :key="option.value"
                 :value="option.value"
+                :disabled="option.isLocked"
+                :class="{ 'popup-option-locked': option.isLocked }"
               >
-                {{ option.label }}
+                {{ option.label }}{{ option.isLocked ? ' 🔒' : '' }}
               </option>
             </select>
+            <p v-if="!isPremiumUser && allowedStyles.length < 9" class="popup-premium-hint">
+              升级高级版解锁更多样式
+            </p>
             <!-- 自定义样式提示 -->
             <div
               v-if="settings.translationStyle === 'custom'"
@@ -1305,4 +1567,208 @@ const nativeLanguageOptions = computed(() =>
 .h-4 { height: 16px; }
 .w-5 { width: 20px; }
 .h-5 { height: 20px; }
+
+/* ========================================
+   Subscription Limit Styles (Requirements: 7.1, 7.2)
+   ======================================== */
+
+.popup-option-locked {
+  color: var(--popup-text-muted, #9ca3af);
+  background: var(--popup-bg-subtle, #f1f5f9);
+}
+
+.popup-premium-hint {
+  font-size: 11px;
+  color: #f59e0b;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 6px;
+}
+
+/* ========================================
+   Membership Status Card (Requirements: 2.3, 17.1)
+   ======================================== */
+
+.popup-membership-card {
+  background: linear-gradient(135deg, var(--popup-card-bg) 0%, var(--popup-primary-lighter) 100%);
+  border: 1px solid var(--popup-primary-light);
+}
+
+.popup-membership-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.popup-membership-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--popup-text);
+}
+
+.popup-membership-title .premium-icon {
+  color: #f59e0b;
+}
+
+.popup-plan-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.popup-plan-badge.free {
+  background: var(--popup-bg-subtle);
+  color: var(--popup-text-secondary);
+}
+
+.popup-plan-badge.premium {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.popup-membership-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: var(--popup-text-secondary);
+  font-size: 13px;
+}
+
+.popup-usage-stats {
+  margin-bottom: 16px;
+}
+
+.popup-usage-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--popup-text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.popup-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.popup-usage-item {
+  background: var(--popup-card-bg);
+  border: 1px solid var(--popup-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.popup-usage-full {
+  grid-column: 1 / -1;
+}
+
+.popup-usage-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--popup-text-muted);
+  margin-bottom: 4px;
+}
+
+.popup-usage-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--popup-text);
+  margin-bottom: 8px;
+}
+
+.popup-usage-current {
+  color: var(--popup-primary);
+}
+
+.popup-usage-separator {
+  color: var(--popup-text-muted);
+  margin: 0 2px;
+}
+
+.popup-usage-limit {
+  color: var(--popup-text-secondary);
+}
+
+.popup-usage-bar {
+  height: 4px;
+  background: var(--popup-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.popup-usage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--popup-primary) 0%, var(--popup-primary-hover) 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.popup-usage-bar-fill.warning {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.popup-upgrade-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.popup-upgrade-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+.popup-login-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.popup-login-prompt-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--popup-text-secondary);
+  font-size: 13px;
+}
+
+.popup-login-btn-small {
+  padding: 8px 16px;
+  background: var(--popup-primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.popup-login-btn-small:hover {
+  background: var(--popup-primary-hover);
+  transform: translateY(-1px);
+}
 </style>

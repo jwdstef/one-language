@@ -1,12 +1,13 @@
 /**
  * Vocabulary Lists Routes
  * API endpoints for managing custom vocabulary lists
- * Requirements: 9.4
+ * Requirements: 9.4, 10.3
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as listService from '../services/list.service.js';
+import * as subscriptionService from '../services/subscription.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { AppError, authenticate } from '../middleware/index.js';
 
@@ -14,6 +15,36 @@ const router = Router();
 
 // All list routes require authentication
 router.use(authenticate);
+
+/**
+ * Middleware to check if user has access to vocabulary lists feature
+ * Requirements: 10.3 - Free users cannot access vocabulary lists
+ */
+async function checkVocabularyListsAccess(req: Request, _res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      throw new AppError('AUTH_REQUIRED', 'Authentication required', 401);
+    }
+
+    const features = await subscriptionService.getUserFeatures(req.user.userId);
+    
+    if (!features.vocabulary.lists) {
+      throw new AppError(
+        'FEATURE_NOT_AVAILABLE',
+        'Vocabulary lists feature requires premium subscription. Upgrade to access custom word lists.',
+        403,
+        { feature: 'vocabularyLists', upgradeRequired: true }
+      );
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Apply vocabulary lists access check to all routes
+router.use(checkVocabularyListsAccess);
 
 // Validation schemas
 const createListSchema = z.object({

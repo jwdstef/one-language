@@ -65,6 +65,31 @@
     "passwordChanged": "密码修改成功",
     "changePasswordFailed": "密码修改失败"
   },
+  "subscription": {
+    "memberStatus": "会员状态",
+    "currentPlan": "当前版本",
+    "free": "免费版",
+    "premium": "高级版",
+    "todayUsage": "今日使用",
+    "translationUsage": "翻译",
+    "reviewUsage": "复习",
+    "collectionUsage": "收藏",
+    "unlimited": "无限",
+    "paragraphs": "段",
+    "words": "词",
+    "times": "次",
+    "upgrade": "升级",
+    "upgradeToPremium": "升级到高级版",
+    "upgradeDesc": "解锁无限翻译、更多语言和高级功能",
+    "expiresAt": "到期时间",
+    "loginToView": "登录查看会员状态",
+    "loading": "加载中...",
+    "usageStats": "使用统计",
+    "dailyLimit": "每日限额",
+    "totalLimit": "总限额",
+    "remaining": "剩余",
+    "used": "已用"
+  },
   "errors": {
     "getExtensionVersion": "获取扩展版本失败",
     "apiTestFailed": "API测试失败",
@@ -93,7 +118,10 @@
     "selectLanguageFirst": "请先选择语言",
     "save": "设置已保存",
     "saveFailed": "保存失败",
-    "switchConfigFailed": "切换配置失败"
+    "switchConfigFailed": "切换配置失败",
+    "premiumFeature": "高级功能",
+    "premiumRequired": "需要高级订阅",
+    "floatingBallPremiumDesc": "悬浮球功能仅对高级用户开放，升级后即可使用"
   },
   "actions": {
     "translate": "翻译"
@@ -209,7 +237,15 @@
     "blacklistCount": "黑名单: {count}",
     "whitelistCount": "白名单: {count}",
     "confirmDeleteRule": "确定要删除这个规则吗？",
-    "confirmDeleteSelected": "确定要删除选中的 {count} 个规则吗？"
+    "confirmDeleteSelected": "确定要删除选中的 {count} 个规则吗？",
+    "rulesUsed": "已使用规则",
+    "unlimited": "无限制",
+    "ruleLimitReached": "规则数量已达上限",
+    "ruleLimitDesc": "免费用户最多可添加 {limit} 条网站规则。升级到高级版可获得无限规则。",
+    "whitelistPremiumOnly": "白名单是高级功能",
+    "whitelistPremiumDesc": "白名单功能仅对高级用户开放。升级以解锁此功能。",
+    "later": "稍后",
+    "upgradeToPremium": "升级到高级版"
   },
   "websiteRuleDialog": {
     "editTitle": "编辑网站规则",

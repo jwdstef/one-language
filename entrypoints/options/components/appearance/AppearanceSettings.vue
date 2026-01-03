@@ -12,10 +12,25 @@
             <p class="opt-card-subtitle">配置页面悬浮球的显示和行为</p>
           </div>
         </div>
+        <!-- Premium badge for floating ball -->
+        <div v-if="!canAccessFloatingBall" class="opt-premium-badge">
+          <Lock class="opt-premium-badge-icon" />
+          <span>{{ $t('settings.premiumFeature') }}</span>
+        </div>
       </div>
       <div class="opt-card-content">
+        <!-- Premium locked message -->
+        <div v-if="!canAccessFloatingBall" class="opt-premium-locked">
+          <div class="opt-premium-locked-icon">
+            <Lock class="w-5 h-5" />
+          </div>
+          <div class="opt-premium-locked-content">
+            <p class="opt-premium-locked-title">{{ $t('settings.premiumRequired') }}</p>
+            <p class="opt-premium-locked-desc">{{ $t('settings.floatingBallPremiumDesc') }}</p>
+          </div>
+        </div>
         <!-- 启用悬浮球 -->
-        <div class="opt-setting-row">
+        <div class="opt-setting-row" :class="{ 'opt-setting-row--disabled': !canAccessFloatingBall }">
           <div class="opt-setting-info">
             <div class="opt-setting-label-row">
               <Power class="opt-setting-icon opt-text-success" />
@@ -27,12 +42,13 @@
             id="floating-ball-enabled"
             :model-value="settings.floatingBall.enabled"
             @update:model-value="settings.floatingBall.enabled = $event"
+            :disabled="!canAccessFloatingBall"
           />
         </div>
 
         <!-- 悬浮球位置 -->
         <Transition name="slide-down">
-          <div v-if="settings.floatingBall.enabled" class="opt-setting-row opt-setting-row--vertical">
+          <div v-if="settings.floatingBall.enabled && canAccessFloatingBall" class="opt-setting-row opt-setting-row--vertical">
             <div class="opt-setting-info">
               <div class="opt-setting-label-row">
                 <Move class="opt-setting-icon" />
@@ -59,7 +75,7 @@
 
         <!-- 悬浮球透明度 -->
         <Transition name="slide-down">
-          <div v-if="settings.floatingBall.enabled" class="opt-setting-row opt-setting-row--vertical">
+          <div v-if="settings.floatingBall.enabled && canAccessFloatingBall" class="opt-setting-row opt-setting-row--vertical">
             <div class="opt-setting-info">
               <div class="opt-setting-label-row">
                 <Eye class="opt-setting-icon" />
@@ -86,7 +102,7 @@
 
         <!-- 预览提示 -->
         <Transition name="slide-down">
-          <div v-if="settings.floatingBall.enabled" class="opt-info-box">
+          <div v-if="settings.floatingBall.enabled && canAccessFloatingBall" class="opt-info-box">
             <div class="opt-info-box-icon">
               <Lightbulb class="w-5 h-5" />
             </div>
@@ -133,11 +149,15 @@
 
         <!-- 快捷键设置 -->
         <Transition name="slide-down">
-          <div v-if="settings.enablePronunciationTooltip" class="opt-setting-row">
+          <div v-if="settings.enablePronunciationTooltip" class="opt-setting-row" :class="{ 'opt-setting-row--disabled': !canAccessPronunciationHotkey }">
             <div class="opt-setting-info">
               <div class="opt-setting-label-row">
                 <Keyboard class="opt-setting-icon" />
                 <Label for="hotkey-enabled">{{ $t('appearanceSettings.pronunciationTooltip.hotkey') }}</Label>
+                <span v-if="!canAccessPronunciationHotkey" class="opt-premium-badge-inline">
+                  <Lock class="opt-premium-badge-icon" />
+                  {{ $t('settings.premiumFeature') }}
+                </span>
               </div>
               <p class="opt-setting-desc">{{ $t('appearanceSettings.pronunciationTooltip.hotkeyDescription') }}</p>
             </div>
@@ -145,6 +165,7 @@
               id="hotkey-enabled"
               :model-value="settings.pronunciationHotkey.enabled"
               @update:model-value="settings.pronunciationHotkey.enabled = $event"
+              :disabled="!canAccessPronunciationHotkey"
             />
           </div>
         </Transition>
@@ -199,6 +220,7 @@ import { useI18n } from 'vue-i18n';
 import { StorageService } from '@/src/modules/core/storage';
 import { UserSettings } from '@/src/modules/shared/types/storage';
 import { DEFAULT_SETTINGS, DEFAULT_FLOATING_BALL_CONFIG, DEFAULT_PRONUNCIATION_HOTKEY } from '@/src/modules/shared/constants/defaults';
+import { featureGateService } from '@/src/modules/subscription/FeatureGateService';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -215,6 +237,7 @@ import {
   BookOpen,
   Sparkles,
   Star,
+  Lock,
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -225,6 +248,8 @@ const settings = ref<UserSettings>({
   pronunciationHotkey: { ...DEFAULT_PRONUNCIATION_HOTKEY },
 });
 const storageService = StorageService.getInstance();
+const canAccessFloatingBall = ref(true);
+const canAccessPronunciationHotkey = ref(true);
 
 const emit = defineEmits<{
   saveMessage: [message: string];
@@ -240,6 +265,22 @@ onMounted(async () => {
     loadedSettings.pronunciationHotkey = { ...DEFAULT_PRONUNCIATION_HOTKEY };
   }
   settings.value = loadedSettings;
+  
+  // Check feature access for floating ball
+  try {
+    canAccessFloatingBall.value = await featureGateService.canAccess('floatingBall');
+  } catch (error) {
+    console.warn('[AppearanceSettings] Failed to check floating ball access:', error);
+    canAccessFloatingBall.value = true; // Default to allowing if check fails
+  }
+  
+  // Check feature access for pronunciation hotkey
+  try {
+    canAccessPronunciationHotkey.value = await featureGateService.canAccess('pronunciationHotkey');
+  } catch (error) {
+    console.warn('[AppearanceSettings] Failed to check pronunciation hotkey access:', error);
+    canAccessPronunciationHotkey.value = true; // Default to allowing if check fails
+  }
 });
 
 watch(
@@ -607,5 +648,112 @@ watch(
     align-items: stretch;
     gap: 12px;
   }
+}
+
+/* Premium Badge */
+.opt-premium-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #fcd34d;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+:global(.dark) .opt-premium-badge {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+.opt-premium-badge-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Premium Locked Message */
+.opt-premium-locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  background: linear-gradient(145deg, #fef3c7 0%, rgba(254,243,199,0.5) 100%);
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+:global(.dark) .opt-premium-locked {
+  background: linear-gradient(145deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border-color: rgba(251, 191, 36, 0.2);
+}
+
+.opt-premium-locked-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.opt-premium-locked-content {
+  flex: 1;
+}
+
+.opt-premium-locked-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 4px 0;
+}
+
+:global(.dark) .opt-premium-locked-title {
+  color: #fbbf24;
+}
+
+.opt-premium-locked-desc {
+  font-size: 13px;
+  color: #b45309;
+  line-height: 1.5;
+  margin: 0;
+}
+
+:global(.dark) .opt-premium-locked-desc {
+  color: #fcd34d;
+}
+
+/* Disabled Setting Row */
+.opt-setting-row--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Inline Premium Badge */
+.opt-premium-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  margin-left: 8px;
+}
+
+:global(.dark) .opt-premium-badge-inline {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
 }
 </style>

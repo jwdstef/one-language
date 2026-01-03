@@ -9,6 +9,7 @@ import { BASE_STYLES } from './core/base';
 import { TRANSLATION_STYLES } from './themes/translation';
 import { PRONUNCIATION_STYLES } from './components/pronunciation';
 import { TOOLTIP_STYLES } from './components/tooltip';
+import { UPGRADE_PROMPT_STYLES } from './components/upgradePrompt';
 import { WORD_POPUP_STYLES } from '../wordPopup/WordPopupTemplate';
 
 // 导出样式常量
@@ -18,6 +19,7 @@ export {
   TRANSLATION_STYLES,
   PRONUNCIATION_STYLES,
   TOOLTIP_STYLES,
+  UPGRADE_PROMPT_STYLES,
   WORD_POPUP_STYLES,
 };
 
@@ -31,5 +33,6 @@ ${BASE_STYLES}
 ${TRANSLATION_STYLES}
 ${PRONUNCIATION_STYLES}
 ${TOOLTIP_STYLES}
+${UPGRADE_PROMPT_STYLES}
 ${WORD_POPUP_STYLES}
 `;

@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { vocabularyService, exportService } from '../services/index.js';
+import { vocabularyService, exportService, usageService, subscriptionService } from '../services/index.js';
 import { sendSuccess, sendPaginated } from '../utils/response.js';
 import { AppError, authenticate } from '../middleware/index.js';
 
@@ -115,6 +115,22 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       );
     }
 
+    // Check collection limit before adding word (Requirements: 4.1, 4.2)
+    const usageLimit = await usageService.checkLimit(req.user.userId, 'collection');
+    if (!usageLimit.allowed) {
+      throw new AppError(
+        'USAGE_LIMIT_EXCEEDED',
+        `Vocabulary collection limit reached. You have ${usageLimit.current}/${usageLimit.limit} words. Upgrade to premium for unlimited collections.`,
+        403,
+        {
+          type: 'collection',
+          current: usageLimit.current,
+          limit: usageLimit.limit,
+          remaining: usageLimit.remaining,
+        }
+      );
+    }
+
     console.log('[Vocabulary] Validation passed, adding word...');
     const word = await vocabularyService.addWord(req.user.userId, validation.data);
     console.log('[Vocabulary] Word added successfully:', word.id);
@@ -158,6 +174,17 @@ router.put('/:id/tags', async (req: Request, res: Response, next: NextFunction) 
   try {
     if (!req.user) {
       throw new AppError('AUTH_REQUIRED', 'Authentication required', 401);
+    }
+
+    // Check if user has access to advanced tags feature (Requirements: 10.3)
+    const features = await subscriptionService.getUserFeatures(req.user.userId);
+    if (!features.vocabulary.tags) {
+      throw new AppError(
+        'FEATURE_NOT_AVAILABLE',
+        'Advanced tags feature requires premium subscription. Upgrade to organize your vocabulary with custom tags.',
+        403,
+        { feature: 'tags', upgradeRequired: true }
+      );
     }
 
     const validation = updateTagsSchema.safeParse(req.body);

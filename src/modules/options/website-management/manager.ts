@@ -1,5 +1,6 @@
 import glob from './glob';
-import { WebsiteRule, WebsiteManagementSettings, WebsiteStatus } from './types';
+import { WebsiteRule, WebsiteManagementSettings, WebsiteStatus, RuleLimitCheckResult } from './types';
+import { featureGateService } from '@/src/modules/subscription/FeatureGateService';
 
 // 用于向后兼容的旧黑名单设置接口
 interface BlacklistSettings {
@@ -93,6 +94,46 @@ export class WebsiteManager {
     this.clearCache();
     const settings = await this.getSettings();
     return settings.rules.filter((rule) => rule.type === type);
+  }
+
+  /**
+   * 检查是否可以添加规则（基于订阅限制）
+   * Requirements: 9.1, 9.2, 9.3
+   */
+  async checkCanAddRule(): Promise<RuleLimitCheckResult> {
+    const settings = await this.getSettings();
+    const currentCount = settings.rules.length;
+    const maxLimit = await featureGateService.getMaxWebsiteRulesLimit();
+    
+    // 0 means unlimited
+    if (maxLimit === 0) {
+      return {
+        allowed: true,
+        current: currentCount,
+        limit: 0,
+        remaining: -1, // -1 indicates unlimited
+        isPremium: true,
+      };
+    }
+    
+    const remaining = maxLimit - currentCount;
+    const allowed = remaining > 0;
+    
+    return {
+      allowed,
+      current: currentCount,
+      limit: maxLimit,
+      remaining: Math.max(0, remaining),
+      isPremium: false,
+    };
+  }
+
+  /**
+   * 检查白名单功能是否可用
+   * Requirements: 9.4
+   */
+  async canUseWhitelist(): Promise<boolean> {
+    return featureGateService.canAccess('whitelist');
   }
 
   /**

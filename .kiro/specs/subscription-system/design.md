@@ -402,7 +402,7 @@ const FREE_PLAN_FEATURES: PlanFeatures = {
     whitelist: false,
   },
   features: {
-    floatingBall: false,
+    floatingBall: true,
     hotkeys: false,
     contextMenu: false,
     multiApi: false,

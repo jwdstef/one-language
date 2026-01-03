@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { api } from '@/services/api';
+import { useAuthStore } from './auth';
 import type { FavoriteWord } from '@/types';
 
 // Extended type for admin vocabulary with user info
@@ -36,6 +37,13 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
     totalPages: 0,
   });
 
+  // Helper to get the correct API path based on user role
+  function getApiPath(path: string): string {
+    const authStore = useAuthStore();
+    const isAdmin = authStore.user?.role === 'admin';
+    return isAdmin ? `/admin${path}` : path;
+  }
+
   async function fetchWords(params?: {
     page?: number;
     pageSize?: number;
@@ -47,9 +55,10 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
     error.value = null;
 
     try {
-      // Use admin API to get all users' vocabulary
+      // Use admin API for admins, regular API for normal users
+      const apiPath = getApiPath('/vocabulary');
       const response = await api.get<PaginatedApiResponse<AdminFavoriteWord>>(
-        '/admin/vocabulary',
+        apiPath,
         { params }
       );
       words.value = response.data.data;
@@ -76,7 +85,8 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
     error.value = null;
 
     try {
-      const response = await api.get<{ success: boolean; data: AdminFavoriteWord }>(`/admin/vocabulary/${id}`);
+      const apiPath = getApiPath(`/vocabulary/${id}`);
+      const response = await api.get<{ success: boolean; data: AdminFavoriteWord }>(apiPath);
       currentWord.value = response.data.data;
       return response.data.data;
     } catch (err) {
@@ -90,7 +100,8 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
 
   async function deleteWord(id: string) {
     try {
-      await api.delete(`/admin/vocabulary/${id}`);
+      const apiPath = getApiPath(`/vocabulary/${id}`);
+      await api.delete(apiPath);
       words.value = words.value.filter((w) => w.id !== id);
       pagination.value.total -= 1;
       updateAvailableTags();
@@ -104,7 +115,8 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
 
   async function updateTags(id: string, tags: string[]) {
     try {
-      await api.put(`/admin/vocabulary/${id}/tags`, { tags });
+      const apiPath = getApiPath(`/vocabulary/${id}/tags`);
+      await api.put(apiPath, { tags });
       const word = words.value.find((w) => w.id === id);
       if (word) {
         word.tags = tags;
@@ -124,8 +136,9 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
   async function fetchAllTags() {
     try {
       // Fetch all words to get all tags (without pagination limit)
+      const apiPath = getApiPath('/vocabulary');
       const response = await api.get<PaginatedApiResponse<AdminFavoriteWord>>(
-        '/admin/vocabulary',
+        apiPath,
         { params: { pageSize: 1000 } }
       );
       const allWords = response.data.data || [];

@@ -18,6 +18,7 @@ import { IContentManager, ServiceContainer } from './types';
 import { LazyLoadingService } from './services/LazyLoadingService';
 import { ContentSegment } from '../processing/ProcessingStateManager';
 import { languageService } from '../core/translation/LanguageService';
+import { upgradePromptService, upgradePromptUI } from '../subscription';
 
 /**
  * 翻译显示状态管理器
@@ -393,6 +394,18 @@ export class ContentManager implements IContentManager {
     const paragraphTranslationService =
       ParagraphTranslationService.getInstance(lazyLoadingService);
 
+    // 设置翻译限制回调，显示升级提示 (Requirements: 3.5)
+    paragraphTranslationService.setOnLimitReachedCallback((limitResult) => {
+      console.log('[ContentManager] Translation limit reached, showing upgrade prompt');
+      // 初始化升级提示UI
+      upgradePromptUI.initialize();
+      // 显示升级提示
+      upgradePromptService.showPrompt('translation_limit', {
+        current: limitResult.current,
+        limit: limitResult.limit,
+      });
+    });
+
     const floatingBallManager = new FloatingBallManager(
       this.settings.floatingBall,
     );
@@ -470,6 +483,21 @@ export class ContentManager implements IContentManager {
   private async initializeFloatingBall(): Promise<void> {
     if (!this.services?.floatingBallManager || !this.translationStateManager)
       return;
+
+    // Check if user has access to floating ball feature
+    try {
+      const { featureGateService } = await import('../subscription/FeatureGateService');
+      const canAccessFloatingBall = await featureGateService.canAccess('floatingBall');
+      
+      if (!canAccessFloatingBall) {
+        console.log('[ContentManager] 悬浮球功能需要高级版订阅，跳过初始化');
+        return;
+      }
+    } catch (error) {
+      // If feature gate check fails (e.g., not logged in), allow floating ball
+      // This maintains backward compatibility for users not using the subscription system
+      console.log('[ContentManager] 无法检查悬浮球权限，默认允许:', error);
+    }
 
     await this.services.floatingBallManager.init(async () => {
       // 悬浮球点击状态切换回调

@@ -7,6 +7,8 @@ import reviewRoutes from './review.js';
 import listsRoutes from './lists.js';
 import achievementsRoutes from './achievements.js';
 import goalsRoutes from './goals.js';
+import subscriptionRoutes from './subscription.js';
+import usageRoutes from './usage.js';
 
 const router = Router();
 
@@ -18,5 +20,7 @@ router.use('/review', reviewRoutes);
 router.use('/lists', listsRoutes);
 router.use('/achievements', achievementsRoutes);
 router.use('/goals', goalsRoutes);
+router.use('/subscription', subscriptionRoutes);
+router.use('/usage', usageRoutes);
 
 export default router;

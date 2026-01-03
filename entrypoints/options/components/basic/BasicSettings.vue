@@ -208,27 +208,35 @@
             <div class="opt-setting-label-row">
               <Palette class="opt-setting-icon" />
               <Label for="translation-style">{{ $t('basicSettings.translationStyle') }}</Label>
+              <span v-if="!isPremiumUser" class="opt-setting-limit-badge">
+                {{ allowedStyles.length }} 种可用
+              </span>
             </div>
-            <p class="opt-setting-desc">选择翻译文本的显示样式</p>
+            <p class="opt-setting-desc">
+              选择翻译文本的显示样式
+              <span v-if="!isPremiumUser" class="opt-premium-hint">
+                （升级高级版解锁全部样式）
+              </span>
+            </p>
           </div>
           <div class="opt-style-selector">
             <Select
               :model-value="settings.translationStyle"
-              @update:model-value="settings.translationStyle = $event as TranslationStyle"
+              @update:model-value="handleStyleChange($event as TranslationStyle)"
             >
               <SelectTrigger class="opt-style-trigger">
                 <SelectValue :placeholder="$t('basicSettings.selectStyle')" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="default">{{ $t('basicSettings.styles.default') }}</SelectItem>
-                <SelectItem value="subtle">{{ $t('basicSettings.styles.subtle') }}</SelectItem>
-                <SelectItem value="bold">{{ $t('basicSettings.styles.bold') }}</SelectItem>
-                <SelectItem value="italic">{{ $t('basicSettings.styles.italic') }}</SelectItem>
-                <SelectItem value="underlined">{{ $t('basicSettings.styles.underlined') }}</SelectItem>
-                <SelectItem value="highlighted">{{ $t('basicSettings.styles.highlighted') }}</SelectItem>
-                <SelectItem value="dotted">{{ $t('basicSettings.styles.dotted') }}</SelectItem>
-                <SelectItem value="learning">{{ $t('basicSettings.styles.learning') }}</SelectItem>
-                <SelectItem value="custom">{{ $t('basicSettings.styles.custom') }}</SelectItem>
+                <SelectItem 
+                  v-for="style in styleOptionsWithLock" 
+                  :key="style.value" 
+                  :value="style.value"
+                  :disabled="style.isLocked"
+                  :class="{ 'opt-locked-option': style.isLocked }"
+                >
+                  {{ style.label }}{{ style.isLocked ? ' 🔒' : '' }}
+                </SelectItem>
               </SelectContent>
             </Select>
             <!-- 自定义CSS编辑框 -->
@@ -339,21 +347,35 @@
             <div class="opt-setting-label-row">
               <GraduationCap class="opt-setting-icon" />
               <Label for="user-level">{{ $t('basicSettings.userLevel') }}</Label>
+              <span v-if="!isPremiumUser" class="opt-setting-limit-badge">
+                {{ allowedLevels.length }} 级可用
+              </span>
             </div>
-            <p class="opt-setting-desc">根据您的语言水平智能选择翻译词汇</p>
+            <p class="opt-setting-desc">
+              根据您的语言水平智能选择翻译词汇
+              <span v-if="!isPremiumUser" class="opt-premium-hint">
+                （升级高级版解锁全部等级）
+              </span>
+            </p>
           </div>
           <div class="opt-setting-control" style="min-width: 180px;">
             <Select
               id="user-level"
               :model-value="settings.userLevel"
-              @update:model-value="settings.userLevel = $event as number"
+              @update:model-value="handleLevelChange($event as number)"
             >
               <SelectTrigger>
                 <SelectValue :placeholder="$t('basicSettings.selectUserLevel')" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="option in userLevelOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
+                <SelectItem 
+                  v-for="option in userLevelOptionsWithLock" 
+                  :key="option.value" 
+                  :value="option.value"
+                  :disabled="option.isLocked"
+                  :class="{ 'opt-locked-option': option.isLocked }"
+                >
+                  {{ option.label }}{{ option.isLocked ? ' 🔒' : '' }}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -367,21 +389,29 @@
               <Percent class="opt-setting-icon" />
               <Label for="replacement-rate">{{ $t('basicSettings.replacementRate') }}</Label>
               <span class="opt-setting-value">{{ Math.round(settings.replacementRate * 100) }}%</span>
+              <span v-if="!isPremiumUser" class="opt-setting-limit-badge">
+                最高 {{ Math.round(maxRatioLimit * 100) }}%
+              </span>
             </div>
-            <p class="opt-setting-desc">控制页面中被翻译词汇的比例</p>
+            <p class="opt-setting-desc">
+              控制页面中被翻译词汇的比例
+              <span v-if="!isPremiumUser" class="opt-premium-hint">
+                （升级高级版可解锁100%）
+              </span>
+            </p>
           </div>
           <div class="opt-slider-wrapper">
             <span class="opt-slider-label">1%</span>
             <Slider
               id="replacement-rate"
               :model-value="[settings.replacementRate]"
-              @update:model-value="settings.replacementRate = ($event || [0])[0]"
+              @update:model-value="handleRatioChange($event)"
               :min="0.01"
-              :max="1"
+              :max="maxRatioLimit"
               :step="0.01"
               class="opt-slider"
             />
-            <span class="opt-slider-label">100%</span>
+            <span class="opt-slider-label">{{ Math.round(maxRatioLimit * 100) }}%</span>
           </div>
         </div>
       </div>
@@ -470,6 +500,7 @@ import { useI18n } from 'vue-i18n';
 import { StorageService } from '@/src/modules/core/storage';
 import { StyleManager } from '@/src/modules/styles';
 import { LanguageService } from '@/src/modules/core/translation/LanguageService';
+import { featureGateService } from '@/src/modules/subscription';
 import { SUPPORTED_LOCALES, LOCALE_NAMES, setLocale } from '@/src/i18n';
 import {
   UserSettings,
@@ -528,6 +559,12 @@ const currentLocale = ref(locale.value);
 const supportedLocales = SUPPORTED_LOCALES;
 const storageService = StorageService.getInstance();
 
+// Subscription-based limits (Requirements: 5.1, 5.2, 8.1, 8.2, 1.4.2)
+const maxRatioLimit = ref(1); // Default to 100%, will be updated from subscription
+const isPremiumUser = ref(false);
+const allowedStyles = ref<string[]>([]); // Allowed styles based on subscription
+const allowedLevels = ref<string[]>([]); // Allowed levels based on subscription
+
 const getLocaleName = (locale: string) => {
   return LOCALE_NAMES[locale] || locale;
 };
@@ -569,11 +606,100 @@ const userLevelOptions = computed(() => [
   { value: 6, label: t('languageLevel.c2') },
 ]);
 
+// All available styles with their labels
+const allStyleOptions = computed(() => [
+  { value: 'default', label: t('basicSettings.styles.default') },
+  { value: 'subtle', label: t('basicSettings.styles.subtle') },
+  { value: 'bold', label: t('basicSettings.styles.bold') },
+  { value: 'italic', label: t('basicSettings.styles.italic') },
+  { value: 'underlined', label: t('basicSettings.styles.underlined') },
+  { value: 'highlighted', label: t('basicSettings.styles.highlighted') },
+  { value: 'dotted', label: t('basicSettings.styles.dotted') },
+  { value: 'learning', label: t('basicSettings.styles.learning') },
+  { value: 'custom', label: t('basicSettings.styles.custom') },
+]);
+
+// Style options with lock status based on subscription (Requirements: 8.1, 8.2)
+const styleOptionsWithLock = computed(() => {
+  if (allowedStyles.value.length === 0) {
+    // If no subscription info, show all styles unlocked
+    return allStyleOptions.value.map(opt => ({ ...opt, isLocked: false }));
+  }
+  const allowedSet = new Set(allowedStyles.value);
+  return allStyleOptions.value.map(opt => ({
+    ...opt,
+    isLocked: !allowedSet.has(opt.value),
+  }));
+});
+
+// User level options with lock status based on subscription (Requirements: 1.4.2)
+const userLevelOptionsWithLock = computed(() => {
+  const allLevels = [
+    { value: 1, label: t('languageLevel.a1'), code: 'a1' },
+    { value: 2, label: t('languageLevel.a2'), code: 'a2' },
+    { value: 3, label: t('languageLevel.b1'), code: 'b1' },
+    { value: 4, label: t('languageLevel.b2'), code: 'b2' },
+    { value: 5, label: t('languageLevel.c1'), code: 'c1' },
+    { value: 6, label: t('languageLevel.c2'), code: 'c2' },
+  ];
+  
+  if (allowedLevels.value.length === 0) {
+    // If no subscription info, show all levels unlocked
+    return allLevels.map(opt => ({ ...opt, isLocked: false }));
+  }
+  const allowedSet = new Set(allowedLevels.value);
+  return allLevels.map(opt => ({
+    ...opt,
+    isLocked: !allowedSet.has(opt.code),
+  }));
+});
+
 onMounted(async () => {
   settings.value = await storageService.getUserSettings();
   styleManager.setTranslationStyle(settings.value.translationStyle);
   if (settings.value.translationStyle === TranslationStyle.CUSTOM) {
     styleManager.setCustomCSS(settings.value.customTranslationCSS);
+  }
+  
+  // Load subscription-based limits (Requirements: 5.1, 5.2, 8.1, 8.2, 1.4.2)
+  try {
+    const maxRatio = await featureGateService.getMaxRatio();
+    maxRatioLimit.value = maxRatio / 100; // Convert from percentage to decimal
+    isPremiumUser.value = await featureGateService.isPremium();
+    
+    // Load allowed styles (Requirements: 8.1, 8.2)
+    const styles = await featureGateService.getAvailableOptions('style');
+    allowedStyles.value = styles;
+    
+    // Load allowed levels (Requirements: 1.4.2)
+    const levels = await featureGateService.getAvailableOptions('level');
+    allowedLevels.value = levels;
+    
+    // Clamp current setting to max allowed
+    if (settings.value.replacementRate > maxRatioLimit.value) {
+      settings.value.replacementRate = maxRatioLimit.value;
+    }
+    
+    // Reset style if current style is not allowed
+    if (allowedStyles.value.length > 0 && !allowedStyles.value.includes(settings.value.translationStyle)) {
+      settings.value.translationStyle = allowedStyles.value[0] as TranslationStyle || TranslationStyle.DEFAULT;
+    }
+    
+    // Reset level if current level is not allowed
+    const levelCodeMap: Record<number, string> = { 1: 'a1', 2: 'a2', 3: 'b1', 4: 'b2', 5: 'c1', 6: 'c2' };
+    const currentLevelCode = levelCodeMap[settings.value.userLevel];
+    if (allowedLevels.value.length > 0 && currentLevelCode && !allowedLevels.value.includes(currentLevelCode)) {
+      // Find the first allowed level
+      const levelValueMap: Record<string, number> = { 'a1': 1, 'a2': 2, 'b1': 3, 'b2': 4, 'c1': 5, 'c2': 6 };
+      settings.value.userLevel = levelValueMap[allowedLevels.value[0]] || 1;
+    }
+  } catch (error) {
+    console.warn('[BasicSettings] Failed to load subscription limits:', error);
+    // Default to free tier limits
+    maxRatioLimit.value = 0.3;
+    isPremiumUser.value = false;
+    allowedStyles.value = ['default', 'subtle', 'bold'];
+    allowedLevels.value = ['a1', 'b1', 'b2'];
   }
 });
 
@@ -591,6 +717,45 @@ const currentStyleClass = computed(() => {
   }
   return styleManager.getCurrentStyleClass();
 });
+
+/**
+ * Handle ratio change with subscription limit enforcement
+ * Requirements: 5.1, 5.2
+ */
+const handleRatioChange = (value: number[] | undefined) => {
+  const newValue = (value || [0])[0];
+  // Clamp to max allowed ratio
+  settings.value.replacementRate = Math.min(newValue, maxRatioLimit.value);
+};
+
+/**
+ * Handle style change with subscription limit enforcement
+ * Requirements: 8.1, 8.2
+ */
+const handleStyleChange = (newStyle: TranslationStyle) => {
+  // Check if the selected style is allowed
+  if (allowedStyles.value.length > 0 && !allowedStyles.value.includes(newStyle)) {
+    // Style is locked, don't change
+    return;
+  }
+  settings.value.translationStyle = newStyle;
+};
+
+/**
+ * Handle user level change with subscription limit enforcement
+ * Requirements: 1.4.2
+ */
+const handleLevelChange = (newLevel: number) => {
+  const levelCodeMap: Record<number, string> = { 1: 'a1', 2: 'a2', 3: 'b1', 4: 'b2', 5: 'c1', 6: 'c2' };
+  const levelCode = levelCodeMap[newLevel];
+  
+  // Check if the selected level is allowed
+  if (allowedLevels.value.length > 0 && levelCode && !allowedLevels.value.includes(levelCode)) {
+    // Level is locked, don't change
+    return;
+  }
+  settings.value.userLevel = newLevel;
+};
 
 watch(
   settings,
@@ -1046,6 +1211,37 @@ watch(
 
 .opt-text-success {
   color: #10b981 !important;
+}
+
+/* Subscription Limit Styles (Requirements: 5.1, 5.2) */
+.opt-setting-limit-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+.opt-premium-hint {
+  color: #f59e0b;
+  font-size: 12px;
+}
+
+.opt-locked-option {
+  opacity: 0.5;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.opt-locked-option::after {
+  content: '🔒';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
 }
 
 /* Responsive */

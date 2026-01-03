@@ -53,16 +53,17 @@ export class TooltipRenderer {
    * 为单词生成包含音标和翻译的悬浮框，为短语生成可交互的单词列表。
    *
    * @param elementData - 元素数据对象，包含单词/短语和相关音标信息
+   * @param canUseAiDefinition - 是否有权限使用 AI 词义解释（高级功能）
    * @returns HTML字符串，包含完整的悬浮框结构
    */
-  createMainTooltipHTML(elementData: PronunciationElementData): string {
+  createMainTooltipHTML(elementData: PronunciationElementData, canUseAiDefinition: boolean = true): string {
     const words = DOMUtils.extractWords(elementData.word);
     const isPhrase = words.length > 1;
 
     if (isPhrase) {
       return this.createPhraseTooltipHTML(elementData);
     } else {
-      return this.createWordTooltipHTML(elementData);
+      return this.createWordTooltipHTML(elementData, canUseAiDefinition);
     }
   }
 
@@ -110,8 +111,10 @@ export class TooltipRenderer {
   /**
    * 创建单词悬浮框HTML
    * @param elementData 元素数据
+   * @param canUseAiDefinition 是否有权限使用 AI 词义解释（高级功能）
+   * Requirements: 10.1
    */
-  private createWordTooltipHTML(elementData: PronunciationElementData): string {
+  private createWordTooltipHTML(elementData: PronunciationElementData, canUseAiDefinition: boolean = true): string {
     const phonetic = elementData.phonetic;
     const phoneticText = phonetic?.phonetics[0]?.text || '';
     const aiTranslation = phonetic?.aiTranslation;
@@ -137,6 +140,20 @@ export class TooltipRenderer {
       );
     }
 
+    // AI 词义显示逻辑：仅高级用户可见
+    // Requirements: 10.1
+    let meaningSection = '';
+    if (canUseAiDefinition) {
+      meaningSection = `
+            <div class="wxt-meaning-container">
+              ${
+                aiTranslation
+                  ? `<div class="wxt-meaning-text">${aiTranslation.explain}</div>`
+                  : `<div class="wxt-meaning-loading">获取词义中...</div>`
+              }
+            </div>`;
+    }
+
     return `
       <div class="wxt-tooltip-card">
         <div class="wxt-tooltip-header">
@@ -144,13 +161,7 @@ export class TooltipRenderer {
             <div class="wxt-word-main">${elementData.word}</div>
             ${originalTextDisplay}
             ${phoneticDisplay}
-            <div class="wxt-meaning-container">
-              ${
-                aiTranslation
-                  ? `<div class="wxt-meaning-text">${aiTranslation.explain}</div>`
-                  : `<div class="wxt-meaning-loading">获取词义中...</div>`
-              }
-            </div>
+            ${meaningSection}
           </div>
           ${
             this.uiConfig.showPlayButton

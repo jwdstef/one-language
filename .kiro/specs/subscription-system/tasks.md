@@ -6,24 +6,24 @@
 
 ## Tasks
 
-- [ ] 1. 数据库模型和迁移
-  - [ ] 1.1 更新 Prisma Schema 添加订阅相关表
+- [x] 1. 数据库模型和迁移
+  - [x] 1.1 更新 Prisma Schema 添加订阅相关表
     - 添加 SubscriptionPlan 模型
     - 添加 Subscription 模型
     - 添加 UsageRecord 模型
     - 更新 User 模型添加 subscriptions 关系
     - _Requirements: 1.1, 1.3, 2.1_
-  - [ ] 1.2 创建数据库迁移并执行
+  - [x] 1.2 创建数据库迁移并执行
     - 运行 prisma migrate dev
     - 验证表结构创建成功
     - _Requirements: 1.1_
-  - [ ] 1.3 创建种子数据脚本
+  - [x] 1.3 创建种子数据脚本
     - 创建免费版计划配置
     - 创建高级版计划配置
     - _Requirements: 1.1_
 
-- [ ] 2. 后端订阅服务
-  - [ ] 2.1 创建 PlanService
+- [x] 2. 后端订阅服务
+  - [x] 2.1 创建 PlanService
     - 实现 getAllPlans 方法
     - 实现 getPlanById 方法
     - 实现 getPlanByName 方法
@@ -33,7 +33,7 @@
     - 测试计划查询功能
     - 测试功能配置解析
     - _Requirements: 1.1_
-  - [ ] 2.3 创建 SubscriptionService
+  - [x] 2.3 创建 SubscriptionService
     - 实现 getUserSubscription 方法
     - 实现 createSubscription 方法
     - 实现 cancelSubscription 方法
@@ -53,8 +53,8 @@
     - **Property 9: Subscription Expiration Downgrade**
     - **Validates: Requirements 2.2**
 
-- [ ] 3. 后端使用量服务
-  - [ ] 3.1 创建 UsageService
+- [x] 3. 后端使用量服务
+  - [x] 3.1 创建 UsageService
     - 实现 recordUsage 方法
     - 实现 getTodayUsage 方法
     - 实现 getTotalUsage 方法
@@ -73,17 +73,17 @@
     - **Property 5: Daily Usage Reset**
     - **Validates: Requirements 3.3, 6.4**
 
-- [ ] 4. 后端 API 路由
-  - [ ] 4.1 创建订阅状态 API 路由
+- [x] 4. 后端 API 路由
+  - [x] 4.1 创建订阅状态 API 路由
     - GET /api/subscription/status - 获取当前订阅状态
     - GET /api/subscription/features - 获取可用功能
     - GET /api/subscription/usage - 获取使用量统计
     - _Requirements: 12.1, 12.2, 12.3_
-  - [ ] 4.2 创建使用量记录 API 路由
+  - [x] 4.2 创建使用量记录 API 路由
     - POST /api/usage/record - 记录使用量
     - GET /api/usage/check/:type - 检查使用量限制
     - _Requirements: 3.1, 4.1, 6.1_
-  - [ ] 4.3 添加订阅状态缓存
+  - [x] 4.3 添加订阅状态缓存
     - 实现 Redis 或内存缓存
     - 订阅变更时失效缓存
     - _Requirements: 12.4, 12.5_
@@ -95,20 +95,20 @@
     - **Property 11: Subscription Status Round-Trip**
     - **Validates: Requirements 12.1, 12.2**
 
-- [ ] 5. Checkpoint - 后端服务验证
+- [x] 5. Checkpoint - 后端服务验证
   - 确保所有后端测试通过
   - 验证 API 端点正常工作
   - 如有问题请询问用户
 
-- [ ] 6. 前端订阅服务
-  - [ ] 6.1 创建 SubscriptionService (Frontend)
+- [x] 6. 前端订阅服务
+  - [x] 6.1 创建 SubscriptionService (Frontend)
     - 实现 getSubscriptionStatus 方法（带缓存）
     - 实现 refreshSubscriptionStatus 方法
     - 实现 isPremium 方法
     - 实现 getFeatures 方法
     - 实现 getUsage 方法
     - _Requirements: 2.3, 12.1_
-  - [ ] 6.2 创建订阅状态类型定义
+  - [x] 6.2 创建订阅状态类型定义
     - 定义 SubscriptionStatus 接口
     - 定义 PlanFeatures 接口
     - 定义 UsageStatus 接口
@@ -118,8 +118,8 @@
     - 测试功能检查
     - _Requirements: 2.3_
 
-- [ ] 7. 前端功能门控服务
-  - [ ] 7.1 创建 FeatureGateService
+- [x] 7. 前端功能门控服务
+  - [x] 7.1 创建 FeatureGateService
     - 实现 canAccess 方法
     - 实现 canUse 方法
     - 实现 getAvailableOptions 方法
@@ -146,140 +146,140 @@
     - **Property 8: Premium Feature Gating**
     - **Validates: Requirements 10.1-10.7**
 
-- [ ] 8. Checkpoint - 前端服务验证
+- [x] 8. Checkpoint - 前端服务验证
   - 确保所有前端测试通过
   - 验证服务正常工作
   - 如有问题请询问用户
 
-- [ ] 9. 功能门控集成 - 翻译模块
-  - [ ] 9.1 集成翻译段落限制
+- [x] 9. 功能门控集成 - 翻译模块
+  - [x] 9.1 集成翻译段落限制
     - 在翻译前检查每日限制
     - 翻译完成后记录使用量
     - 达到限制时阻止翻译
     - _Requirements: 3.1, 3.2, 3.4_
-  - [ ] 9.2 集成翻译比例限制
+  - [x] 9.2 集成翻译比例限制
     - 在设置页面限制滑块范围
     - 免费用户最大30%
     - _Requirements: 5.1, 5.2_
-  - [ ] 9.3 集成语言选择限制
+  - [x] 9.3 集成语言选择限制
     - 过滤可选语言列表
     - 锁定高级语言选项
     - _Requirements: 7.1, 7.2_
-  - [ ] 9.4 集成翻译样式限制
+  - [x] 9.4 集成翻译样式限制
     - 过滤可选样式列表
     - 锁定高级样式选项
     - _Requirements: 8.1, 8.2_
-  - [ ] 9.5 集成用户等级限制
+  - [x] 9.5 集成用户等级限制
     - 过滤可选等级列表
     - 锁定高级等级选项
     - _Requirements: 1.4.2_
 
-- [ ] 10. 功能门控集成 - 词汇模块
-  - [ ] 10.1 集成词汇收藏限制
+- [x] 10. 功能门控集成 - 词汇模块
+  - [x] 10.1 集成词汇收藏限制
     - 在收藏前检查总数限制
     - 收藏完成后更新计数
     - 达到限制时阻止收藏
     - _Requirements: 4.1, 4.2, 4.3_
-  - [ ] 10.2 集成词汇列表功能门控
+  - [x] 10.2 集成词汇列表功能门控
     - 免费用户隐藏词汇列表功能
     - _Requirements: 10.3_
-  - [ ] 10.3 集成高级标签功能门控
+  - [x] 10.3 集成高级标签功能门控
     - 免费用户限制标签功能
     - _Requirements: 10.3_
 
-- [ ] 11. 功能门控集成 - 复习模块
-  - [ ] 11.1 集成每日复习限制
+- [x] 11. 功能门控集成 - 复习模块
+  - [x] 11.1 集成每日复习限制
     - 在复习前检查每日限制
     - 复习完成后记录使用量
     - 达到限制时阻止复习
     - _Requirements: 6.1, 6.2, 6.3_
-  - [ ] 11.2 集成智能复习推荐门控
+  - [x] 11.2 集成智能复习推荐门控
     - 免费用户使用基础复习
     - _Requirements: 10.4_
 
-- [ ] 12. 功能门控集成 - 发音模块
-  - [ ] 12.1 集成 TTS 服务切换
+- [x] 12. 功能门控集成 - 发音模块
+  - [x] 12.1 集成 TTS 服务切换
     - 免费用户使用 Web Speech API
     - 高级用户可选有道 TTS
     - _Requirements: 10.2_
-  - [ ] 12.2 集成 AI 词义解释门控
+  - [x] 12.2 集成 AI 词义解释门控
     - 免费用户隐藏 AI 词义
     - _Requirements: 10.1_
-  - [ ] 12.3 集成发音快捷键门控
+  - [x] 12.3 集成发音快捷键门控
     - 免费用户禁用快捷键
     - _Requirements: 10.1_
 
-- [ ] 13. 功能门控集成 - 网站管理模块
-  - [ ] 13.1 集成网站规则数量限制
+- [x] 13. 功能门控集成 - 网站管理模块
+  - [x] 13.1 集成网站规则数量限制
     - 在添加前检查规则数量
     - 达到限制时阻止添加
     - _Requirements: 9.1, 9.2, 9.3_
-  - [ ] 13.2 集成白名单功能门控
+  - [x] 13.2 集成白名单功能门控
     - 免费用户隐藏白名单功能
     - _Requirements: 9.4_
 
-- [ ] 14. 功能门控集成 - 其他模块
-  - [ ] 14.1 集成成就系统门控
+- [x] 14. 功能门控集成 - 其他模块
+  - [x] 14.1 集成成就系统门控
     - 免费用户隐藏成就功能
     - _Requirements: 10.4_
-  - [ ] 14.2 集成目标系统门控
+  - [x] 14.2 集成目标系统门控
     - 免费用户隐藏目标功能
     - _Requirements: 10.5_
-  - [ ] 14.3 集成高级统计门控
+  - [x] 14.3 集成高级统计门控
     - 免费用户显示基础统计
     - _Requirements: 10.6_
-  - [ ] 14.4 集成数据导出门控
+  - [x] 14.4 集成数据导出门控
     - 免费用户仅支持 JSON
     - 高级用户支持 CSV/Anki
     - _Requirements: 10.7_
-  - [ ] 14.5 集成悬浮球功能门控
+  - [x] 14.5 集成悬浮球功能门控
     - 免费用户隐藏悬浮球
     - _Requirements: 10.3_
 
-- [ ] 15. Checkpoint - 功能门控验证
+- [x] 15. Checkpoint - 功能门控验证
   - 确保所有功能门控正常工作
   - 测试免费用户限制
   - 测试高级用户权限
   - 如有问题请询问用户
 
-- [ ] 16. 升级提示系统
-  - [ ] 16.1 创建 UpgradePromptService
+- [x] 16. 升级提示系统
+  - [x] 16.1 创建 UpgradePromptService
     - 实现 showPrompt 方法
     - 实现 shouldShowPrompt 方法（24小时限制）
     - 实现 recordPromptShown 方法
     - 实现 dismissPrompt 方法
     - _Requirements: 11.1, 11.3, 11.4_
-  - [ ] 16.2 创建升级提示组件
+  - [x] 16.2 创建升级提示组件
     - 设计提示 UI 组件
     - 支持不同提示类型
     - 包含升级按钮和关闭按钮
     - _Requirements: 11.1, 11.2, 11.5_
-  - [ ] 16.3 集成升级提示到各限制点
+  - [x] 16.3 集成升级提示到各限制点
     - 翻译限制提示
     - 收藏限制提示
     - 复习限制提示
     - 功能锁定提示
     - _Requirements: 3.5, 4.4, 5.3, 6.5, 7.3, 8.3, 9.5, 10.8_
 
-- [ ] 17. 会员状态 UI
-  - [ ] 17.1 更新 Popup 页面显示会员状态
+- [x] 17. 会员状态 UI
+  - [x] 17.1 更新 Popup 页面显示会员状态
     - 显示当前版本（免费/高级）
     - 显示使用量统计
     - 添加升级入口
     - _Requirements: 2.3_
-  - [ ] 17.2 更新 Options 页面账户设置
+  - [x] 17.2 更新 Options 页面账户设置
     - 显示会员状态详情
     - 显示订阅到期时间
     - 添加升级/续费入口
     - _Requirements: 2.3_
-  - [ ] 17.3 更新管理后台仪表板
+  - [x] 17.3 更新管理后台仪表板
     - 显示会员状态
     - 显示使用量统计
     - 添加升级入口
     - _Requirements: 2.3_
 
-- [ ] 18. 新用户自动分配免费计划
-  - [ ] 18.1 更新用户注册流程
+- [x] 18. 新用户自动分配免费计划
+  - [x] 18.1 更新用户注册流程
     - 注册成功后自动创建免费订阅
     - 初始化使用量记录
     - _Requirements: 1.2_
@@ -287,7 +287,7 @@
     - **Property 10: Immediate Premium Activation**
     - **Validates: Requirements 2.4**
 
-- [ ] 19. Final Checkpoint - 完整系统验证
+- [x] 19. Final Checkpoint - 完整系统验证
   - 确保所有测试通过
   - 验证完整用户流程
   - 测试免费用户体验

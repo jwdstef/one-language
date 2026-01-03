@@ -239,3 +239,11 @@ export interface StreakInfo {
   lastActivityDate: string | null;
   streakHistory: { date: string; active: boolean }[];
 }
+
+// Usage limit types for subscription system
+export interface UsageLimitResult {
+  allowed: boolean;
+  current: number;
+  limit: number;
+  remaining: number;
+}

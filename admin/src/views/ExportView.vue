@@ -1,15 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/services/api';
-import { Download, FileJson, FileSpreadsheet, Loader2, Check } from 'lucide-vue-next';
+import { canAccessFeature } from '@/services/subscription';
+import { Download, FileJson, FileSpreadsheet, Loader2, Check, Lock, FileArchive } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const loading = ref(false);
 const exportSuccess = ref<string | null>(null);
 const error = ref<string | null>(null);
 
-async function exportData(format: 'csv' | 'json') {
+// Feature gating flags
+const canExportCsv = ref(false);
+const canExportAnki = ref(false);
+
+onMounted(async () => {
+  // Check feature access
+  const [csvAccess, ankiAccess] = await Promise.all([
+    canAccessFeature('csvExport'),
+    canAccessFeature('ankiExport'),
+  ]);
+  canExportCsv.value = csvAccess;
+  canExportAnki.value = ankiAccess;
+});
+
+async function exportData(format: 'csv' | 'json' | 'anki') {
+  // Check if user has access to the format
+  if (format === 'csv' && !canExportCsv.value) {
+    error.value = t('export.premiumRequired');
+    return;
+  }
+  if (format === 'anki' && !canExportAnki.value) {
+    error.value = t('export.premiumRequired');
+    return;
+  }
+
   loading.value = true;
   error.value = null;
   exportSuccess.value = null;
@@ -20,14 +45,22 @@ async function exportData(format: 'csv' | 'json') {
       responseType: 'blob',
     });
 
+    // Determine file extension and MIME type
+    let mimeType = 'application/json';
+    let extension: string = format;
+    if (format === 'csv') {
+      mimeType = 'text/csv';
+    } else if (format === 'anki') {
+      mimeType = 'text/plain';
+      extension = 'txt';
+    }
+
     // Create download link
-    const blob = new Blob([response.data], {
-      type: format === 'csv' ? 'text/csv' : 'application/json',
-    });
+    const blob = new Blob([response.data], { type: mimeType });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `vocabulary-export-${new Date().toISOString().split('T')[0]}.${format}`;
+    link.download = `vocabulary-export-${new Date().toISOString().split('T')[0]}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -71,23 +104,8 @@ async function exportData(format: 'csv' | 'json') {
         {{ error }}
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- CSV Export -->
-        <button
-          :disabled="loading"
-          class="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          @click="exportData('csv')"
-        >
-          <FileSpreadsheet class="h-12 w-12 text-green-600" />
-          <div class="text-center">
-            <h3 class="font-semibold mb-1">{{ t('export.exportAsCsv') }}</h3>
-            <p class="text-sm text-[var(--muted-foreground)]">
-              {{ t('export.csvDescription') }}
-            </p>
-          </div>
-        </button>
-
-        <!-- JSON Export -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- JSON Export (Free) -->
         <button
           :disabled="loading"
           class="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -98,6 +116,54 @@ async function exportData(format: 'csv' | 'json') {
             <h3 class="font-semibold mb-1">{{ t('export.exportAsJson') }}</h3>
             <p class="text-sm text-[var(--muted-foreground)]">
               {{ t('export.jsonDescription') }}
+            </p>
+          </div>
+        </button>
+
+        <!-- CSV Export (Premium) -->
+        <button
+          :disabled="loading || !canExportCsv"
+          :class="[
+            'flex flex-col items-center gap-4 p-6 rounded-xl border-2 transition-colors relative',
+            canExportCsv
+              ? 'border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] disabled:opacity-50 disabled:cursor-not-allowed'
+              : 'border-[var(--border)] opacity-60 cursor-not-allowed'
+          ]"
+          @click="canExportCsv && exportData('csv')"
+        >
+          <Lock v-if="!canExportCsv" class="absolute top-2 right-2 h-4 w-4 text-[var(--muted-foreground)]" />
+          <FileSpreadsheet class="h-12 w-12 text-green-600" />
+          <div class="text-center">
+            <h3 class="font-semibold mb-1 flex items-center justify-center gap-1">
+              {{ t('export.exportAsCsv') }}
+              <span v-if="!canExportCsv" class="text-xs text-[var(--muted-foreground)]">({{ t('common.premiumFeature') }})</span>
+            </h3>
+            <p class="text-sm text-[var(--muted-foreground)]">
+              {{ t('export.csvDescription') }}
+            </p>
+          </div>
+        </button>
+
+        <!-- Anki Export (Premium) -->
+        <button
+          :disabled="loading || !canExportAnki"
+          :class="[
+            'flex flex-col items-center gap-4 p-6 rounded-xl border-2 transition-colors relative',
+            canExportAnki
+              ? 'border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] disabled:opacity-50 disabled:cursor-not-allowed'
+              : 'border-[var(--border)] opacity-60 cursor-not-allowed'
+          ]"
+          @click="canExportAnki && exportData('anki')"
+        >
+          <Lock v-if="!canExportAnki" class="absolute top-2 right-2 h-4 w-4 text-[var(--muted-foreground)]" />
+          <FileArchive class="h-12 w-12 text-purple-600" />
+          <div class="text-center">
+            <h3 class="font-semibold mb-1 flex items-center justify-center gap-1">
+              {{ t('export.exportAsAnki') }}
+              <span v-if="!canExportAnki" class="text-xs text-[var(--muted-foreground)]">({{ t('common.premiumFeature') }})</span>
+            </h3>
+            <p class="text-sm text-[var(--muted-foreground)]">
+              {{ t('export.ankiDescription') }}
             </p>
           </div>
         </button>

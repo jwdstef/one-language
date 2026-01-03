@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
+import * as subscriptionService from './subscription.service.js';
 import type { MasteryLevel, Pronunciation, Meaning, ExampleSentence } from '../types/index.js';
 
 export interface ReviewWordResponse {
@@ -108,12 +109,19 @@ function calculateNextReviewDate(masteryLevel: MasteryLevel): Date {
 
 /**
  * Get words that are due for review, ordered by priority.
+ * Premium users get smart recommendations based on spaced repetition algorithm.
+ * Free users get basic chronological ordering.
+ * Requirements: 10.4 - Smart review recommendation gating
  */
 export async function getDueWords(
   userId: string,
   limit: number = 20
 ): Promise<ReviewWordResponse[]> {
   const now = new Date();
+  
+  // Check if user has smart recommendation feature (Requirements: 10.4)
+  const features = await subscriptionService.getUserFeatures(userId);
+  const useSmartRecommend = features.review.smartRecommend;
   
   // Get all user's words
   const words = await prisma.favoriteWord.findMany({
@@ -139,11 +147,11 @@ export async function getDueWords(
     favoritedAt: Date;
   }) => {
     const masteryLevel = word.masteryLevel as MasteryLevel;
-    const dueScore = calculateDueScore(
-      masteryLevel,
-      word.lastReviewedAt,
-      word.favoritedAt
-    );
+    
+    // Calculate due score only for premium users with smart recommend
+    const dueScore = useSmartRecommend 
+      ? calculateDueScore(masteryLevel, word.lastReviewedAt, word.favoritedAt)
+      : 0; // Basic mode: no scoring, use chronological order
     
     const nextReviewAt = word.lastReviewedAt
       ? new Date(
@@ -168,11 +176,30 @@ export async function getDueWords(
     };
   });
   
-  // Filter to only due words and sort by score (highest first)
-  const dueWords = wordsWithScores
-    .filter((w: WordWithScore) => w.isDue || w.masteryLevel === 'new')
-    .sort((a: WordWithScore, b: WordWithScore) => b.dueScore - a.dueScore)
-    .slice(0, limit);
+  // Filter and sort based on subscription tier
+  let dueWords: WordWithScore[];
+  
+  if (useSmartRecommend) {
+    // Premium: Smart recommendation - filter to due words and sort by score (highest first)
+    dueWords = wordsWithScores
+      .filter((w: WordWithScore) => w.isDue || w.masteryLevel === 'new')
+      .sort((a: WordWithScore, b: WordWithScore) => b.dueScore - a.dueScore)
+      .slice(0, limit);
+  } else {
+    // Free: Basic review - simple chronological order, prioritize new words
+    dueWords = wordsWithScores
+      .filter((w: WordWithScore) => w.isDue || w.masteryLevel === 'new')
+      .sort((a: WordWithScore, b: WordWithScore) => {
+        // Prioritize new words first
+        if (a.masteryLevel === 'new' && b.masteryLevel !== 'new') return -1;
+        if (b.masteryLevel === 'new' && a.masteryLevel !== 'new') return 1;
+        // Then sort by last reviewed date (oldest first)
+        const aDate = a.lastReviewedAt?.getTime() || 0;
+        const bDate = b.lastReviewedAt?.getTime() || 0;
+        return aDate - bDate;
+      })
+      .slice(0, limit);
+  }
   
   // Remove isDue from response
   return dueWords.map(({ isDue: _isDue, ...word }) => word);

@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { env } from '../config/env.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { JwtPayload, AuthTokens } from '../types/index.js';
+import * as planService from './plan.service.js';
 
 const SALT_ROUNDS = 12;
 
@@ -90,6 +91,30 @@ export async function register(
     data: {
       userId: user.id,
     },
+  });
+
+  // Automatically assign free plan to new user (Requirements: 1.2)
+  const freePlan = await planService.getFreePlan();
+  await prisma.subscription.create({
+    data: {
+      userId: user.id,
+      planId: freePlan.id,
+      status: 'active',
+      startDate: new Date(),
+      endDate: null, // Free plan is lifetime
+    },
+  });
+
+  // Initialize usage records for the new user (Requirements: 18.1)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  await prisma.usageRecord.createMany({
+    data: [
+      { userId: user.id, type: 'translation', count: 0, date: today },
+      { userId: user.id, type: 'review', count: 0, date: today },
+      { userId: user.id, type: 'collection', count: 0, date: today },
+    ],
   });
 
   // Generate tokens

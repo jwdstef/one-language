@@ -7,3 +7,7 @@ export * as listService from './list.service.js';
 export * as adminService from './admin.service.js';
 export * as achievementService from './achievement.service.js';
 export * as goalService from './goal.service.js';
+export * as planService from './plan.service.js';
+export * as subscriptionService from './subscription.service.js';
+export * as usageService from './usage.service.js';
+export { cacheService, CacheKeys, CacheTTL } from './cache.service.js';

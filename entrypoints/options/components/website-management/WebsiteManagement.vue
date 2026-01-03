@@ -51,22 +51,45 @@
               <button
                 @click="filterType = 'whitelist'"
                 class="opt-filter-btn opt-filter-btn--green"
-                :class="{ 'opt-filter-btn--active': filterType === 'whitelist' }"
+                :class="{ 
+                  'opt-filter-btn--active': filterType === 'whitelist',
+                  'opt-filter-btn--locked': !canUseWhitelist
+                }"
               >
-                <ShieldCheck class="w-4 h-4" />
+                <Lock v-if="!canUseWhitelist" class="w-4 h-4" />
+                <ShieldCheck v-else class="w-4 h-4" />
                 {{ $t('websiteManagement.filterWhitelist') }}
                 <span class="opt-filter-count">{{ whitelistCount }}</span>
+                <Crown v-if="!canUseWhitelist" class="w-3 h-3 opt-premium-icon" />
               </button>
             </div>
           </div>
 
           <div class="opt-toolbar-right">
+            <!-- Rule limit indicator -->
+            <div v-if="ruleLimitInfo && ruleLimitInfo.limit > 0" class="opt-limit-indicator">
+              <span class="opt-limit-text">
+                {{ $t('websiteManagement.rulesUsed') }}: {{ ruleLimitInfo.current }}/{{ ruleLimitInfo.limit }}
+              </span>
+              <div class="opt-limit-bar">
+                <div 
+                  class="opt-limit-bar-fill" 
+                  :style="{ width: `${Math.min(100, (ruleLimitInfo.current / ruleLimitInfo.limit) * 100)}%` }"
+                  :class="{ 'opt-limit-bar-fill--warning': ruleLimitInfo.current >= ruleLimitInfo.limit * 0.8 }"
+                ></div>
+              </div>
+            </div>
             <button v-if="selectedRules.length > 0" @click="bulkDeleteRules" class="opt-btn opt-btn--danger">
               <Trash2 class="w-4 h-4" />
               {{ $t('websiteManagement.deleteSelected') }} ({{ selectedRules.length }})
             </button>
-            <button @click="showAddDialog = true" class="opt-btn opt-btn--primary">
-              <Plus class="w-4 h-4" />
+            <button 
+              @click="handleAddRuleClick" 
+              class="opt-btn opt-btn--primary"
+              :class="{ 'opt-btn--disabled': !canAddRule }"
+            >
+              <Lock v-if="!canAddRule" class="w-4 h-4" />
+              <Plus v-else class="w-4 h-4" />
               {{ $t('websiteManagement.addRule') }}
             </button>
           </div>
@@ -134,8 +157,9 @@
             <p class="opt-empty-desc">
               {{ searchQuery ? $t('websiteManagement.tryOtherKeywords') : $t('websiteManagement.startAddingRules') }}
             </p>
-            <button v-if="!searchQuery" @click="showAddDialog = true" class="opt-btn opt-btn--primary">
-              <Plus class="w-4 h-4" />
+            <button v-if="!searchQuery" @click="handleAddRuleClick" class="opt-btn opt-btn--primary">
+              <Lock v-if="!canAddRule" class="w-4 h-4" />
+              <Plus v-else class="w-4 h-4" />
               {{ $t('websiteManagement.addFirstRule') }}
             </button>
           </div>
@@ -214,21 +238,52 @@
       v-if="showAddDialog"
       :rule="editingRule"
       :is-editing="!!editingRule"
+      :can-use-whitelist="canUseWhitelist"
       @save="handleSaveRule"
       @cancel="handleCancelEdit"
     />
+
+    <!-- 升级提示对话框 -->
+    <div v-if="showUpgradePrompt" class="opt-upgrade-overlay" @click="closeUpgradePrompt">
+      <div class="opt-upgrade-dialog" @click.stop>
+        <div class="opt-upgrade-icon">
+          <Crown class="w-8 h-8" />
+        </div>
+        <h3 class="opt-upgrade-title">
+          {{ upgradePromptReason === 'rule_limit' 
+            ? $t('websiteManagement.ruleLimitReached') 
+            : $t('websiteManagement.whitelistPremiumOnly') 
+          }}
+        </h3>
+        <p class="opt-upgrade-desc">
+          {{ upgradePromptReason === 'rule_limit'
+            ? $t('websiteManagement.ruleLimitDesc', { limit: ruleLimitInfo?.limit || 10 })
+            : $t('websiteManagement.whitelistPremiumDesc')
+          }}
+        </p>
+        <div class="opt-upgrade-actions">
+          <button @click="closeUpgradePrompt" class="opt-btn opt-btn--secondary">
+            {{ $t('websiteManagement.later') }}
+          </button>
+          <button @click="handleUpgrade" class="opt-btn opt-btn--premium">
+            <Crown class="w-4 h-4" />
+            {{ $t('websiteManagement.upgradeToPremium') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   Search, Plus, Trash2, ShieldOff, ShieldCheck, Pencil, Globe, Layers,
-  Copy, Lightbulb, Info,
+  Copy, Lightbulb, Info, Lock, Crown,
 } from 'lucide-vue-next';
 import { WebsiteManager } from '@/src/modules/options/website-management/manager';
-import { WebsiteRule } from '@/src/modules/options/website-management/types';
+import { WebsiteRule, RuleLimitCheckResult } from '@/src/modules/options/website-management/types';
 import WebsiteRuleDialog from './WebsiteRuleDialog.vue';
 
 const { t } = useI18n();
@@ -242,8 +297,27 @@ const selectAll = ref(false);
 const showAddDialog = ref(false);
 const editingRule = ref<WebsiteRule | null>(null);
 
+// Feature gating state
+const ruleLimitInfo = ref<RuleLimitCheckResult | null>(null);
+const canUseWhitelist = ref(true);
+const showUpgradePrompt = ref(false);
+const upgradePromptReason = ref<'rule_limit' | 'whitelist'>('rule_limit');
+
 const blacklistCount = computed(() => allRules.value.filter((rule) => rule.type === 'blacklist').length);
 const whitelistCount = computed(() => allRules.value.filter((rule) => rule.type === 'whitelist').length);
+
+// Check if user can add more rules
+const canAddRule = computed(() => {
+  if (!ruleLimitInfo.value) return true;
+  return ruleLimitInfo.value.allowed;
+});
+
+// Get remaining rules count text
+const remainingRulesText = computed(() => {
+  if (!ruleLimitInfo.value) return '';
+  if (ruleLimitInfo.value.remaining === -1) return t('websiteManagement.unlimited');
+  return `${ruleLimitInfo.value.remaining}/${ruleLimitInfo.value.limit}`;
+});
 
 const filteredRules = computed(() => {
   let rules = allRules.value;
@@ -259,12 +333,29 @@ const filteredRules = computed(() => {
   return rules;
 });
 
-onMounted(async () => { await loadRules(); });
+onMounted(async () => { 
+  await loadRules(); 
+  await checkFeatureGating();
+});
 
 const loadRules = async () => {
   try { allRules.value = await manager.getRules(); }
   catch (error) { console.error(t('errors.loadRulesFailed'), error); }
 };
+
+const checkFeatureGating = async () => {
+  try {
+    ruleLimitInfo.value = await manager.checkCanAddRule();
+    canUseWhitelist.value = await manager.canUseWhitelist();
+  } catch (error) {
+    console.error('Failed to check feature gating:', error);
+  }
+};
+
+// Watch for rule changes to update limit info
+watch(allRules, async () => {
+  await checkFeatureGating();
+}, { deep: true });
 
 const handleSelectAll = () => {
   selectedRules.value = selectAll.value ? filteredRules.value.map((rule) => rule.id) : [];
@@ -275,8 +366,41 @@ const editRule = (rule: WebsiteRule) => {
   showAddDialog.value = true;
 };
 
+const handleAddRuleClick = async () => {
+  // Check if user can add more rules
+  const limitCheck = await manager.checkCanAddRule();
+  if (!limitCheck.allowed) {
+    upgradePromptReason.value = 'rule_limit';
+    showUpgradePrompt.value = true;
+    return;
+  }
+  showAddDialog.value = true;
+};
+
 const handleSaveRule = async (ruleData: Omit<WebsiteRule, 'id' | 'createdAt'>) => {
   try {
+    // Check whitelist access for new whitelist rules
+    if (!editingRule.value && ruleData.type === 'whitelist') {
+      const whitelistAllowed = await manager.canUseWhitelist();
+      if (!whitelistAllowed) {
+        upgradePromptReason.value = 'whitelist';
+        showUpgradePrompt.value = true;
+        handleCancelEdit();
+        return;
+      }
+    }
+    
+    // Check rule limit for new rules
+    if (!editingRule.value) {
+      const limitCheck = await manager.checkCanAddRule();
+      if (!limitCheck.allowed) {
+        upgradePromptReason.value = 'rule_limit';
+        showUpgradePrompt.value = true;
+        handleCancelEdit();
+        return;
+      }
+    }
+    
     if (editingRule.value) {
       await manager.updateRule(editingRule.value.id, ruleData);
     } else {
@@ -328,6 +452,16 @@ const copyToClipboard = async (text: string) => {
     document.execCommand('copy');
     document.body.removeChild(textArea);
   }
+};
+
+const closeUpgradePrompt = () => {
+  showUpgradePrompt.value = false;
+};
+
+const handleUpgrade = () => {
+  // Open upgrade page - this would typically navigate to a subscription page
+  window.open('https://admin.1zhizu.com/subscription', '_blank');
+  closeUpgradePrompt();
 };
 </script>
 
@@ -1053,5 +1187,148 @@ const copyToClipboard = async (text: string) => {
   .opt-rules-header-desc, .opt-rule-desc {
     display: none;
   }
+}
+
+/* Rule Limit Indicator */
+.opt-limit-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--opt-bg-subtle, #f8fafc);
+  border: 1px solid var(--opt-border, rgba(0,0,0,0.06));
+  border-radius: 10px;
+  min-width: 120px;
+}
+
+.opt-limit-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--opt-text-muted, #9ca3af);
+}
+
+.opt-limit-bar {
+  height: 4px;
+  background: var(--opt-border, rgba(0,0,0,0.1));
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.opt-limit-bar-fill {
+  height: 100%;
+  background: var(--opt-primary, #0d9488);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.opt-limit-bar-fill--warning {
+  background: #f59e0b;
+}
+
+/* Locked/Premium Styles */
+.opt-filter-btn--locked {
+  opacity: 0.7;
+  position: relative;
+}
+
+.opt-premium-icon {
+  color: #f59e0b;
+  margin-left: 4px;
+}
+
+.opt-btn--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.opt-btn--secondary {
+  background: var(--opt-card-bg, #ffffff);
+  color: var(--opt-text, #111827);
+  border: 1px solid var(--opt-border, rgba(0,0,0,0.1));
+}
+
+:global(.dark) .opt-btn--secondary {
+  background: rgba(30, 41, 59, 0.8);
+  color: #f1f5f9;
+}
+
+.opt-btn--premium {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.opt-btn--premium:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+/* Upgrade Prompt Dialog */
+.opt-upgrade-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.opt-upgrade-dialog {
+  background: var(--opt-card-bg, #ffffff);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+:global(.dark) .opt-upgrade-dialog {
+  background: rgba(30, 41, 59, 0.95);
+}
+
+.opt-upgrade-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+}
+
+.opt-upgrade-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--opt-text, #111827);
+  margin: 0 0 12px 0;
+}
+
+:global(.dark) .opt-upgrade-title {
+  color: #f1f5f9;
+}
+
+.opt-upgrade-desc {
+  font-size: 14px;
+  color: var(--opt-text-muted, #9ca3af);
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.opt-upgrade-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.opt-upgrade-actions .opt-btn {
+  flex: 1;
+  max-width: 160px;
 }
 </style>

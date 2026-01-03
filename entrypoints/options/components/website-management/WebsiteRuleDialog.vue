@@ -28,7 +28,7 @@
       <!-- 内容 -->
       <div class="p-6 space-y-6">
         <!-- 规则类型选择 -->
-        <RuleTypeSelector v-model="formData.type" />
+        <RuleTypeSelector v-model="formData.type" :can-use-whitelist="canUseWhitelist" />
 
         <!-- 网站模式输入 -->
         <div class="space-y-2">
@@ -151,9 +151,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { X, Shield, Heart } from 'lucide-vue-next';
+import { X, Shield, Heart, Lock, Crown } from 'lucide-vue-next';
 import { WebsiteRule } from '@/src/modules/options/website-management/types';
 import RuleTypeSelector from './RuleTypeSelector.vue';
 
@@ -162,9 +162,12 @@ const { t } = useI18n();
 interface Props {
   rule?: WebsiteRule | null;
   isEditing: boolean;
+  canUseWhitelist?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  canUseWhitelist: true,
+});
 
 const emit = defineEmits<{
   save: [rule: Omit<WebsiteRule, 'id' | 'createdAt'>];
@@ -174,10 +177,21 @@ const emit = defineEmits<{
 const patternInput = ref<HTMLInputElement>();
 const patternError = ref('');
 
+// Computed property for whitelist access
+const canUseWhitelist = computed(() => props.canUseWhitelist);
+
 const formData = reactive({
   pattern: '',
   type: 'blacklist' as 'blacklist' | 'whitelist',
   description: '',
+});
+
+// Watch for whitelist selection when not allowed
+watch(() => formData.type, (newType) => {
+  if (newType === 'whitelist' && !props.canUseWhitelist && !props.isEditing) {
+    // Reset to blacklist if whitelist is not allowed
+    formData.type = 'blacklist';
+  }
 });
 
 const presets = [
@@ -214,7 +228,13 @@ const isFormValid = computed(() => {
 });
 
 const getPresets = () => {
-  return presets.filter((preset) => preset.type === formData.type);
+  // Filter out whitelist presets if whitelist is not allowed
+  return presets.filter((preset) => {
+    if (preset.type === 'whitelist' && !props.canUseWhitelist) {
+      return false;
+    }
+    return preset.type === formData.type;
+  });
 };
 
 const getPresetIcon = (type: string) => {

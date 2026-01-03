@@ -5,6 +5,7 @@
  * 1. 使用简单的选择器查找段落元素
  * 2. 直接翻译找到的元素
  * 3. 避免复杂的DOM遍历
+ * 4. 集成订阅系统的使用量限制 (Requirements: 3.1, 3.2, 3.4)
  */
 
 import { StorageService } from '../storage';
@@ -14,6 +15,9 @@ import { PARAGRAPH_TRANSLATION } from '../../shared/constants';
 import type { LazyLoadingService } from '../../content/services/LazyLoadingService';
 import type { ContentSegment } from '../../processing/ProcessingStateManager';
 import { globalProcessingState } from '../../processing/ProcessingStateManager';
+import { translationUsageService } from '../../subscription';
+import { upgradePromptService } from '../../subscription/UpgradePromptService';
+import type { TranslationLimitCheckResult } from '../../subscription/types';
 
 /**
  * 段落翻译服务类 - 简化版本
@@ -33,6 +37,9 @@ export class ParagraphTranslationService {
   // 并发配置
   private readonly BATCH_SIZE = 5; // 每批处理5个元素
   private readonly BATCH_DELAY = 200; // 批次间延迟200ms
+
+  // 使用量限制回调 (Requirements: 3.5)
+  private onLimitReachedCallback?: (result: TranslationLimitCheckResult) => void;
 
   // 加载指示器样式
   private readonly LOADING_CLASS = 'illa-paragraph-loading';
@@ -132,6 +139,16 @@ export class ParagraphTranslationService {
     }
 
     console.log('[段落翻译] 翻译服务已停止');
+  }
+
+  /**
+   * 设置达到限制时的回调函数
+   * Requirements: 3.5
+   * 
+   * @param callback - 当达到翻译限制时调用的回调函数
+   */
+  public setOnLimitReachedCallback(callback: (result: TranslationLimitCheckResult) => void): void {
+    this.onLimitReachedCallback = callback;
   }
 
   /**
@@ -418,6 +435,7 @@ export class ParagraphTranslationService {
 
   /**
    * 翻译元素列表
+   * Requirements: 3.1, 3.2, 3.4
    */
   private async translateElements(elements: HTMLElement[]): Promise<number> {
     if (elements.length === 0) {
@@ -426,14 +444,57 @@ export class ParagraphTranslationService {
 
     console.log('[段落翻译] 开始并发翻译，元素数量:', elements.length);
 
+    // 检查翻译限制 (Requirements: 3.2)
+    const limitCheck = await translationUsageService.checkTranslationAllowed(elements.length);
+    
+    if (!limitCheck.allowed) {
+      console.log('[段落翻译] 达到每日翻译限制:', limitCheck);
+      
+      // 触发限制回调 (Requirements: 3.5)
+      if (this.onLimitReachedCallback) {
+        this.onLimitReachedCallback(limitCheck);
+      }
+      
+      // 显示升级提示 (Requirements: 3.5)
+      upgradePromptService.showPrompt('translation_limit', {
+        current: limitCheck.current,
+        limit: limitCheck.limit,
+        message: limitCheck.message,
+      });
+      
+      return 0;
+    }
+
+    // 如果剩余配额不足以翻译所有元素，只翻译部分
+    let elementsToTranslate = elements;
+    if (limitCheck.limit > 0 && limitCheck.remaining < elements.length) {
+      console.log(`[段落翻译] 剩余配额 ${limitCheck.remaining}，只翻译部分元素`);
+      elementsToTranslate = elements.slice(0, limitCheck.remaining);
+    }
+
     // 分批处理，避免API限流
     const batchSize = this.BATCH_SIZE; // 每批处理5个元素
     let successCount = 0;
 
-    for (let i = 0; i < elements.length; i += batchSize) {
-      const batch = elements.slice(i, i + batchSize);
+    for (let i = 0; i < elementsToTranslate.length; i += batchSize) {
+      // 每批次前再次检查限制（防止并发问题）
+      const batchLimitCheck = await translationUsageService.checkTranslationAllowed(1);
+      if (!batchLimitCheck.allowed) {
+        console.log('[段落翻译] 批次处理中达到限制，停止翻译');
+        if (this.onLimitReachedCallback) {
+          this.onLimitReachedCallback(batchLimitCheck);
+        }
+        // 显示升级提示 (Requirements: 3.5)
+        upgradePromptService.showPrompt('translation_limit', {
+          current: batchLimitCheck.current,
+          limit: batchLimitCheck.limit,
+        });
+        break;
+      }
+
+      const batch = elementsToTranslate.slice(i, i + batchSize);
       console.log(
-        `[段落翻译] 处理批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(elements.length / batchSize)}，元素数量: ${batch.length}`,
+        `[段落翻译] 处理批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(elementsToTranslate.length / batchSize)}，元素数量: ${batch.length}`,
       );
 
       // 并发处理当前批次
@@ -455,8 +516,13 @@ export class ParagraphTranslationService {
       );
       successCount += batchSuccessCount;
 
+      // 记录使用量 (Requirements: 3.1)
+      if (batchSuccessCount > 0) {
+        await translationUsageService.recordTranslationUsage(batchSuccessCount);
+      }
+
       // 批次间稍微延迟，避免API限流
-      if (i + batchSize < elements.length) {
+      if (i + batchSize < elementsToTranslate.length) {
         await new Promise((resolve) => setTimeout(resolve, this.BATCH_DELAY));
       }
     }

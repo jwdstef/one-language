@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "自动开始下一个任务",
+  "description": "当spec中的一个task完成后，自动开始执行下一个task",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "检查当前spec的任务进度，如果还有未完成的task，请自动开始执行下一个task。"
+  }
+}

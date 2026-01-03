@@ -30,6 +30,8 @@ model User {
   userStreak         UserStreak?
   refreshTokens      RefreshToken[]
   vocabularyLists    VocabularyList[]
+  subscriptions      Subscription[]
+  usageRecords       UsageRecord[]
 
   @@map("users")
 }
@@ -170,4 +172,65 @@ model UserGoal {
   updatedAt       DateTime @updatedAt @map("updated_at")
   
   @@map("user_goals")
+}
+
+
+// Subscription plan table - defines available subscription plans
+model SubscriptionPlan {
+  id          String   @id @default(uuid())
+  name        String   @unique // free, premium
+  displayName String   @map("display_name")
+  description String?  @db.Text
+  price       Decimal  @default(0) @db.Decimal(10, 2)
+  duration    Int      @default(0) // days, 0 = lifetime
+  features    Json     // plan features configuration JSON
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+// User subscription table - tracks user subscriptions
+model Subscription {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  planId    String    @map("plan_id")
+  status    String    @default("active") // active, expired, cancelled
+  startDate DateTime  @default(now()) @map("start_date")
+  endDate   DateTime? @map("end_date") // null = lifetime
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
+  @@map("subscriptions")
+}
+
+// Usage record table - tracks daily usage for rate limiting
+model UsageRecord {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String   // translation, review, collection, website_rule
+  count     Int      @default(0)
+  date      DateTime @db.Date // for daily limits
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, date])
+  @@index([userId])
+  @@index([date])
+  @@map("usage_records")
 }
