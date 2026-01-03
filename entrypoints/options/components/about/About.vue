@@ -9,7 +9,7 @@
           </div>
           <div class="opt-about-info">
             <h1 class="opt-about-title">{{ $t('about.appName') }}</h1>
-            <p class="opt-about-tagline">沉浸式语言学习助手</p>
+            <p class="opt-about-tagline">一站式学语言助手</p>
             <div class="opt-about-badges">
               <span class="opt-badge opt-badge--primary">
                 <Sparkles class="w-3 h-3" />
@@ -205,7 +205,6 @@ import {
   Star,
   Bug,
   GitPullRequest,
-  FolderOpen,
 } from 'lucide-vue-next';
 
 const { t } = useI18n();

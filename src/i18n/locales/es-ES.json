@@ -42,7 +42,7 @@
   "language": {
     "nativeLanguage": "Idioma Nativo",
     "targetLanguage": "Idioma Objetivo",
-    "languageLevel": "Nivel de Idioma",
+    "languageLevel": "Nivel de Dominio",
     "selectNativeLanguage": "Por favor, selecciona tu idioma nativo",
     "selectTargetLanguage": "Por favor, selecciona el idioma objetivo",
     "popularLanguages": "Idiomas Populares",
@@ -70,32 +70,32 @@
     "setCSS": "Establecer Estilo CSS"
   },
   "trigger": {
-    "mode": "Modo de Activación",
+    "mode": "Modo de Inicio",
     "automatic": "Automático",
     "manual": "Manual"
   },
   "display": {
-    "originalWord": "Visualización del Texto Original",
+    "originalWord": "Mostrar Palabra Original",
     "visible": "Visible",
     "hidden": "Oculto",
     "learning": "Modo Aprendizaje"
   },
   "replacement": {
-    "rate": "Tasa de Reemplazo",
-    "maxLength": "Longitud Máxima"
+    "rate": "Intensidad de Aprendizaje",
+    "maxLength": "Capacidad de Contenido"
   },
   "pronunciation": {},
   "floatingBall": {},
   "lazyLoading": {
-    "title": "Traducción con Carga Diferida (Lazy Loading)",
-    "enabled": "Activar Carga Diferida",
-    "description": "Traduce los párrafos solo cuando se desplazan a la vista, reduciendo el consumo de recursos y mejorando el rendimiento.",
-    "preloadDistance": "Distancia de Precarga",
-    "preloadDistanceHint": "Valores más altos pueden capturar más párrafos pero aumentarán el consumo de recursos. Rango recomendado: 50%-100%",
+    "title": "Carga Inteligente",
+    "enabled": "Activar Carga Inteligente",
+    "description": "Traduce el contenido solo cuando se desplaza a la vista, mejorando la experiencia de navegación.",
+    "preloadDistance": "Rango de Precarga",
+    "preloadDistanceHint": "Valores más altos precargan más contenido. Rango recomendado: 50%-100%",
     "performanceHintTitle": "Consejo de Rendimiento",
-    "performanceHintEnabled": "La carga diferida está activada. El contenido se traducirá bajo demanda a medida que te desplaces, reduciendo eficazmente el uso de memoria y mejorando la velocidad de carga de la página.",
-    "performanceHintDisabled": "La carga diferida está desactivada. Se traducirá toda la página de una vez. Se recomienda activar la carga diferida en páginas con mucho contenido.",
-    "note": "Valores más altos capturan más párrafos pero aumentan el consumo de recursos"
+    "performanceHintEnabled": "La carga inteligente está activada. El contenido se traducirá bajo demanda a medida que te desplaces, reduciendo eficazmente el uso de memoria y mejorando la velocidad de carga de la página.",
+    "performanceHintDisabled": "La carga inteligente está desactivada. Se traducirá toda la página de una vez. Se recomienda activar la carga inteligente en páginas con mucho contenido.",
+    "note": "Valores más altos precargan más contenido"
   },
   "api": {
     "title": "Ajustes de la API del Modelo",
@@ -114,7 +114,7 @@
     "unknownError": "Error desconocido"
   },
   "footer": {
-    "slogan": "💖 Basado en la teoría \"i+1\", deja que el aprendizaje ocurra de forma natural",
+    "slogan": "🌱 Aprende mientras navegas, tu vocabulario crece naturalmente",
     "clickForUpdate": "Haz clic para ver los detalles de la actualización",
     "settings": "Ajustes"
   },
@@ -216,15 +216,15 @@
     "previewText": "Este es un texto de ejemplo que contiene el ",
     "originalText": "texto original",
     "advancedSettings": "Ajustes Avanzados",
-    "triggerMode": "Modo de Activación",
+    "triggerMode": "Modo de Inicio",
     "triggerModes": {
       "automatic": "Traducción Automática",
-      "manual": "Activación Manual"
+      "manual": "Inicio Manual"
     },
-    "maxLength": "Longitud Máxima de Procesamiento",
-    "userLevel": "Familiaridad con Palabras",
-    "selectUserLevel": "Por favor, selecciona tu nivel de idioma",
-    "replacementRate": "Tasa de Reemplazo",
+    "maxLength": "Capacidad de Contenido",
+    "userLevel": "Nivel de Dominio",
+    "selectUserLevel": "Por favor, selecciona tu nivel de dominio",
+    "replacementRate": "Intensidad de Aprendizaje",
     "translationMode": "Modo de Traducción",
     "translationModeDescription": "Selecciona el método de traducción: modo palabra (reemplazo parcial) o modo párrafo (traducción completa)",
     "translationModes": {
@@ -361,24 +361,24 @@
     "logoAlt": "Logo de Asistente de Aprendizaje Inmersivo one-language",
     "appName": "Asistente de Aprendizaje Inmersivo (one-language)",
     "version": "Versión {version}",
-    "description": "El Asistente de Aprendizaje Inmersivo (one-language) es una extensión de navegador basada en la teoría de entrada comprensible 'i+1', diseñada para ayudarte a aprender idiomas extranjeros de manera fácil y eficiente durante tu navegación diaria a través de un ecosistema inmersivo de traducción y aprendizaje de pronunciación.",
+    "description": "El Asistente de Aprendizaje Inmersivo es una herramienta de aprendizaje de idiomas basada en IA, con extracción inteligente de vocabulario, entrenamiento de pronunciación y refuerzo de memoria. Transforma tu navegación web diaria en sesiones de aprendizaje personalizadas, construyendo vocabulario naturalmente mientras lees.",
     "coreFeatures": "Características Principales",
     "features": {
       "smartTranslation": {
-        "title": "Traducción Inteligente y Reemplazo de Vocabulario",
-        "description": "Soporta más de 20 idiomas y selecciona inteligentemente el vocabulario según tu nivel."
+        "title": "Extracción Inteligente de Vocabulario",
+        "description": "La IA analiza el contenido web y selecciona con precisión el vocabulario adecuado a tu nivel de dominio, compatible con más de 20 idiomas."
       },
       "pronunciation": {
-        "title": "Ecosistema de Aprendizaje de Pronunciación",
-        "description": "Integra fonética, definiciones de palabras por IA y lectura de voz dual TTS para una experiencia de aprendizaje de pronunciación todo en uno."
+        "title": "Sistema de Entrenamiento de Pronunciación",
+        "description": "Visualización fonética integrada, definiciones impulsadas por IA y texto a voz de doble motor para una experiencia completa de aprendizaje de pronunciación."
       },
       "learningStyles": {
-        "title": "Múltiples Estilos de Aprendizaje",
-        "description": "Ofrece 7 estilos de traducción diferentes (ej. subrayado, resaltado, difuminado) para satisfacer necesidades de aprendizaje personalizadas."
+        "title": "Modos de Refuerzo de Memoria",
+        "description": "7 estilos visuales y modos de aprendizaje (como difuminado a revelado) que mejoran la retención de vocabulario mediante estimulación multisensorial."
       },
       "interactive": {
-        "title": "Ventana Flotante Interactiva",
-        "description": "Pasa el ratón para ver la pronunciación y definición detallada de palabras y frases, con soporte para búsquedas anidadas."
+        "title": "Tarjetas de Palabras Interactivas",
+        "description": "Pasa el ratón para ver detalles de palabras, con desglose de frases y búsquedas anidadas para un aprendizaje eficiente y conveniente."
       }
     },
     "versionUpdate": "Actualización de Versión",

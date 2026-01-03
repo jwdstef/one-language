@@ -101,7 +101,7 @@
   "language": {
     "nativeLanguage": "母语",
     "targetLanguage": "目标语言",
-    "languageLevel": "语言水平",
+    "languageLevel": "掌握等级",
     "selectNativeLanguage": "请选择母语",
     "selectTargetLanguage": "请选择目标语言",
     "popularLanguages": "常用语言",
@@ -129,32 +129,32 @@
     "setCSS": "设置CSS样式"
   },
   "trigger": {
-    "mode": "触发模式",
+    "mode": "启动方式",
     "automatic": "自动",
     "manual": "手动"
   },
   "display": {
-    "originalWord": "原文显示",
+    "originalWord": "原词展示",
     "visible": "显示",
     "hidden": "隐藏",
     "learning": "学习模式"
   },
   "replacement": {
-    "rate": "替换比例",
-    "maxLength": "最大长度"
+    "rate": "学习强度",
+    "maxLength": "段落容量"
   },
   "pronunciation": {},
   "floatingBall": {},
   "lazyLoading": {
-    "title": "懒加载翻译",
-    "enabled": "启用懒加载翻译",
-    "description": "滚动到段落时才进行翻译，减少资源消耗和提高性能",
-    "preloadDistance": "预加载距离",
-    "preloadDistanceHint": "较高的值可以捕获更多段落，但会增加资源消耗。推荐范围：50%-100%",
+    "title": "智能加载",
+    "enabled": "启用智能加载",
+    "description": "滚动到内容时才进行翻译，提升浏览体验",
+    "preloadDistance": "提前加载范围",
+    "preloadDistanceHint": "较高的值可以提前加载更多内容。推荐范围：50%-100%",
     "performanceHintTitle": "性能提示",
-    "performanceHintEnabled": "懒加载已启用，将在您滚动时按需翻译内容，有效减少内存使用和提高页面加载速度。",
-    "performanceHintDisabled": "懒加载未启用，将一次性翻译整个页面。建议在内容较多的页面开启懒加载。",
-    "note": "较高值可捕获更多段落，但会增加资源消耗"
+    "performanceHintEnabled": "智能加载已启用，将在您滚动时按需翻译内容，有效减少内存使用和提高页面加载速度。",
+    "performanceHintDisabled": "智能加载未启用，将一次性翻译整个页面。建议在内容较多的页面开启智能加载。",
+    "note": "较高值可提前加载更多内容"
   },
   "api": {
     "title": "模型 API 设置",
@@ -173,7 +173,7 @@
     "unknownError": "未知错误"
   },
   "footer": {
-    "slogan": "💖 基于\"i+1\"理论，让学习自然发生",
+    "slogan": "🌱 边浏览边学习，词汇自然增长",
     "clickForUpdate": "点击查看更新详情",
     "settings": "设置"
   },
@@ -275,15 +275,15 @@
     "previewText": "这是一个示例文本，其中包含",
     "originalText": "原文",
     "advancedSettings": "高级设置",
-    "triggerMode": "触发模式",
+    "triggerMode": "启动方式",
     "triggerModes": {
       "automatic": "自动翻译",
-      "manual": "手动触发"
+      "manual": "手动启动"
     },
-    "maxLength": "最大处理长度",
-    "userLevel": "单词熟悉度",
-    "selectUserLevel": "请选择您的语言水平",
-    "replacementRate": "替换率",
+    "maxLength": "段落容量",
+    "userLevel": "掌握等级",
+    "selectUserLevel": "请选择您的掌握等级",
+    "replacementRate": "学习强度",
     "translationMode": "翻译模式",
     "translationModeDescription": "选择翻译方式：单词模式（部分替换）或段落模式（整段翻译）",
     "translationModes": {
@@ -420,24 +420,24 @@
     "logoAlt": "一站式学语言助手 one-language Logo",
     "appName": "一站式学语言助手 (one-language)",
     "version": "版本 {version}",
-    "description": "一站式学语言助手 (one-language) 是一款基于 'i+1' 可理解输入理论的浏览器扩展，旨在通过沉浸式翻译和发音学习生态系统，帮助您在日常浏览中轻松、高效地学习外语。",
+    "description": "一站式学语言助手是一款基于AI的沉浸式语言学习工具，支持智能词汇提取、发音训练和记忆强化等功能。通过将日常网页浏览转化为个性化的语言学习场景，让您在阅读中自然积累词汇，轻松提升外语能力。",
     "coreFeatures": "核心功能",
     "features": {
       "smartTranslation": {
-        "title": "智能翻译与词汇替换",
-        "description": "支持超过20种语言，并根据您的水平智能选择词汇。"
+        "title": "智能词汇提取",
+        "description": "AI智能分析网页内容，根据您的掌握等级精准选择适合学习的词汇，支持20+种语言。"
       },
       "pronunciation": {
-        "title": "发音学习生态系统",
-        "description": "集成音标、AI词义解释和双TTS语音朗读，提供一站式发音学习体验。"
+        "title": "发音训练系统",
+        "description": "集成音标显示、AI词义解析和双引擎语音朗读，提供完整的发音学习体验。"
       },
       "learningStyles": {
-        "title": "多种学习风格",
-        "description": "提供7种不同的翻译样式（如下划线、高亮、模糊等），满足个性化学习需求。"
+        "title": "记忆强化模式",
+        "description": "提供7种视觉样式和学习模式（如模糊渐显），通过多感官刺激增强词汇记忆效果。"
       },
       "interactive": {
-        "title": "交互式悬浮框",
-        "description": "鼠标悬停即可查看单词和短语的详细发音与释义，支持嵌套查询。"
+        "title": "交互式词义卡片",
+        "description": "悬停即可查看单词详情，支持短语拆解和嵌套查询，让学习更加高效便捷。"
       }
     },
     "versionUpdate": "版本更新",

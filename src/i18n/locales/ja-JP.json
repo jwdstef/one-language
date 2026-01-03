@@ -42,7 +42,7 @@
   "language": {
     "nativeLanguage": "母国語",
     "targetLanguage": "目標言語",
-    "languageLevel": "言語レベル",
+    "languageLevel": "習熟度",
     "selectNativeLanguage": "母国語を選択してください",
     "selectTargetLanguage": "目標言語を選択してください",
     "popularLanguages": "よく使われる言語",
@@ -70,32 +70,32 @@
     "setCSS": "CSSスタイルを設定"
   },
   "trigger": {
-    "mode": "トリガーモード",
+    "mode": "起動モード",
     "automatic": "自動",
     "manual": "手動"
   },
   "display": {
-    "originalWord": "原文表示",
+    "originalWord": "原語表示",
     "visible": "表示",
     "hidden": "非表示",
     "learning": "学習モード"
   },
   "replacement": {
-    "rate": "置換率",
-    "maxLength": "最大長"
+    "rate": "学習強度",
+    "maxLength": "コンテンツ容量"
   },
   "pronunciation": {},
   "floatingBall": {},
   "lazyLoading": {
-    "title": "遅延読み込み翻訳",
-    "enabled": "遅延読み込み翻訳を有効にする",
-    "description": "段落までスクロールした時に翻訳を行い、リソース消費を削減しパフォーマンスを向上させます",
-    "preloadDistance": "事前読み込み距離",
-    "preloadDistanceHint": "値を大きくするとより多くの段落をキャプチャできますが、リソース消費が増加します。推奨範囲：50%-100%",
+    "title": "スマートローディング",
+    "enabled": "スマートローディングを有効にする",
+    "description": "スクロールした時にコンテンツを翻訳し、ブラウジング体験を向上させます",
+    "preloadDistance": "事前読み込み範囲",
+    "preloadDistanceHint": "値を大きくするとより多くのコンテンツを事前に読み込めます。推奨範囲：50%-100%",
     "performanceHintTitle": "パフォーマンスヒント",
-    "performanceHintEnabled": "遅延読み込みが有効です。スクロールに応じてコンテンツを翻訳し、メモリ使用量を効果的に削減し、ページの読み込み速度を向上させます。",
-    "performanceHintDisabled": "遅延読み込みが無効です。ページ全体を一度に翻訳します。コンテンツの多いページでは遅延読み込みを有効にすることをお勧めします。",
-    "note": "値を大きくするとより多くの段落をキャプチャできますが、リソース消費が増加します"
+    "performanceHintEnabled": "スマートローディングが有効です。スクロールに応じてコンテンツを翻訳し、メモリ使用量を効果的に削減し、ページの読み込み速度を向上させます。",
+    "performanceHintDisabled": "スマートローディングが無効です。ページ全体を一度に翻訳します。コンテンツの多いページではスマートローディングを有効にすることをお勧めします。",
+    "note": "値を大きくするとより多くのコンテンツを事前に読み込めます"
   },
   "api": {
     "title": "モデルAPI設定",
@@ -114,7 +114,7 @@
     "unknownError": "不明なエラー"
   },
   "footer": {
-    "slogan": "💖「i+1」理論に基づき、学習を自然に発生させる",
+    "slogan": "🌱 ブラウジングしながら学習、語彙が自然に増える",
     "clickForUpdate": "クリックして更新詳細を表示",
     "settings": "設定"
   },
@@ -216,15 +216,15 @@
     "previewText": "これはサンプルテキストで、",
     "originalText": "原文",
     "advancedSettings": "詳細設定",
-    "triggerMode": "トリガーモード",
+    "triggerMode": "起動モード",
     "triggerModes": {
       "automatic": "自動翻訳",
-      "manual": "手動トリガー"
+      "manual": "手動起動"
     },
-    "maxLength": "最大処理長",
-    "userLevel": "単語の習熟度",
-    "selectUserLevel": "言語レベルを選択してください",
-    "replacementRate": "置換率",
+    "maxLength": "コンテンツ容量",
+    "userLevel": "習熟度",
+    "selectUserLevel": "習熟度を選択してください",
+    "replacementRate": "学習強度",
     "translationMode": "翻訳モード",
     "translationModeDescription": "翻訳方法を選択：単語モード（部分置換）または段落モード（全文翻訳）",
     "translationModes": {
@@ -361,24 +361,24 @@
     "logoAlt": "イマージョン言語学習アシスタント one-language ロゴ",
     "appName": "イマージョン言語学習アシスタント (one-language)",
     "version": "バージョン {version}",
-    "description": "イマージョン言語学習アシスタント (one-language) は、「i+1」可解インプット理論に基づくブラウザ拡張機能です。没入型翻訳と発音学習エコシステムを通じて、日常のブラウジング中に簡単かつ効率的に外国語を学ぶお手伝いをします。",
+    "description": "イマージョン言語学習アシスタントは、AIを活用した没入型言語学習ツールです。スマート語彙抽出、発音トレーニング、記憶強化などの機能を搭載。日常のウェブブラウジングをパーソナライズされた言語学習の場に変え、読みながら自然に語彙を増やすことができます。",
     "coreFeatures": "主な機能",
     "features": {
       "smartTranslation": {
-        "title": "スマート翻訳と単語置換",
-        "description": "20以上の言語をサポートし、あなたのレベルに応じて単語をスマートに選択します。"
+        "title": "スマート語彙抽出",
+        "description": "AIがウェブコンテンツを分析し、あなたの習熟度に合った語彙を的確に選択。20以上の言語に対応。"
       },
       "pronunciation": {
-        "title": "発音学習エコシステム",
-        "description": "発音記号、AIによる単語の意味解説、デュアルTTS音声読み上げを統合し、ワンストップの発音学習体験を提供します。"
+        "title": "発音トレーニングシステム",
+        "description": "発音記号表示、AI単語解析、デュアルエンジン音声読み上げを統合した完全な発音学習体験。"
       },
       "learningStyles": {
-        "title": "多様な学習スタイル",
-        "description": "下線、ハイライト、ぼかしなど7種類の異なる翻訳スタイルを提供し、個別化された学習ニーズに応えます。"
+        "title": "記憶強化モード",
+        "description": "7種類のビジュアルスタイルと学習モード（ぼかし→クリア表示など）で、多感覚刺激により語彙の記憶を強化。"
       },
       "interactive": {
-        "title": "インタラクティブなフローティングボックス",
-        "description": "マウスをホバーするだけで単語やフレーズの詳細な発音と意味を確認でき、ネストされた検索もサポートします。"
+        "title": "インタラクティブ単語カード",
+        "description": "ホバーで単語の詳細を表示、フレーズ分解やネスト検索に対応し、効率的で便利な学習を実現。"
       }
     },
     "versionUpdate": "バージョン更新",

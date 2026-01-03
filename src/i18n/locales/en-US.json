@@ -95,7 +95,7 @@
   "language": {
     "nativeLanguage": "Native Language",
     "targetLanguage": "Target Language",
-    "languageLevel": "Language Level",
+    "languageLevel": "Proficiency Level",
     "selectNativeLanguage": "Please select native language",
     "selectTargetLanguage": "Please select target language",
     "popularLanguages": "Popular Languages",
@@ -123,32 +123,32 @@
     "setCSS": "Set CSS Style"
   },
   "trigger": {
-    "mode": "Trigger Mode",
+    "mode": "Start Mode",
     "automatic": "Automatic",
     "manual": "Manual"
   },
   "display": {
-    "originalWord": "Original Word Display",
+    "originalWord": "Source Word Display",
     "visible": "Visible",
     "hidden": "Hidden",
     "learning": "Learning Mode"
   },
   "replacement": {
-    "rate": "Replacement Rate",
-    "maxLength": "Max Length"
+    "rate": "Learning Intensity",
+    "maxLength": "Content Capacity"
   },
   "pronunciation": {},
   "floatingBall": {},
   "lazyLoading": {
-    "title": "Lazy Loading Translation",
-    "enabled": "Enable Lazy Loading",
-    "description": "Translate paragraphs only when they are scrolled into view, reducing resource consumption and improving performance.",
-    "preloadDistance": "Preload Distance",
-    "preloadDistanceHint": "Higher values can capture more paragraphs but will increase resource consumption. Recommended range: 50%-100%",
+    "title": "Smart Loading",
+    "enabled": "Enable Smart Loading",
+    "description": "Translate content only when scrolled into view, improving browsing experience.",
+    "preloadDistance": "Preload Range",
+    "preloadDistanceHint": "Higher values preload more content. Recommended range: 50%-100%",
     "performanceHintTitle": "Performance Tip",
-    "performanceHintEnabled": "Lazy loading is enabled. Content will be translated on-demand as you scroll, effectively reducing memory usage and improving page load speed.",
-    "performanceHintDisabled": "Lazy loading is disabled. The entire page will be translated at once. It's recommended to enable lazy loading on content-heavy pages.",
-    "note": "Higher values capture more paragraphs but increase resource consumption"
+    "performanceHintEnabled": "Smart loading is enabled. Content will be translated on-demand as you scroll, effectively reducing memory usage and improving page load speed.",
+    "performanceHintDisabled": "Smart loading is disabled. The entire page will be translated at once. It's recommended to enable smart loading on content-heavy pages.",
+    "note": "Higher values preload more content"
   },
   "api": {
     "title": "Model API Settings",
@@ -167,7 +167,7 @@
     "unknownError": "Unknown error"
   },
   "footer": {
-    "slogan": "💖 Based on the \"i+1\" theory, let learning happen naturally",
+    "slogan": "🌱 Learn while browsing, grow your vocabulary naturally",
     "clickForUpdate": "Click to view update details",
     "settings": "Settings"
   },
@@ -269,15 +269,15 @@
     "previewText": "This is a sample text containing the ",
     "originalText": "original text",
     "advancedSettings": "Advanced Settings",
-    "triggerMode": "Trigger Mode",
+    "triggerMode": "Start Mode",
     "triggerModes": {
       "automatic": "Automatic Translation",
-      "manual": "Manual Trigger"
+      "manual": "Manual Start"
     },
-    "maxLength": "Maximum Processing Length",
-    "userLevel": "Word Familiarity",
-    "selectUserLevel": "Please select your language level",
-    "replacementRate": "Replacement Rate",
+    "maxLength": "Content Capacity",
+    "userLevel": "Proficiency Level",
+    "selectUserLevel": "Please select your proficiency level",
+    "replacementRate": "Learning Intensity",
     "translationMode": "Translation Mode",
     "translationModeDescription": "Choose translation method: word mode (partial replacement) or paragraph mode (full translation)",
     "translationModes": {
@@ -414,24 +414,24 @@
     "logoAlt": "Immersive Language Learning Helper one-language Logo",
     "appName": "Immersive Language Learning Helper (one-language)",
     "version": "Version {version}",
-    "description": "Immersive Language Learning Helper (one-language) is a browser extension based on the 'i+1' comprehensible input theory, designed to help you learn foreign languages easily and efficiently during your daily browsing through an immersive translation and pronunciation learning ecosystem.",
+    "description": "Immersive Language Learning Helper is an AI-powered immersive language learning tool featuring smart vocabulary extraction, pronunciation training, and memory reinforcement. Transform your daily web browsing into personalized language learning sessions, naturally building vocabulary while you read.",
     "coreFeatures": "Core Features",
     "features": {
       "smartTranslation": {
-        "title": "Smart Translation & Vocabulary Replacement",
-        "description": "Supports over 20 languages and intelligently selects vocabulary based on your level."
+        "title": "Smart Vocabulary Extraction",
+        "description": "AI analyzes web content and precisely selects vocabulary suited to your proficiency level, supporting 20+ languages."
       },
       "pronunciation": {
-        "title": "Pronunciation Learning Ecosystem",
-        "description": "Integrates phonetics, AI word definitions, and dual TTS voice reading for a one-stop pronunciation learning experience."
+        "title": "Pronunciation Training System",
+        "description": "Integrated phonetics display, AI-powered definitions, and dual-engine text-to-speech for a complete pronunciation learning experience."
       },
       "learningStyles": {
-        "title": "Multiple Learning Styles",
-        "description": "Offers 7 different translation styles (e.g., underline, highlight, blur) to meet personalized learning needs."
+        "title": "Memory Reinforcement Modes",
+        "description": "7 visual styles and learning modes (like blur-to-reveal) that enhance vocabulary retention through multi-sensory stimulation."
       },
       "interactive": {
-        "title": "Interactive Floating Box",
-        "description": "Hover to view detailed pronunciation and definitions of words and phrases, with support for nested lookups."
+        "title": "Interactive Word Cards",
+        "description": "Hover to view word details, with phrase breakdown and nested lookups for efficient and convenient learning."
       }
     },
     "versionUpdate": "Version Update",
