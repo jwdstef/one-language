@@ -77,14 +77,14 @@ function createDefaultApiConfigItem(): ApiConfigItem {
 
 // 默认用户设置
 export const DEFAULT_SETTINGS: UserSettings = {
-  userLevel: UserLevel.B1,
-  replacementRate: 0.3,
+  userLevel: UserLevel.B1, // 中级
+  replacementRate: 0.1, // 10%
   isEnabled: true,
   useGptApi: true,
   apiConfigs: [createDefaultApiConfigItem()],
   activeApiConfigId: 'default-config',
   translationStyle: TranslationStyle.DEFAULT,
-  translationMode: TranslationMode.WORD,
+  translationMode: TranslationMode.WORD, // 单词翻译模式
   triggerMode: TriggerMode.MANUAL,
   maxLength: 400,
   originalWordDisplayMode: OriginalWordDisplayMode.VISIBLE,
@@ -92,7 +92,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   multilingualConfig: DEFAULT_MULTILINGUAL_CONFIG,
   pronunciationHotkey: DEFAULT_PRONUNCIATION_HOTKEY,
   floatingBall: DEFAULT_FLOATING_BALL_CONFIG,
-  translationPosition: TranslationPosition.BEFORE,
+  translationPosition: TranslationPosition.BEFORE, // 词前
   showParentheses: true,
   apiRequestTimeout: 0, // 无限制超时
   customTranslationCSS: '',
