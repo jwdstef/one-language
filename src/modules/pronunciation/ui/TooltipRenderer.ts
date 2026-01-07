@@ -229,6 +229,7 @@ export class TooltipRenderer {
             </div>
           </div>
         </div>
+        <div class="wxt-tooltip-arrow"></div>
       </div>
     `;
   }

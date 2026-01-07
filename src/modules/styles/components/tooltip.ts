@@ -1,68 +1,49 @@
 /**
  * 工具提示样式
- * 包含工具提示相关的所有样式定义，基于原始样式完整重建
+ * 包含工具提示相关的所有样式定义，支持亮色/深色主题
+ * 默认亮色主题，深色主题通过 @media (prefers-color-scheme: dark) 切换
  */
 
 export const TOOLTIP_STYLES = `
-/* 深色词典风格工具提示卡片 */
+/* ===== 亮色主题（默认） ===== */
 .wxt-pronunciation-tooltip {
   position: fixed;
   z-index: 10000;
   pointer-events: auto;
   animation: wxt-tooltip-appear 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.25)) drop-shadow(0 10px 10px rgba(0, 0, 0, 0.06));
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
 }
 
 @keyframes wxt-tooltip-appear {
-  from {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .wxt-tooltip-card {
-  background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
-  border: 1px solid #48484a;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 14px;
-  box-shadow:
-    0 16px 32px -10px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 0;
   min-width: 220px;
   max-width: 300px;
-  color: white;
+  color: #1f2937;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(20px);
-}
-
-.wxt-tooltip-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  overflow: visible;
 }
 
 .wxt-tooltip-header {
-  background: linear-gradient(135deg, rgba(58, 58, 60, 0.8) 0%, rgba(42, 42, 44, 0.9) 100%);
-  padding: 16px 16px 12px 16px;
+  background: #f9fafb;
+  padding: 14px 14px 10px 14px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   position: relative;
+  border-radius: 14px 14px 0 0;
 }
 
-/* 短语悬浮框header特殊布局 */
 .wxt-phrase-tooltip-header {
   align-items: flex-start;
   gap: 12px;
@@ -72,27 +53,21 @@ export const TOOLTIP_STYLES = `
   content: '';
   position: absolute;
   bottom: 0;
-  left: 16px;
-  right: 16px;
+  left: 14px;
+  right: 14px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  background: #e5e7eb;
 }
 
-.wxt-tooltip-body {
-  font-size: 12px;
-}
-
-/* 短语悬浮框的body样式 */
-.wxt-phrase-tooltip-body {
-  padding: 8px 16px 12px 16px;
-}
+.wxt-tooltip-body { font-size: 12px; }
+.wxt-phrase-tooltip-body { padding: 8px 14px 12px 14px; }
 
 .wxt-phrase-words {
   padding: 6px 8px;
   font-size: 12px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  background: #f3f4f6;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid #e5e7eb;
   margin: 0;
   position: relative;
   min-height: 32px;
@@ -102,70 +77,49 @@ export const TOOLTIP_STYLES = `
   align-content: flex-start;
 }
 
-.wxt-phrase-words::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-}
-
-.wxt-word-info {
-  flex: 1;
-  min-width: 0;
-}
+.wxt-word-info { flex: 1; min-width: 0; }
 
 .wxt-word-main {
   font-size: 14px;
   font-weight: 700;
-  color: #ffffff;
+  color: #1f2937;
   margin-bottom: 0;
   word-break: break-word;
   letter-spacing: -0.02em;
   line-height: 1.2;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .wxt-phonetic-row {
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #e5e7eb;
 }
 
 .wxt-phonetic-text {
-  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Roboto Mono', monospace;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
   font-size: 13px;
-  color: #64ffda;
-  font-style: normal;
+  color: #6366f1;
   font-weight: 600;
-  background: linear-gradient(135deg, rgba(100, 255, 218, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%);
+  background: #eef2ff;
   padding: 4px 8px;
   border-radius: 6px;
   display: inline-block;
-  border: 1px solid rgba(100, 255, 218, 0.3);
-  letter-spacing: 0.02em;
-  box-shadow: 0 2px 6px rgba(100, 255, 218, 0.15);
+  border: 1px solid #c7d2fe;
 }
 
-/* 音标错误提示样式 */
 .wxt-phonetic-error {
-  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Roboto Mono', monospace;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
   font-size: 13px;
-  color: #ff9999;
+  color: #ef4444;
   font-style: italic;
   font-weight: 500;
-  background: linear-gradient(135deg, rgba(255, 153, 153, 0.1) 0%, rgba(255, 153, 153, 0.05) 100%);
+  background: #fef2f2;
   padding: 4px 8px;
   border-radius: 6px;
   display: inline-block;
-  border: 1px solid rgba(255, 153, 153, 0.3);
-  letter-spacing: 0.02em;
-  opacity: 0.8;
+  border: 1px solid #fecaca;
 }
 
-/* 嵌套单词悬浮框标题行布局 */
 .wxt-word-title-row {
   display: flex;
   align-items: center;
@@ -174,16 +128,11 @@ export const TOOLTIP_STYLES = `
   margin-bottom: 6px;
 }
 
-.wxt-word-title-row .wxt-word-main {
-  flex: 1;
-}
-
-.wxt-word-title-row .wxt-accent-buttons {
-  flex-shrink: 0;
-}
+.wxt-word-title-row .wxt-word-main { flex: 1; }
+.wxt-word-title-row .wxt-accent-buttons { flex-shrink: 0; }
 
 .wxt-audio-btn {
-  background: linear-gradient(135deg, #64ffda 0%, #1de9b6 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   border: none;
   border-radius: 10px;
   width: 36px;
@@ -192,114 +141,66 @@ export const TOOLTIP_STYLES = `
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #000000;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #ffffff;
+  transition: all 0.2s ease;
   flex-shrink: 0;
-  box-shadow:
-    0 3px 10px rgba(100, 255, 218, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-.wxt-audio-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .wxt-audio-btn:hover {
-  transform: translateY(-2px) scale(1.08);
-  box-shadow:
-    0 8px 20px rgba(100, 255, 218, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
-.wxt-audio-btn:hover::before {
-  opacity: 1;
-}
+.wxt-audio-btn svg { width: 14px; height: 14px; }
 
-.wxt-audio-btn:active {
-  transform: translateY(-1px) scale(1.02);
-  box-shadow:
-    0 4px 12px rgba(100, 255, 218, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.wxt-audio-btn svg {
-  width: 14px;
-  height: 14px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-}
-
-/* 工具提示箭头 */
+/* 工具提示箭头 - 默认显示在下方（箭头指向上方的单词） */
 .wxt-tooltip-arrow {
   position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 12px;
-  height: 12px;
-  background: #2a2a2c;
-  border: 1px solid #48484a;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-top: none;
   border-left: none;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 1;
 }
 
-.wxt-tooltip-arrow-top {
+/* 箭头显示在顶部（tooltip在单词下方时） */
+.wxt-tooltip-arrow.wxt-tooltip-arrow-top {
   bottom: auto;
-  top: -6px;
-  transform: translateX(-50%) rotate(-135deg);
-  border: 1px solid #48484a;
+  top: -8px;
+  border: 1px solid #e5e7eb;
   border-bottom: none;
   border-right: none;
+  box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* ===== 短语悬浮框专用样式 ===== */
+/* 短语信息 */
+.wxt-phrase-info-card { flex: 1; min-width: 0; }
 
-/* 短语信息容器 - 简洁版 */
-.wxt-phrase-info-card {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 短语标题 */
 .wxt-phrase-title {
   font-size: 15px;
   font-weight: 700;
-  color: #ffffff;
+  color: #1f2937;
   margin-bottom: 4px;
   line-height: 1.2;
-  letter-spacing: -0.01em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* 短语原文显示 */
 .wxt-phrase-original {
   font-size: 10px;
-  color: #64ffda;
+  color: #6366f1;
   font-style: italic;
-  opacity: 0.9;
-  background: linear-gradient(135deg, rgba(100, 255, 218, 0.12) 0%, rgba(52, 211, 153, 0.08) 100%);
+  background: #eef2ff;
   padding: 3px 8px;
   border-radius: 4px;
-  border: 1px solid rgba(100, 255, 218, 0.2);
+  border: 1px solid #c7d2fe;
   display: inline-block;
   margin-top: 4px;
-  letter-spacing: 0.02em;
-  box-shadow: 0 1px 3px rgba(100, 255, 218, 0.1);
 }
 
-/* 短语音频按钮 */
 .wxt-phrase-audio-btn {
   width: 32px !important;
   height: 32px !important;
@@ -307,68 +208,39 @@ export const TOOLTIP_STYLES = `
   align-self: flex-start;
 }
 
-.wxt-pronunciation-tooltip button{
+.wxt-pronunciation-tooltip button,
+.wxt-word-tooltip button {
   min-width: 20px !important;
   padding: 0 !important;
   margin: 0 !important;
 }
 
-.wxt-word-tooltip button{
-  min-width: 20px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-
-
-
-.wxt-word-list {
-  line-height: 1.6;
-  padding: 3px 0;
-  font-size: 11px;
-}
+.wxt-word-list { line-height: 1.6; padding: 3px 0; font-size: 11px; }
 
 .wxt-interactive-word {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 5px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   display: inline-block;
-  margin: 2px 2px;
-  color: #e5e5e7;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 2px;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
   font-weight: 500;
   font-size: 11px;
   line-height: 1.2;
-  position: relative;
-  overflow: hidden;
-}
-
-.wxt-interactive-word::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.1), transparent);
-  transition: left 0.3s ease;
 }
 
 .wxt-interactive-word:hover {
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%);
-  color: #34d399;
+  background: #eef2ff;
+  color: #6366f1;
   transform: translateY(-1px);
-  border-color: rgba(52, 211, 153, 0.4);
-  box-shadow: 0 3px 12px rgba(52, 211, 153, 0.25);
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
 }
 
-.wxt-interactive-word:hover::before {
-  left: 100%;
-}
-
-/* 单词悬浮框样式(更小更简洁) */
+/* 单词悬浮框 */
 .wxt-word-tooltip {
   position: fixed;
   z-index: 10001;
@@ -385,42 +257,22 @@ export const TOOLTIP_STYLES = `
 }
 
 @keyframes wxt-word-tooltip-appear {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(-4px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .wxt-word-tooltip-card {
-  background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
-  border: 1px solid #48484a;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 12px 14px;
-  color: white;
+  color: #1f2937;
   font-size: 12px;
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  max-width: 200px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  max-width: 220px;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(15px);
-}
-
-.wxt-word-tooltip-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  overflow: visible;
 }
 
 .wxt-word-tooltip-header {
@@ -430,44 +282,32 @@ export const TOOLTIP_STYLES = `
   gap: 10px;
 }
 
-.wxt-word-tooltip-header .wxt-word-info {
-  flex: 1;
-  min-width: 0;
-}
+.wxt-word-tooltip-header .wxt-word-info { flex: 1; min-width: 0; }
 
 .wxt-word-tooltip-header .wxt-word-main {
   font-weight: 700;
   font-size: 13px;
-  color: #ffffff;
-  letter-spacing: -0.02em;
+  color: #1f2937;
   margin-bottom: 0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .wxt-word-tooltip-header .wxt-phonetic-row {
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #e5e7eb;
 }
 
-.wxt-phonetic-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.wxt-phonetic-container { display: flex; flex-direction: column; gap: 6px; }
 
 .wxt-word-tooltip-header .wxt-phonetic-text {
   font-size: 12px;
-  color: #64ffda;
-  font-style: normal;
+  color: #6366f1;
   font-weight: 600;
-  background: linear-gradient(135deg, rgba(100, 255, 218, 0.12) 0%, rgba(52, 211, 153, 0.12) 100%);
+  background: #eef2ff;
   padding: 4px 8px;
   border-radius: 5px;
-  border: 1px solid rgba(100, 255, 218, 0.25);
-  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Roboto Mono', monospace;
-  letter-spacing: 0.02em;
-  box-shadow: 0 1px 3px rgba(100, 255, 218, 0.1);
+  border: 1px solid #c7d2fe;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
   text-align: center;
   margin-bottom: 3px;
 }
@@ -479,26 +319,21 @@ export const TOOLTIP_STYLES = `
   gap: 12px;
 }
 
-.wxt-accent-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+.wxt-accent-group { display: flex; align-items: center; gap: 4px; }
 
 .wxt-accent-label {
   font-size: 10px;
   font-weight: 600;
-  color: #a0a0a0;
+  color: #6b7280;
   min-width: 14px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.08);
+  background: #f3f4f6;
   padding: 1px 4px;
   border-radius: 3px;
-  letter-spacing: 0.3px;
 }
 
 .wxt-accent-audio-btn {
-  background: linear-gradient(135deg, #64ffda 0%, #1de9b6 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   border: none;
   border-radius: 5px;
   width: 20px;
@@ -507,61 +342,42 @@ export const TOOLTIP_STYLES = `
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #000000;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #ffffff;
+  transition: all 0.2s ease;
   flex-shrink: 0;
-  box-shadow:
-    0 2px 5px rgba(100, 255, 218, 0.25),
-    0 0 0 1px rgba(255, 255, 255, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
 }
 
 .wxt-accent-audio-btn:hover {
   transform: translateY(-1px) scale(1.1);
-  box-shadow:
-    0 3px 8px rgba(100, 255, 218, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.35);
 }
 
-.wxt-accent-audio-btn:active {
-  transform: translateY(0) scale(1.05);
-  box-shadow:
-    0 1px 4px rgba(100, 255, 218, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-/* 原文显示样式 */
+/* 原文显示 */
 .wxt-original-text {
   font-size: 10px;
-  color: #a0a0a0;
+  color: #6b7280;
   font-style: italic;
   margin: 6px 0 0 0;
   padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f3f4f6;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  opacity: 0.85;
+  border: 1px solid #e5e7eb;
   text-align: center;
-  position: relative;
 }
 
-/* 单词悬浮框中的原文样式 */
 .wxt-tooltip-header .wxt-original-text {
   margin: 6px 0 6px 0;
-  font-size: 10px;
-  background: linear-gradient(135deg, rgba(100, 255, 218, 0.08) 0%, rgba(52, 211, 153, 0.08) 100%);
-  border-color: rgba(100, 255, 218, 0.15);
-  color: #64ffda;
-  opacity: 0.9;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #6366f1;
 }
 
-/* 词义容器样式 */
+/* 词义容器 */
 .wxt-meaning-container {
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #e5e7eb;
   min-height: 20px;
   display: flex;
   align-items: center;
@@ -569,28 +385,27 @@ export const TOOLTIP_STYLES = `
 
 .wxt-meaning-text {
   font-size: 11px;
-  color: #e5e5e7;
+  color: #374151;
   line-height: 1.4;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  background: #f9fafb;
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e5e7eb;
   margin: 0;
   font-style: italic;
-  opacity: 0.95;
   flex: 1;
 }
 
 .wxt-meaning-loading {
   font-size: 11px;
-  color: #a0a0a0;
+  color: #6b7280;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f9fafb;
   border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #e5e7eb;
   font-style: italic;
   flex: 1;
 }
@@ -600,25 +415,26 @@ export const TOOLTIP_STYLES = `
   width: 12px;
   height: 12px;
   border: 2px solid transparent;
-  border-top-color: #64ffda;
+  border-top-color: #6366f1;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: wxt-spin 1s linear infinite;
   flex-shrink: 0;
 }
 
+@keyframes wxt-spin { to { transform: rotate(360deg); } }
+
 .wxt-phonetic-loading {
   font-size: 12px;
-  color: #a0a0a0;
+  color: #6b7280;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f9fafb;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #e5e7eb;
   font-style: italic;
   margin-bottom: 4px;
-  text-align: center;
 }
 
 .wxt-phonetic-loading::after {
@@ -626,61 +442,197 @@ export const TOOLTIP_STYLES = `
   width: 10px;
   height: 10px;
   border: 2px solid transparent;
-  border-top-color: #64ffda;
+  border-top-color: #6366f1;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: wxt-spin 1s linear infinite;
   flex-shrink: 0;
 }
 
-/* 词义容器在单词悬浮框中的样式 */
-.wxt-word-tooltip .wxt-meaning-container {
-  margin-top: 6px;
-  padding-top: 6px;
-  min-height: 20px;
+.wxt-word-tooltip .wxt-meaning-container { margin-top: 6px; padding-top: 6px; min-height: 20px; }
+.wxt-word-tooltip .wxt-meaning-text { font-size: 12px; padding: 6px 10px; }
+.wxt-word-tooltip .wxt-meaning-loading { font-size: 11px; padding: 4px 8px; }
+.wxt-word-tooltip .wxt-meaning-loading::after { width: 10px; height: 10px; }
+
+/* 单词悬浮框箭头（嵌套tooltip） */
+.wxt-word-tooltip .wxt-tooltip-arrow {
+  position: absolute;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-left: none;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 1;
 }
 
-.wxt-word-tooltip .wxt-meaning-text {
-  font-size: 12px;
-  padding: 6px 10px;
+.wxt-word-tooltip .wxt-tooltip-arrow.wxt-tooltip-arrow-top {
+  bottom: auto;
+  top: -8px;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  border-right: none;
+  box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.wxt-word-tooltip .wxt-meaning-loading {
-  font-size: 11px;
-  padding: 4px 8px;
+/* ===== 深色主题 ===== */
+/* 通过 .wxt-theme-dark 类触发深色主题 */
+.wxt-theme-dark .wxt-tooltip-card {
+  background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
+  border-color: #48484a;
+  color: #ffffff;
+  box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.4);
 }
 
-.wxt-word-tooltip .wxt-meaning-loading::after {
-  width: 10px;
-  height: 10px;
+.wxt-theme-dark .wxt-tooltip-header {
+  background: linear-gradient(135deg, rgba(58, 58, 60, 0.8) 0%, rgba(42, 42, 44, 0.9) 100%);
 }
 
-/* 响应式适配 */
+.wxt-theme-dark .wxt-tooltip-header::after { background: rgba(255, 255, 255, 0.08); }
+
+.wxt-theme-dark .wxt-phrase-words {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.wxt-theme-dark .wxt-word-main { color: #ffffff; }
+.wxt-theme-dark .wxt-phonetic-row { border-top-color: rgba(255, 255, 255, 0.08); }
+
+.wxt-theme-dark .wxt-phonetic-text {
+  color: #64ffda;
+  background: linear-gradient(135deg, rgba(100, 255, 218, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%);
+  border-color: rgba(100, 255, 218, 0.3);
+}
+
+.wxt-theme-dark .wxt-phonetic-error {
+  color: #ff9999;
+  background: rgba(255, 153, 153, 0.1);
+  border-color: rgba(255, 153, 153, 0.3);
+}
+
+.wxt-theme-dark .wxt-audio-btn {
+  background: linear-gradient(135deg, #64ffda 0%, #1de9b6 100%);
+  color: #000000;
+  box-shadow: 0 3px 10px rgba(100, 255, 218, 0.4);
+}
+
+.wxt-theme-dark .wxt-audio-btn:hover { box-shadow: 0 8px 20px rgba(100, 255, 218, 0.5); }
+
+.wxt-theme-dark .wxt-tooltip-arrow {
+  background: #1f2937;
+  border-color: #48484a;
+}
+
+.wxt-theme-dark .wxt-tooltip-arrow.wxt-tooltip-arrow-top {
+  background: #1f2937;
+  border-color: #48484a;
+}
+
+.wxt-theme-dark .wxt-phrase-title { color: #ffffff; }
+
+.wxt-theme-dark .wxt-phrase-original {
+  color: #64ffda;
+  background: rgba(100, 255, 218, 0.12);
+  border-color: rgba(100, 255, 218, 0.2);
+}
+
+.wxt-theme-dark .wxt-interactive-word {
+  color: #e5e5e7;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.wxt-theme-dark .wxt-interactive-word:hover {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 3px 12px rgba(52, 211, 153, 0.25);
+}
+
+.wxt-theme-dark .wxt-word-tooltip-card {
+  background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
+  border-color: #48484a;
+  color: #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.wxt-theme-dark .wxt-word-tooltip-header .wxt-word-main { color: #ffffff; }
+.wxt-theme-dark .wxt-word-tooltip-header .wxt-phonetic-row { border-top-color: rgba(255, 255, 255, 0.08); }
+
+.wxt-theme-dark .wxt-word-tooltip-header .wxt-phonetic-text {
+  color: #64ffda;
+  background: rgba(100, 255, 218, 0.12);
+  border-color: rgba(100, 255, 218, 0.25);
+}
+
+.wxt-theme-dark .wxt-accent-label {
+  color: #a0a0a0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.wxt-theme-dark .wxt-accent-audio-btn {
+  background: linear-gradient(135deg, #64ffda 0%, #1de9b6 100%);
+  color: #000000;
+  box-shadow: 0 2px 5px rgba(100, 255, 218, 0.25);
+}
+
+.wxt-theme-dark .wxt-accent-audio-btn:hover { box-shadow: 0 3px 8px rgba(100, 255, 218, 0.35); }
+
+.wxt-theme-dark .wxt-original-text {
+  color: #a0a0a0;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wxt-theme-dark .wxt-tooltip-header .wxt-original-text {
+  background: rgba(100, 255, 218, 0.08);
+  border-color: rgba(100, 255, 218, 0.15);
+  color: #64ffda;
+}
+
+.wxt-theme-dark .wxt-meaning-container { border-top-color: rgba(255, 255, 255, 0.08); }
+
+.wxt-theme-dark .wxt-meaning-text {
+  color: #e5e5e7;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.wxt-theme-dark .wxt-meaning-loading {
+  color: #a0a0a0;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wxt-theme-dark .wxt-meaning-loading::after { border-top-color: #64ffda; }
+
+.wxt-theme-dark .wxt-phonetic-loading {
+  color: #a0a0a0;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wxt-theme-dark .wxt-phonetic-loading::after { border-top-color: #64ffda; }
+
+/* 单词悬浮框箭头深色主题 */
+.wxt-theme-dark .wxt-word-tooltip .wxt-tooltip-arrow {
+  background: #1f2937;
+  border-color: #48484a;
+}
+
+.wxt-theme-dark .wxt-word-tooltip .wxt-tooltip-arrow.wxt-tooltip-arrow-top {
+  background: #1f2937;
+  border-color: #48484a;
+}
+
+/* 响应式 */
 @media (max-width: 480px) {
-  .wxt-tooltip-card {
-    min-width: 200px;
-    max-width: 280px;
-  }
-
-  .wxt-tooltip-header {
-    padding: 14px 14px 10px 14px;
-  }
-
-  .wxt-word-main {
-    font-size: 13px;
-  }
-
-  .wxt-phonetic-text {
-    font-size: 12px;
-  }
-
-  .wxt-audio-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .wxt-audio-btn svg {
-    width: 12px;
-    height: 12px;
-  }
+  .wxt-tooltip-card { min-width: 200px; max-width: 280px; }
+  .wxt-tooltip-header { padding: 12px 12px 8px 12px; }
+  .wxt-word-main { font-size: 13px; }
+  .wxt-phonetic-text { font-size: 12px; }
+  .wxt-audio-btn { width: 32px; height: 32px; }
+  .wxt-audio-btn svg { width: 12px; height: 12px; }
 }
 `;

@@ -76,6 +76,9 @@ class PositionUtils {
     const viewportHeight = window.innerHeight;
     const padding = 12;
 
+    // 计算单词中心点
+    const wordCenterX = rect.left + rect.width / 2;
+
     // 计算水平位置（居中对齐）
     let left = rect.left + (rect.width - tooltipRect.width) / 2;
     if (left < padding) {
@@ -113,10 +116,24 @@ class PositionUtils {
       top = viewportHeight - tooltipRect.height - padding;
     }
 
-    // 更新箭头样式
-    const arrow = tooltip.querySelector('.wxt-tooltip-arrow');
+    // 计算箭头相对于tooltip的位置（指向单词中心）
+    let arrowLeft = wordCenterX - left;
+    // 限制箭头位置在tooltip范围内（留出边距）
+    const arrowMinLeft = 20;
+    const arrowMaxLeft = tooltipRect.width - 20;
+    arrowLeft = Math.max(arrowMinLeft, Math.min(arrowMaxLeft, arrowLeft));
+
+    // 更新箭头样式和位置
+    const arrow = tooltip.querySelector('.wxt-tooltip-arrow') as HTMLElement;
     if (arrow) {
       arrow.className = arrowClass;
+      arrow.style.left = `${arrowLeft}px`;
+      // 根据箭头方向设置正确的transform
+      if (arrowClass.includes('arrow-top')) {
+        arrow.style.transform = 'translateX(-50%) rotate(-135deg)';
+      } else {
+        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+      }
     }
 
     // 应用最终位置

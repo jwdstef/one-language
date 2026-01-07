@@ -25,11 +25,11 @@ const SVG_ICONS = {
 
 /**
  * CSS styles for the word popup component
- * "Exquisite & Perfect" Light Theme Design
+ * 默认亮色主题，深色主题通过 @media (prefers-color-scheme: dark) 切换
  */
 
 export const WORD_POPUP_STYLES = `
-/* Global Reset & Font */
+/* ===== 亮色主题（默认） ===== */
 .wxt-word-popup {
   position: absolute;
   z-index: 2147483647;
@@ -37,14 +37,11 @@ export const WORD_POPUP_STYLES = `
   opacity: 0;
   visibility: hidden;
   transform: translateY(8px) scale(0.98);
-  transition: 
-    opacity 0.2s ease-out,
-    transform 0.25s ease-out,
-    visibility 0.2s;
+  transition: opacity 0.2s ease-out, transform 0.25s ease-out, visibility 0.2s;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
   width: 380px;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.15)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.12)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
 }
 
 .wxt-word-popup * {
@@ -52,26 +49,21 @@ export const WORD_POPUP_STYLES = `
   -webkit-font-smoothing: antialiased;
 }
 
-/* Visibility States */
 .wxt-word-popup--visible {
   opacity: 1;
   visibility: visible;
   transform: translateY(0) scale(1);
 }
 
-.wxt-word-popup--loading {
-  pointer-events: none;
-}
+.wxt-word-popup--loading { pointer-events: none; }
 
-/* Loading Overlay */
 .wxt-word-popup--loading::after {
   content: '';
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 24px;
+  border-radius: 16px;
   z-index: 20;
 }
 
@@ -81,7 +73,7 @@ export const WORD_POPUP_STYLES = `
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -141,7 +133,7 @@ export const WORD_POPUP_STYLES = `
 }
 
 .wxt-favorite-btn:hover {
-  background: #f3f4f6;
+  background: #eef2ff;
   color: #6366f1;
   border-color: #c7d2fe;
 }
@@ -505,26 +497,52 @@ export const WORD_POPUP_STYLES = `
 /* Arrow */
 .wxt-word-popup-arrow {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  transform: rotate(45deg);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  z-index: 10;
   left: 50%;
-  margin-left: -6px;
-  z-index: -1;
+  transform: translateX(-50%);
 }
 
 .wxt-word-popup--arrow-top .wxt-word-popup-arrow {
-  top: -6px;
-  border-right: none;
-  border-bottom: none;
+  top: -10px;
+  border-width: 0 10px 10px 10px;
+  border-color: transparent transparent #ffffff transparent;
+  filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.06));
+}
+
+.wxt-word-popup--arrow-top .wxt-word-popup-arrow::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -11px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 11px 11px 11px;
+  border-color: transparent transparent #e5e7eb transparent;
+  z-index: -1;
 }
 
 .wxt-word-popup--arrow-bottom .wxt-word-popup-arrow {
-  bottom: -6px;
-  border-left: none;
-  border-top: none;
+  bottom: -10px;
+  border-width: 10px 10px 0 10px;
+  border-color: #ffffff transparent transparent transparent;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+}
+
+.wxt-word-popup--arrow-bottom .wxt-word-popup-arrow::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: -11px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 11px 11px 0 11px;
+  border-color: #e5e7eb transparent transparent transparent;
+  z-index: -1;
 }
 
 /* Skeletons */
@@ -550,6 +568,53 @@ export const WORD_POPUP_STYLES = `
   color: #9ca3af;
   font-size: 13px;
 }
+
+/* ===== 深色主题 ===== */
+/* 通过 .wxt-theme-dark 类触发深色主题 */
+.wxt-theme-dark .wxt-word-popup { filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)); }
+.wxt-theme-dark .wxt-word-popup--loading::after { background: rgba(31, 41, 55, 0.7); }
+.wxt-theme-dark .wxt-word-popup-container { background: #1f2937; border-color: #374151; }
+.wxt-theme-dark .wxt-word-header { border-bottom-color: #374151; }
+.wxt-theme-dark .wxt-word-text { color: #f9fafb; }
+.wxt-theme-dark .wxt-favorite-btn { background: #374151; border-color: #4b5563; color: #9ca3af; }
+.wxt-theme-dark .wxt-favorite-btn:hover { background: rgba(129, 140, 248, 0.15); color: #818cf8; border-color: #818cf8; }
+.wxt-theme-dark .wxt-pronunciation-item { background: #374151; }
+.wxt-theme-dark .wxt-pronunciation-item:hover { background: #4b5563; }
+.wxt-theme-dark .wxt-pronunciation-audio-btn { background: #818cf8; }
+.wxt-theme-dark .wxt-pronunciation-audio-btn:hover { background: #a5b4fc; }
+.wxt-theme-dark .wxt-pronunciation-label { color: #818cf8; }
+.wxt-theme-dark .wxt-pronunciation-phonetic { color: #9ca3af; }
+.wxt-theme-dark .wxt-word-popup-body { color: #f9fafb; }
+.wxt-theme-dark .wxt-word-popup-body::-webkit-scrollbar-thumb { background: #4b5563; }
+.wxt-theme-dark .wxt-popup-section { border-bottom-color: #374151; }
+.wxt-theme-dark .wxt-section-icon { color: #818cf8; }
+.wxt-theme-dark .wxt-section-title { color: #6b7280; }
+.wxt-theme-dark .wxt-context-box { background: #111827; border-left-color: #818cf8; }
+.wxt-theme-dark .wxt-context-sentence { color: #f9fafb; }
+.wxt-theme-dark .wxt-highlight-word { color: #818cf8; background: rgba(129, 140, 248, 0.25); }
+.wxt-theme-dark .wxt-context-translation { color: #9ca3af; border-top-color: #374151; }
+.wxt-theme-dark .wxt-meaning-pos { color: #818cf8; background: rgba(129, 140, 248, 0.15); }
+.wxt-theme-dark .wxt-meaning-def { color: #f9fafb; }
+.wxt-theme-dark .wxt-example-card { background: #111827; }
+.wxt-theme-dark .wxt-example-en { color: #9ca3af; }
+.wxt-theme-dark .wxt-example-zh { color: #6b7280; }
+.wxt-theme-dark .wxt-morphology-chip { background: #111827; border-color: #374151; }
+.wxt-theme-dark .wxt-morphology-text { color: #f9fafb; }
+.wxt-theme-dark .wxt-morphology-meaning { color: #6b7280; }
+.wxt-theme-dark .wxt-morphology-separator { color: #4b5563; }
+.wxt-theme-dark .wxt-morphology-etymology { color: #9ca3af; background: #111827; }
+.wxt-theme-dark .wxt-tag-chip { color: #818cf8; background: rgba(129, 140, 248, 0.15); }
+.wxt-theme-dark .wxt-tag-remove { color: #818cf8; }
+.wxt-theme-dark .wxt-tag-input { background: #111827; border-color: #374151; color: #f9fafb; }
+.wxt-theme-dark .wxt-tag-input:focus { border-color: #818cf8; }
+.wxt-theme-dark .wxt-tag-add-btn { background: #818cf8; }
+.wxt-theme-dark .wxt-tag-add-btn:hover { background: #a5b4fc; }
+.wxt-theme-dark .wxt-word-popup--arrow-top .wxt-word-popup-arrow { border-color: transparent transparent #1f2937 transparent; }
+.wxt-theme-dark .wxt-word-popup--arrow-top .wxt-word-popup-arrow::before { border-color: transparent transparent #374151 transparent; }
+.wxt-theme-dark .wxt-word-popup--arrow-bottom .wxt-word-popup-arrow { border-color: #1f2937 transparent transparent transparent; }
+.wxt-theme-dark .wxt-word-popup--arrow-bottom .wxt-word-popup-arrow::before { border-color: #374151 transparent transparent transparent; }
+.wxt-theme-dark .wxt-skeleton { background: linear-gradient(90deg, #111827 25%, #374151 50%, #111827 75%); }
+.wxt-theme-dark .wxt-empty-state { color: #6b7280; }
 `;
 
 

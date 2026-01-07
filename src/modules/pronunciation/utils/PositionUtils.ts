@@ -11,6 +11,7 @@ export interface PositionResult {
   left: number;
   top: number;
   arrowClass: string;
+  arrowLeft: number; // 箭头相对于tooltip左边的位置
 }
 
 export class PositionUtils {
@@ -36,10 +37,19 @@ export class PositionUtils {
 
     const positionResult = this.calculatePosition(element, tooltip, position);
 
-    // 更新箭头样式
-    const arrow = tooltip.querySelector('.wxt-tooltip-arrow');
+    // 更新箭头样式和位置
+    const arrow = tooltip.querySelector('.wxt-tooltip-arrow') as HTMLElement;
     if (arrow) {
       arrow.className = positionResult.arrowClass;
+      arrow.style.left = `${positionResult.arrowLeft}px`;
+      // 根据箭头位置设置旋转角度
+      if (positionResult.arrowClass.includes('arrow-top')) {
+        // tooltip在单词下方，箭头在顶部指向上方
+        arrow.style.transform = 'translateX(-50%) rotate(-135deg)';
+      } else {
+        // tooltip在单词上方，箭头在底部指向下方
+        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+      }
     }
 
     // 应用最终位置
@@ -69,6 +79,9 @@ export class PositionUtils {
     const viewportHeight = window.innerHeight;
     const padding = UI_CONSTANTS.TOOLTIP_PADDING;
 
+    // 计算单词中心点
+    const wordCenterX = rect.left + rect.width / 2;
+
     // 计算水平位置（居中对齐）
     let left = rect.left + (rect.width - tooltipRect.width) / 2;
     if (left < padding) {
@@ -76,6 +89,13 @@ export class PositionUtils {
     } else if (left + tooltipRect.width > viewportWidth - padding) {
       left = viewportWidth - tooltipRect.width - padding;
     }
+
+    // 计算箭头相对于tooltip的位置（指向单词中心）
+    let arrowLeft = wordCenterX - left;
+    // 限制箭头位置在tooltip范围内（留出边距）
+    const arrowMinLeft = 20;
+    const arrowMaxLeft = tooltipRect.width - 20;
+    arrowLeft = Math.max(arrowMinLeft, Math.min(arrowMaxLeft, arrowLeft));
 
     // 计算垂直位置
     let top: number;
@@ -106,7 +126,7 @@ export class PositionUtils {
       top = viewportHeight - tooltipRect.height - padding;
     }
 
-    return { left, top, arrowClass };
+    return { left, top, arrowClass, arrowLeft };
   }
 
   /**

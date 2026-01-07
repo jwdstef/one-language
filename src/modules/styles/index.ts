@@ -24,7 +24,7 @@ export {
 };
 
 // 导出StyleManager类（避免循环依赖）
-export { StyleManager } from './core/StyleManager';
+export { StyleManager, type ThemeMode } from './core/StyleManager';
 
 // 合并所有样式
 export const ALL_STYLES = `

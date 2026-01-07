@@ -282,19 +282,31 @@ export class WordPopupManager {
     }
   }
 
-  private calculatePosition(element: HTMLElement): PopupPosition {
+  private calculatePosition(element: HTMLElement): PopupPosition & { arrowLeft: number } {
     const rect = element.getBoundingClientRect();
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     
-    let left = rect.left + scrollLeft + (rect.width / 2) - (POPUP_DIMENSIONS.WIDTH / 2);
+    // 计算弹窗理想的左边位置（以单词中心为基准）
+    const wordCenterX = rect.left + scrollLeft + (rect.width / 2);
+    let left = wordCenterX - (POPUP_DIMENSIONS.WIDTH / 2);
+    
+    // 边界检查
     if (left < POPUP_DIMENSIONS.VIEWPORT_PADDING) {
       left = POPUP_DIMENSIONS.VIEWPORT_PADDING;
     } else if (left + POPUP_DIMENSIONS.WIDTH > viewportWidth - POPUP_DIMENSIONS.VIEWPORT_PADDING) {
       left = viewportWidth - POPUP_DIMENSIONS.WIDTH - POPUP_DIMENSIONS.VIEWPORT_PADDING;
     }
+    
+    // 计算箭头相对于弹窗的位置（指向单词中心）
+    // arrowLeft 是箭头中心相对于弹窗左边的距离
+    let arrowLeft = wordCenterX - left;
+    // 限制箭头位置在弹窗范围内（留出边距）
+    const arrowMinLeft = 30;
+    const arrowMaxLeft = POPUP_DIMENSIONS.WIDTH - 30;
+    arrowLeft = Math.max(arrowMinLeft, Math.min(arrowMaxLeft, arrowLeft));
     
     const spaceAbove = rect.top;
     const spaceBelow = viewportHeight - rect.bottom;
@@ -312,10 +324,10 @@ export class WordPopupManager {
       arrowPosition = 'top';
     }
     
-    return { top, left, arrowPosition };
+    return { top, left, arrowPosition, arrowLeft };
   }
 
-  private setPosition(position: PopupPosition): void {
+  private setPosition(position: PopupPosition & { arrowLeft?: number }): void {
     if (!this.popupElement) return;
     this.popupElement.style.top = `${position.top}px`;
     this.popupElement.style.left = `${position.left}px`;
@@ -324,6 +336,13 @@ export class WordPopupManager {
     this.popupElement.classList.add(
       position.arrowPosition === 'top' ? CSS_CLASSES.POPUP_ARROW_TOP : CSS_CLASSES.POPUP_ARROW_BOTTOM
     );
+    
+    // 设置箭头位置，使其指向单词
+    const arrow = this.popupElement.querySelector('.wxt-word-popup-arrow') as HTMLElement;
+    if (arrow && position.arrowLeft !== undefined) {
+      arrow.style.left = `${position.arrowLeft}px`;
+      arrow.style.transform = 'translateX(-50%)';
+    }
   }
 
   private addDismissalListeners(): void {

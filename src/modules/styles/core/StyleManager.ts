@@ -6,16 +6,26 @@
 import { TranslationStyle } from '../../shared/types/core';
 import { ALL_STYLES } from '../index';
 
+// 主题类型
+export type ThemeMode = 'light' | 'dark';
+
+// 主题类名
+const THEME_CLASS = 'wxt-theme-dark';
+
 export class StyleManager {
   private currentStyle: TranslationStyle;
   private customCSS: string = '';
   private customStyleElement: HTMLStyleElement | null = null;
   private mainStyleElement: HTMLStyleElement | null = null;
+  private currentTheme: ThemeMode = 'light';
+  private themeChangeCallback: ((theme: ThemeMode) => void) | null = null;
 
   constructor() {
     this.currentStyle = TranslationStyle.DEFAULT;
     // 初始化样式
     this.initializeStyles();
+    // 初始化主题
+    this.initializeTheme();
   }
 
   /**
@@ -48,6 +58,89 @@ export class StyleManager {
     }
 
     return `wxt-style-${this.currentStyle}`;
+  }
+
+  /**
+   * 获取当前主题
+   */
+  getCurrentTheme(): ThemeMode {
+    return this.currentTheme;
+  }
+
+  /**
+   * 设置主题
+   * @param theme 主题模式
+   */
+  setTheme(theme: ThemeMode): void {
+    this.currentTheme = theme;
+    this.applyTheme();
+    if (this.themeChangeCallback) {
+      this.themeChangeCallback(theme);
+    }
+  }
+
+  /**
+   * 设置主题变化回调
+   */
+  onThemeChange(callback: (theme: ThemeMode) => void): void {
+    this.themeChangeCallback = callback;
+  }
+
+  /**
+   * 初始化主题
+   * 从存储中读取用户设置的主题
+   */
+  private async initializeTheme(): Promise<void> {
+    try {
+      // 使用 browser API 读取主题设置
+      if (typeof browser !== 'undefined' && browser.storage) {
+        const result = await browser.storage.local.get('theme');
+        if (result.theme) {
+          this.currentTheme = result.theme === 'dark' ? 'dark' : 'light';
+        }
+      }
+    } catch (error) {
+      console.warn('[StyleManager] Failed to read theme from storage:', error);
+    }
+    this.applyTheme();
+    
+    // 监听主题变化
+    this.listenForThemeChanges();
+  }
+
+  /**
+   * 监听存储中的主题变化
+   */
+  private listenForThemeChanges(): void {
+    try {
+      if (typeof browser !== 'undefined' && browser.storage) {
+        browser.storage.onChanged.addListener((changes, areaName) => {
+          if (areaName === 'local' && changes.theme) {
+            const newTheme = changes.theme.newValue === 'dark' ? 'dark' : 'light';
+            if (newTheme !== this.currentTheme) {
+              this.currentTheme = newTheme;
+              this.applyTheme();
+              if (this.themeChangeCallback) {
+                this.themeChangeCallback(newTheme);
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('[StyleManager] Failed to listen for theme changes:', error);
+    }
+  }
+
+  /**
+   * 应用主题到 body
+   */
+  private applyTheme(): void {
+    if (this.currentTheme === 'dark') {
+      document.body.classList.add(THEME_CLASS);
+    } else {
+      document.body.classList.remove(THEME_CLASS);
+    }
   }
 
   /**
@@ -98,6 +191,9 @@ export class StyleManager {
       this.customStyleElement.parentNode.removeChild(this.customStyleElement);
       this.customStyleElement = null;
     }
+    
+    // 移除主题类
+    document.body.classList.remove(THEME_CLASS);
   }
 
   /**
@@ -107,6 +203,7 @@ export class StyleManager {
   reinitialize(): void {
     this.cleanup();
     this.initializeStyles();
+    this.applyTheme();
     if (this.customCSS) {
       this.updateCustomStyle();
     }
