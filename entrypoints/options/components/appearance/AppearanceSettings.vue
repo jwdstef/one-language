@@ -12,25 +12,10 @@
             <p class="opt-card-subtitle">配置页面悬浮球的显示和行为</p>
           </div>
         </div>
-        <!-- Premium badge for floating ball -->
-        <div v-if="!canAccessFloatingBall" class="opt-premium-badge">
-          <Lock class="opt-premium-badge-icon" />
-          <span>{{ $t('settings.premiumFeature') }}</span>
-        </div>
       </div>
       <div class="opt-card-content">
-        <!-- Premium locked message -->
-        <div v-if="!canAccessFloatingBall" class="opt-premium-locked">
-          <div class="opt-premium-locked-icon">
-            <Lock class="w-5 h-5" />
-          </div>
-          <div class="opt-premium-locked-content">
-            <p class="opt-premium-locked-title">{{ $t('settings.premiumRequired') }}</p>
-            <p class="opt-premium-locked-desc">{{ $t('settings.floatingBallPremiumDesc') }}</p>
-          </div>
-        </div>
         <!-- 启用悬浮球 -->
-        <div class="opt-setting-row" :class="{ 'opt-setting-row--disabled': !canAccessFloatingBall }">
+        <div class="opt-setting-row">
           <div class="opt-setting-info">
             <div class="opt-setting-label-row">
               <Power class="opt-setting-icon opt-text-success" />
@@ -42,13 +27,12 @@
             id="floating-ball-enabled"
             :model-value="settings.floatingBall.enabled"
             @update:model-value="settings.floatingBall.enabled = $event"
-            :disabled="!canAccessFloatingBall"
           />
         </div>
 
         <!-- 悬浮球位置 -->
         <Transition name="slide-down">
-          <div v-if="settings.floatingBall.enabled && canAccessFloatingBall" class="opt-setting-row opt-setting-row--vertical">
+          <div v-if="settings.floatingBall.enabled" class="opt-setting-row opt-setting-row--vertical">
             <div class="opt-setting-info">
               <div class="opt-setting-label-row">
                 <Move class="opt-setting-icon" />
@@ -75,7 +59,7 @@
 
         <!-- 悬浮球透明度 -->
         <Transition name="slide-down">
-          <div v-if="settings.floatingBall.enabled && canAccessFloatingBall" class="opt-setting-row opt-setting-row--vertical">
+          <div v-if="settings.floatingBall.enabled" class="opt-setting-row opt-setting-row--vertical">
             <div class="opt-setting-info">
               <div class="opt-setting-label-row">
                 <Eye class="opt-setting-icon" />
@@ -102,7 +86,7 @@
 
         <!-- 预览提示 -->
         <Transition name="slide-down">
-          <div v-if="settings.floatingBall.enabled && canAccessFloatingBall" class="opt-info-box">
+          <div v-if="settings.floatingBall.enabled" class="opt-info-box">
             <div class="opt-info-box-icon">
               <Lightbulb class="w-5 h-5" />
             </div>
@@ -248,7 +232,6 @@ const settings = ref<UserSettings>({
   pronunciationHotkey: { ...DEFAULT_PRONUNCIATION_HOTKEY },
 });
 const storageService = StorageService.getInstance();
-const canAccessFloatingBall = ref(true);
 const canAccessPronunciationHotkey = ref(true);
 
 const emit = defineEmits<{
@@ -265,14 +248,6 @@ onMounted(async () => {
     loadedSettings.pronunciationHotkey = { ...DEFAULT_PRONUNCIATION_HOTKEY };
   }
   settings.value = loadedSettings;
-  
-  // Check feature access for floating ball
-  try {
-    canAccessFloatingBall.value = await featureGateService.canAccess('floatingBall');
-  } catch (error) {
-    console.warn('[AppearanceSettings] Failed to check floating ball access:', error);
-    canAccessFloatingBall.value = true; // Default to allowing if check fails
-  }
   
   // Check feature access for pronunciation hotkey
   try {

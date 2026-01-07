@@ -113,8 +113,13 @@ export class FeatureGateService {
   public async checkFeatureAccess(feature: FeatureName): Promise<FeatureAccessResult> {
     const features = await subscriptionService.getFeatures();
     
-    // If no features available (not logged in), deny access to premium features
+    // If no features available (not logged in), use default free tier features
     if (!features) {
+      // Check if this is a free feature that should be allowed for unauthenticated users
+      const freeFeatures: FeatureName[] = ['floatingBall']; // Features available to all users
+      if (freeFeatures.includes(feature)) {
+        return { allowed: true };
+      }
       return {
         allowed: false,
         reason: 'Not authenticated',
