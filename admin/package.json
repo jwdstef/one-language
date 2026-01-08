@@ -1,7 +1,7 @@
 {
   "name": "one-language-admin",
   "version": "1.0.0",
-  "description": "Admin dashboard for one-language SaaS platform",
+  "description": "Admin dashboard for One-Language immersive language learning platform",
   "type": "module",
   "scripts": {
     "dev": "vite",

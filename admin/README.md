@@ -1,6 +1,6 @@
-# illa-helper Admin Dashboard
+# One-Language Admin Dashboard
 
-Web-based admin dashboard for the illa-helper SaaS platform.
+Web-based admin dashboard for the One-Language immersive language learning platform.
 
 ## Features
 

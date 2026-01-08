@@ -1,647 +1,297 @@
-# Immersive Language Learning Assistant
+# One-Language - 沉浸式语言学习助手
 
 <div align="center">
 <img src="public/icon/128.png" width="100" height="100"  />
 </div>
-<div align="center">
 
-[![Stars](https://img.shields.io/github/stars/xiao-zaiyi/illa-helper?style=flat-square&logo=github&color=007EC6)](https://github.com/xiao-zaiyi/illa-helper/stargazers)
-[![Forks](https://img.shields.io/github/forks/xiao-zaiyi/illa-helper?style=flat-square&logo=github&color=007EC6)](https://github.com/xiao-zaiyi/illa-helper/network/members)
-[![License](https://img.shields.io/github/license/xiao-zaiyi/illa-helper?style=flat-square&logo=github&color=42c88c)](https://github.com/xiao-zaiyi/illa-helper/blob/main/LICENSE)
-[![Open Issues](https://img.shields.io/github/issues/xiao-zaiyi/illa-helper?style=flat-square&logo=github&color=orange)](https://github.com/xiao-zaiyi/illa-helper/issues)
-[![Release](https://img.shields.io/github/v/release/xiao-zaiyi/illa-helper?style=flat-square&logo=github&color=blueviolet)](https://github.com/xiao-zaiyi/illa-helper/releases)
-[![TwitterFollow](https://img.shields.io/twitter/follow/zaiyixiao?logo=x&color=007EC6&label=zaiyixiao)](https://x.com/zaiyixiao)
+> 基于"可理解输入"理论的浏览器扩展，将日常网页浏览转化为自然的语言学习体验。
 
-<br/>
-<a href="https://hellogithub.com/repository/52653c92268d4024878a1a6781df9dd8" target="_blank"><img src="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=52653c92268d4024878a1a6781df9dd8&claim_uid=RfJtwvgkBr3MUGy&theme=small" alt="Featured｜HelloGitHub" /></a>
-</div>
+## ✨ 核心理念
 
-> A browser extension based on the "comprehensible input" theory to help you learn languages naturally while browsing the web.
+One-Language 基于著名的 **"i+1"** 理论，通过智能地将网页上的部分词语替换为目标语言，创造略高于当前水平的可理解输入环境。让你在沉浸式的阅读中，不知不觉地提升词汇量和语感。
 
-English | [简体中文](./README_ZH.md)
+**🎯 项目亮点**: 集成完整的发音学习生态系统和智能多语言翻译功能，包括自动语言检测、音标显示、AI词义解释、双TTS语音合成和交互式悬浮框，提供从智能翻译到发音学习的一站式沉浸式体验。
 
-## 🚀 Quick Install
+## 🏗️ 项目架构
 
-### 📥 Official Store Installation (Recommended)
+本项目采用 Monorepo 架构，包含三个主要模块：
 
-#### Chrome/Edge Users
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Available-brightgreen?logo=googlechrome)](https://chromewebstore.google.com/detail/ekeljkknchehakckhghhkbalnnmgnche?utm_source=item-share-cb)
+### 📦 浏览器扩展（根目录）
+提供沉浸式语言学习功能的主扩展程序：
+- 智能翻译引擎，支持AI驱动的语言检测
+- 发音学习生态系统，配备交互式悬浮框
+- 视觉体验系统，提供多种翻译样式
+- 配置管理系统，支持智能设置
+- 网站管理功能，支持黑名单/白名单
 
-**[📥 Install from Chrome Web Store](https://chromewebstore.google.com/detail/ekeljkknchehakckhghhkbalnnmgnche?utm_source=item-share-cb)**
+### 🔧 后端服务 (`backend/`)
+提供云端功能的API服务：
+- **用户认证**: 注册、登录，支持JWT令牌认证
+- **词汇管理**: 保存、分类和跟踪词汇掌握度
+- **学习记录**: 跟踪学习活动和统计数据
+- **复习系统**: 基于掌握度的智能复习推荐
+- **统计分析**: 全面的学习数据分析
+- **数据导出**: 支持JSON、CSV或Anki格式导出
 
-#### Firefox Users
-[![Firefox Add-ons](https://img.shields.io/badge/Firefox%20Add--ons-Available-orange?logo=firefox)](https://addons.mozilla.org/zh-CN/firefox/addon/%E6%B5%B8%E5%85%A5%E5%BC%8F%E5%AD%A6%E8%AF%AD%E8%A8%80%E5%8A%A9%E6%89%8B/)
+### 📊 管理后台 (`admin/`)
+为用户提供的管理界面：
+- **用户仪表板**: 学习概览，快速访问功能
+- **词汇管理**: 列表、搜索、筛选、编辑和删除词汇
+- **复习系统**: 支持卡片/列表模式的复习队列
+- **统计分析**: 学习趋势、词汇增长、活动分析
+- **数据导出**: 导出设置和下载管理
 
-**[📥 Install from Firefox Add-ons](https://addons.mozilla.org/zh-CN/firefox/addon/%E6%B5%B8%E5%85%A5%E5%BC%8F%E5%AD%A6%E8%AF%AD%E8%A8%80%E5%8A%A9%E6%89%8B/)**
+## 🚀 核心功能
 
-> 💡 **Recommended**: Official store installation is the easiest way - one-click install with automatic updates!
+### 🎯 智能翻译引擎
+- **智能语言检测**: AI自动识别网页源语言，无需手动指定
+- **智能文本处理**: 使用大语言模型分析内容，智能选择适合用户水平的词汇
+- **精确替换控制**: 可精确控制翻译比例（1%-100%），支持字符级计算
+- **上下文感知**: 考虑语境和用户水平，选择最合适的翻译词汇
+- **多语言支持**: 支持20+种语言的智能翻译
+- **懒加载翻译**: 滚动到段落时才进行翻译，减少资源消耗
 
----
+### 🔊 发音学习生态系统
+- **交互式悬浮框**: 鼠标悬停翻译词汇即可查看音标、AI词义和朗读功能
+- **双层学习体验**: 短语显示可交互的单词列表，点击单个单词查看详细信息
+- **多TTS服务支持**: 集成有道TTS（高质量）和Web Speech API（备用）
+- **智能音标获取**: 自动获取Dictionary API音标数据，24小时TTL缓存
+- **AI词义解释**: 实时调用AI生成中文词义解释，理解更准确
+- **渐进式加载**: 先显示基础信息，再异步加载详细内容
+- **音频缓存**: 内存级TTS音频缓存，同一单词无需重复生成语音
 
-## ✨ Core Philosophy
+### 🎨 丰富的视觉体验
+- **7种翻译样式**: 默认、微妙、粗体、斜体、下划线、高亮、学习模式（模糊效果）
+- **学习模式**: 翻译词汇初始模糊显示，鼠标悬停时清晰化，增强记忆效果
+- **辉光动画**: 新翻译词汇出现时的柔和提示效果，不干扰阅读体验
+- **响应式设计**: 自适应深色/浅色主题，智能悬浮框定位
+- **悬浮工具球**: 可配置的悬浮工具球，快速访问常用功能
 
-We firmly believe that the best way to learn a language is through extensive exposure to "comprehensible input," the famous **"i+1"** theory. This means content should be slightly above your current level—challenging but not incomprehensible. This extension aims to turn the entire internet into your personalized language learning material by intelligently replacing selected words with their translations in your target language, allowing you to naturally improve your vocabulary and language intuition while immersed in reading.
+### ⚙️ 高度可配置性
+- **智能翻译模式**: 用户只需选择目标语言，AI自动检测源语言并翻译
+- **用户水平适配**: 从初级到精通5个级别，AI智能调整词汇难度和选择策略
+- **触发模式**: 支持自动触发（页面加载时处理）和手动触发两种工作方式
+- **原文显示控制**: 可选择显示、隐藏或学习模式（模糊效果）显示被翻译的原文
+- **段落长度控制**: 自定义AI单次处理的最大文本长度
+- **发音功能开关**: 可独立控制发音悬浮框功能的启用状态
+- **多API配置**: 支持配置多个API服务，可灵活切换不同的翻译服务提供商
 
-**🎯 Project Highlights**: Features a complete pronunciation learning ecosystem with intelligent multi-language translation, including automatic language detection, phonetic notation, AI definitions, dual TTS support, and interactive tooltips for a comprehensive one-stop immersive experience from smart translation to pronunciation learning.
+### 🔌 开放式API集成
+- **兼容OpenAI API**: 支持任何兼容 OpenAI 格式的AI服务（ChatGPT、Claude、豆包等国产大模型）
+- **Google Gemini支持**: 集成Google Gemini API，提供更多AI服务选择
+- **灵活配置**: 自定义API Key、Endpoint、模型名称、Temperature参数
+- **智能提示词**: 根据翻译方向和用户水平动态生成最优提示词
+- **错误处理**: 完善的API错误处理和重试机制
+- **多API支持**: 支持配置多个API服务并灵活切换
 
-> 📚 **Complete Documentation**: See [Architecture & Features Guide](./docs/ARCHITECTURE_AND_FEATURES.md) for technical architecture, API reference, development guide, and troubleshooting.
+### 🚀 性能与优化
+- **智能缓存**: 翻译结果、音标数据、TTS音频多级缓存策略
+- **增量处理**: 只处理新增内容，避免重复翻译
+- **DOM安全**: 使用Range API确保DOM结构完整性
+- **内存管理**: 及时清理监听器，优化内存使用
+- **懒加载优化**: 滚动时按需翻译，减少初始加载时间
 
-## 🏗️ Project Architecture
+## 💻 技术架构
 
-This project consists of three main modules:
+### 浏览器扩展
+- **框架**: [WXT](https://wxt.dev/) - 现代WebExtension开发框架
+- **前端**: Vue 3 + TypeScript + Vite
+- **UI库**: Tailwind CSS + Lucide Icons + Reka UI
+- **构建**: ESLint + Prettier + TypeScript编译
+- **API集成**: OpenAI兼容接口 + Google Gemini + Dictionary API + 有道TTS
+- **跨浏览器兼容**: 支持Chrome、Edge、Firefox，部分支持Safari
 
-### 📦 Browser Extension (Root Directory)
-The main browser extension that provides immersive language learning features:
-- Intelligent translation engine with AI-powered language detection
-- Pronunciation learning ecosystem with interactive tooltips
-- Visual experience system with multiple translation styles
-- Configuration management with smart settings
-- Website management with blacklist/whitelist support
+### 后端服务
+- **框架**: Express.js + TypeScript
+- **数据库**: MySQL + Prisma ORM
+- **认证**: JWT（访问令牌 + 刷新令牌）
+- **API**: RESTful API
+- **安全**: Helmet、CORS、bcrypt密码加密
+- **验证**: Zod请求验证
 
-### 🔧 Backend Service (`backend/`)
-SaaS platform API service providing cloud-based features:
-- **User Authentication**: Registration, login with JWT tokens
-- **Vocabulary Management**: Save, categorize, and track vocabulary mastery
-- **Learning Records**: Track learning activities and statistics
-- **Review System**: Smart review recommendations based on mastery level
-- **Statistics & Analytics**: Comprehensive learning data analysis
-- **Data Export**: Export vocabulary in JSON, CSV, or Anki format
-- **Admin Features**: User management and system statistics
+### 管理后台
+- **框架**: Vue 3 + TypeScript + Vite
+- **UI库**: Tailwind CSS + Reka UI
+- **状态管理**: Pinia
+- **路由**: Vue Router
+- **HTTP客户端**: Axios
+- **图表**: Chart.js + vue-chartjs
 
-### 📊 Admin Dashboard (`admin/`)
-Management interface for users and administrators:
-- **User Dashboard**: Learning overview, quick access to features
-- **Vocabulary Management**: List, search, filter, edit, and delete vocabulary
-- **Review System**: Review queue with card/list modes
-- **Statistics & Analytics**: Learning trends, vocabulary growth, activity analysis
-- **Data Export**: Export settings and download management
-- **Admin Panel**: System overview, user management, data management
+## 🌐 浏览器兼容性
 
-> 📖 **See [Startup Guide](./启动指南.md)** for detailed setup instructions for all three modules.
+| 浏览器 | 支持状态 | 特殊说明 |
+|-------|--------|----------|
+| Chrome | ✅ 完全支持 | 推荐环境，所有功能可用 |
+| Edge | ✅ 完全支持 | 基于Chromium，完整兼容 |
+| Firefox | ✅ 支持 | 需配置addon ID |
+| Safari | ⚠️ 部分支持 | 需要额外配置 |
 
-## 🚀 Features
+## 🛠️ 快速开始
 
-### 🎯 Core Translation Engine
-- **Intelligent Language Detection**: AI automatically identifies webpage source language, no need for users to manually specify language type
-- **Intelligent Text Processing**: Uses AI large language models to analyze webpage content and intelligently select vocabulary suitable for user proficiency levels
-- **Precise Replacement Control**: Precisely control translation ratio (1%-100%) with character-based calculation support
-- **Context Awareness**: Considers context and user level to select the most appropriate translation vocabulary
-- **Multi-language Support**: Supports 20+ languages intelligent translation (English, Japanese, Korean, French, German, Spanish, Russian, Italian, Portuguese, Dutch, Swedish, Norwegian, Danish, Finnish, Polish, Czech, Turkish, Greek, etc.) **theoretically depends on AI model capabilities**
-- **Translation Position Control**: Added a feature to customize the position of translated text for more flexible display
-- **Parentheses Display Control**: Option to show or hide parentheses around translated text for a cleaner reading experience
-- **Lazy Loading Translation**: Translates paragraphs only when scrolled to, reducing resource consumption and improving performance
+### 环境要求
+- [Node.js](https://nodejs.org/) (版本 18 或更高)
+- [npm](https://nodejs.org/) 或其他包管理器
 
-### 🔊 Pronunciation Learning Ecosystem ⭐
-- **Interactive Pronunciation Tooltips**: Hover over translated words to view phonetics, AI definitions, and pronunciation features with intelligent positioning to avoid boundary overflow
-- **Dual-layer Learning Experience**: Phrases display interactive word lists, click individual words for detailed information with nested tooltip support
-- **Multi-TTS Service Support**: Integrates Youdao TTS (high quality) and Web Speech API (backup), supports British/American pronunciation switching
-- **Smart Phonetic Retrieval**: Automatically retrieves Dictionary API phonetic data with 24-hour TTL caching for optimized performance
-- **AI Definition Explanations**: Real-time AI-generated Chinese definitions for more accurate understanding with contextual analysis support
-- **Progressive Loading**: Display basic information first, then asynchronously load detailed content to optimize user experience
-- **Audio Caching**: Memory-level TTS audio caching, no need to regenerate audio for the same word
-- **Shortcut Key Support**: Added shortcut key settings for the pronunciation pop-up to improve operational efficiency
+### 安装步骤
 
-### 🎨 Rich Visual Experience
-- **7 Translation Styles**: Default, subtle, bold, italic, underlined, highlighted, learning mode (blur effect)
-- **Learning Mode**: Translation words initially displayed blurred, clarified on hover to enhance memory effect
-- **Glow Animation**: Gentle hint effects when new translated words appear, non-intrusive to reading experience
-- **Responsive Design**: Auto-adapts to dark/light themes with intelligent tooltip positioning
-- **Floating Tool Ball**: Added a configurable floating tool ball for quick access to frequently used functions
-- **Appearance Settings**: Support customizing floating ball transparency, position, and other appearance parameters
+#### 1. 克隆仓库
+```bash
+git clone <your-repository-url>
+cd one-language
+```
 
-### ⚙️ Highly Configurable
-- **Smart Translation Mode**: Users only need to select target language, AI automatically detects source language and translates
-- **User Level Adaptation**: 5 levels from beginner to advanced with AI-intelligent vocabulary difficulty and selection strategy adjustment
-- **Trigger Modes**: Supports automatic trigger (process on page load) and manual trigger working modes
-- **Original Text Display Control**: Choose to show, hide, or learning mode (blur effect) display of translated original text
-- **Paragraph Length Control**: Customize maximum text length for AI single processing
-- **Pronunciation Feature Toggle**: Independent control of pronunciation tooltip functionality activation status
-- **Multiple API Configurations**: Supports configuring multiple API services, allowing for flexible switching between different translation providers
-- **Data Import/Export**: Added functionality to import and export configuration data for easy backup and migration
-- **Interface Language**: Support 5 interface languages (Chinese, English, Japanese, Korean, Spanish)
+#### 2. 安装依赖
+```bash
+npm install
+```
 
-### 🔌 Open API Integration
-- **OpenAI API Compatible**: Supports any AI service compatible with OpenAI format (ChatGPT, Claude, domestic large models like Doubao, etc.)
-- **Google Gemini Support**: Added Google Gemini API integration, providing more AI service options
-- **Flexible Configuration**: Customize API Key, Endpoint, model name, Temperature parameters
-- **Smart Prompts**: Dynamically generate optimal prompts based on translation direction and user level
-- **Error Handling**: Comprehensive API error handling and retry mechanisms
-- **Multiple API Support**: Supports configuring and flexibly switching between multiple API services for more reliable service
-- **Thinking Mode**: Support AI thinking process output to improve translation quality
+#### 3. 配置环境
+```bash
+cp .env.example .env
+```
 
-### 🖱️ Enhanced Interactive Features
-- **Context Menu**: Added browser context menu functionality for quick access to translation-related operations
-- **Floating Ball Feature**: Configurable floating tool ball providing quick translation and settings access
-- **Hotkey Management**: Comprehensive hotkey settings and management functionality
-- **Website Management**: Blacklist and whitelist functionality for precise control of translation behavior
+编辑 `.env` 文件，至少需要提供一个有效的 API Key：
+```env
+VITE_WXT_DEFAULT_API_KEY="sk-your-real-api-key"
+VITE_WXT_DEFAULT_API_ENDPOINT="https://api.openai.com/v1/chat/completions"
+VITE_WXT_DEFAULT_MODEL="gpt-3.5-turbo"
+VITE_WXT_DEFAULT_TEMPERATURE="0.2"
+```
 
-### 🚀 Performance & Optimization
-- **Smart Caching**: Multi-level caching strategy for translation results, phonetic data, and TTS audio
-- **Incremental Processing**: Only processes new content, avoiding duplicate translations
-- **DOM Safety**: Uses Range API to ensure DOM structure integrity
-- **Memory Management**: Timely cleanup of listeners and optimized memory usage
-- **Lazy Loading Optimization**: On-demand translation when scrolling, reducing initial loading time
+#### 4. 构建扩展
 
-### 💻 Modern Technical Architecture
-- **Framework**: [WXT](https://wxt.dev/) - A modern WebExtension development framework
-- **Frontend**: Vue 3 + TypeScript + Vite
-- **UI Library**: Tailwind CSS + Lucide Icons + Reka UI
-- **Tooling**: ESLint + Prettier + TypeScript compilation
-- **API Integration**: OpenAI-compatible interfaces + Google Gemini + Dictionary API + Youdao TTS
-- **Cross-browser Compatibility**: Supports Chrome, Edge, Firefox, with partial support for Safari
-- **Internationalization**: Vue I18n support for multi-language interfaces
-
-## 🌐 Browser Compatibility
-
-This extension is built with [Web Extension API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions) and [WXT](https://wxt.dev/), supporting the following browsers:
-
-| Browser | Support Status | Notes |
-|---------|----------------|-------|
-| Chrome  | ✅ Fully Supported | Recommended environment, all features available |
-| Edge    | ✅ Fully Supported | Chromium-based, full compatibility |
-| Firefox | ✅ Supported | Requires addon ID configuration, see [Firefox Installation Guide](#firefox-installation-guide) |
-| Safari  | ⚠️ Partially Supported | Requires additional configuration |
-
-## ⚡ Performance Features
-
-### 🚀 Smart Caching System
-- **Translation Results**: Smart caching based on content and settings, avoiding duplicate API calls
-- **Phonetic Data**: 24-hour TTL local caching for improved response speed
-- **TTS Audio**: Memory-level caching, no need to regenerate audio for the same word
-
-### 🔄 Incremental Processing Mechanism
-- **DOM Monitoring**: Only processes new content, avoiding duplicate translations
-- **Debounce Optimization**: Smart delayed processing for dynamic content changes
-- **Range API**: Precise DOM operations maintaining page structure integrity
-- **Lazy Loading**: On-demand translation when scrolling, optimizing performance
-
-## 📸 Feature Showcase
-
-### 🎬 Dynamic Demo
-<div align="center">
-  <img src="images/Demo.gif" alt="Complete demonstration of immersive language learning assistant" style="max-width:80%; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1)"/>
- <img src="images/demo1.gif" alt="Complete demonstration of immersive language learning assistant" style="max-width:80%; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1)"/>
-  <p><i>🎯 Complete Demo: One-stop immersive experience from smart translation to pronunciation learning</i></p>
-</div>
-
-### 🎨 Theme Adaptation
-<div style="width:100%" align="center">
-  <img src="images/home-dark.png" alt="Dark theme translation effects" style="width:30%; margin:5px; border-radius:6px"/>
-  <img src="images/home-dark1.png" alt="Dark theme variant" style="width:30%; margin:5px; border-radius:6px"/>
-  <img src="images/home-light.png" alt="Light theme translation effects" style="width:30%; margin:5px; border-radius:6px"/>
-  <p><i>🌗 Theme Adaptation: Smart dark/light theme switching with modern visual experience</i></p>
-  <img src="images/set-base.png" alt="Settings" style="width:100%; margin:5px; border-radius:6px;"/>
-  <img src="images/set-ai.png" alt="Settings" style="width:100%; margin:5px; border-radius:6px;"/>
-  <p><i>👍 Settings page supports multiple configurations</i></p>
-</div>
-
-### 🌍 Multi-language Learning Scenarios
-<div style="width:100%" align="center">
-  <img src="images/cn-test.png" alt="Chinese learning scenario" style="width:45%; margin:5px; border-radius:6px"/>
-  <img src="images/en-test.png" alt="English learning scenario" style="width:45%; margin:5px; border-radius:6px"/>
-  <br/>
-  <img src="images/jp-test.png" alt="Japanese learning scenario" style="width:45%; margin:5px; border-radius:6px"/>
-  <img src="images/k-test.png" alt="Korean learning scenario" style="width:45%; margin:5px; border-radius:6px"/>
-  <p><i>🧠 Smart Multi-language: AI automatic detection and translation for 20+ languages, covering mainstream learning languages including Chinese, English, Japanese, Korean, etc.</i></p>
-</div>
-
-## 🛠️ Developer Installation
-
-### 🔧 Build from Source (For Developers)
-
-This project consists of three modules: Browser Extension, Backend Service, and Admin Dashboard.
-
-#### Module 1: Browser Extension (Root Directory)
-
-If you want to participate in extension development or need to build from source:
-
-##### 1. Prerequisites
-
-- [Node.js](https://nodejs.org/) (version 18 or higher)
-- [npm](https://nodejs.org/) or other package managers
-
-##### 2. Installation
-
-1.  **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/xiao-zaiyi/illa-helper.git
-    cd illa-helper
-    ```
-
-2.  **Install dependencies:**
-
-    ```bash
-    npm install
-    ```
-
-> **Tip**: If you just want to use this extension without participating in development, please go directly to the [Releases](https://github.com/xiao-zaiyi/illa-helper/releases) page to download the latest packaged version.
-
-##### 3. Configuration
-
-The project manages local development environment configuration through `.env` files.
-
-1.  **Create .env file:**
-    Copy the `.env.example` file to create your own local configuration file.
-    ```bash
-    cp .env.example .env
-    ```
-
-2.  **Edit configuration:**
-    Open the newly created `.env` file. At minimum, you need to provide a valid API Key for the translation function to work properly.
-    ```env
-    VITE_WXT_DEFAULT_API_KEY="sk-your-real-api-key"
-    # You can also override other default settings here
-    VITE_WXT_DEFAULT_API_ENDPOINT="https://xxxxx/api/v1/chat/completions"
-    VITE_WXT_DEFAULT_MODEL="gpt-4"
-    VITE_WXT_DEFAULT_TEMPERATURE="0.2"
-    ```
-    > **Note**: The `.env` file has been added to `.gitignore`, so your keys won't be accidentally committed.
-
-##### 4. Build Extension
-
-Execute the appropriate build commands based on your target browser:
-
-###### Chrome/Edge Build
+**Chrome/Edge构建**
 ```bash
 npm run build
 npm run zip
 ```
 
-###### Firefox Build
+**Firefox构建**
 ```bash
 npm run build:firefox
 npm run zip:firefox
 ```
 
-##### 5. Load Extension
+#### 5. 加载扩展
 
-##### Chrome/Edge Installation
-1. Open your browser (Chrome, Edge, etc.)
-2. Go to the extension management page (`chrome://extensions` or `edge://extensions`)
-3. Turn on **"Developer mode"**
-4. Click **"Load unpacked"**
-5. Select the `.output/chrome-mv3` folder in the project root directory
-6. Done! You should now see the extension icon in your browser toolbar
+**Chrome/Edge安装**
+1. 打开浏览器扩展管理页面（`chrome://extensions` 或 `edge://extensions`）
+2. 打开"开发者模式"
+3. 点击"加载已解压的扩展程序"
+4. 选择项目根目录下的 `.output/chrome-mv3` 文件夹
 
-##### Firefox Installation Guide <a id="firefox-installation-guide"></a>
+**Firefox安装**
+1. 在Firefox地址栏输入 `about:debugging#/runtime/this-firefox`
+2. 点击"临时加载附加组件..."
+3. 选择 `.output/firefox-mv2/manifest.json` 文件
 
-Firefox requires special installation steps due to security restrictions:
+### 后端服务设置（可选）
 
-The official release version currently cannot be installed through this method, only through the store.
+如果需要使用云端功能：
 
-**Method 1: Temporary Installation (Recommended for Development)**
-1. Enter `about:debugging#/runtime/this-firefox` in Firefox address bar
-2. Click **"Load Temporary Add-on..."**
-3. Select the `.output/firefox-mv2/manifest.json` file
-4. Extension will be loaded temporarily and needs to be reloaded after browser restart
-
-**Method 2: Modify Security Configuration (Permanent Installation)**
-1. Enter `about:config` in Firefox address bar
-2. Search for `xpinstall.signatures.required`
-3. Double-click to change the value to `false`
-4. Now you can install unsigned extensions through `about:addons`
-
-**Firefox Storage API Configuration**
-
-The storage API in Firefox requires an explicit addon ID to work properly. This project has configured Firefox-specific settings in `wxt.config.ts`:
-
-```typescript
-browser_specific_settings: {
-  gecko: {
-    id: 'illa-helper@1932794922@qq.com',
-    strict_min_version: '88.0'
-  }
-}
-```
-
-This ensures proper storage functionality for saving user settings in Firefox.
-
-#### Module 2: Backend Service (`backend/`)
-
-The backend service provides cloud-based features including user authentication, vocabulary management, and learning statistics.
-
-##### 1. Navigate to Backend Directory
+#### 1. 进入后端目录
 ```bash
 cd backend
 ```
 
-##### 2. Install Dependencies
+#### 2. 安装依赖并配置
 ```bash
 npm install
-```
-
-##### 3. Configure Environment Variables
-```bash
 cp .env.example .env
 ```
 
-Edit `.env` file with your configuration:
-```env
-# Database Configuration
-DATABASE_URL="mysql://user:password@localhost:3306/one_language"
-
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# JWT Configuration
-JWT_SECRET="your-jwt-secret-at-least-32-characters-long"
-JWT_EXPIRES_IN="7d"
-REFRESH_TOKEN_EXPIRES_IN="30d"
-
-# API Configuration
-API_BASE_URL="http://localhost:3000"
-```
-
-##### 4. Database Setup
+#### 3. 配置数据库
 ```bash
-# Generate Prisma Client
 npm run db:generate
-
-# Run Database Migrations
 npm run db:migrate
-
-# (Optional) Seed Database with Initial Data
 npm run db:seed
 ```
 
-##### 5. Start Backend Service
+#### 4. 启动服务
 ```bash
-# Development Mode
 npm run dev
-
-# Production Mode
-npm run build
-npm run start
 ```
 
-The backend service will start on `http://localhost:3000`.
+### 管理后台设置（可选）
 
-##### 6. Database Management (Optional)
-```bash
-# Open Prisma Studio for Database Management
-npm run db:studio
-```
-
-#### Module 3: Admin Dashboard (`admin/`)
-
-The admin dashboard provides a web interface for users to manage vocabulary, review words, and view learning statistics.
-
-##### 1. Navigate to Admin Directory
+#### 1. 进入管理后台目录
 ```bash
 cd admin
 ```
 
-##### 2. Install Dependencies
+#### 2. 安装依赖并启动
 ```bash
 npm install
-```
-
-##### 3. Configure Environment Variables
-```bash
-cp .env.example .env
-```
-
-Edit `.env` file with your configuration:
-```env
-# API Configuration
-VITE_API_BASE_URL="/api"
-
-# Development Mode (API will be proxied to backend)
-VITE_DEV_MODE=true
-```
-
-##### 4. Start Admin Dashboard
-```bash
-# Development Mode
 npm run dev
-
-# Build for Production
-npm run build
-
-# Preview Production Build
-npm run preview
 ```
 
-The admin dashboard will start on `http://localhost:5173` (development mode).
+## 📝 开发命令
 
-> **Note**: In development mode, the admin dashboard proxies `/api` requests to the backend service at `http://localhost:3000`.
+### 扩展开发
+```bash
+npm run dev              # 开发服务器 (Chrome)
+npm run dev:firefox      # 开发服务器 (Firefox)
+npm run build            # 生产构建 (Chrome)
+npm run build:firefox    # 生产构建 (Firefox)
+npm run zip              # 打包扩展 (Chrome)
+npm run zip:firefox      # 打包扩展 (Firefox)
+npm run zip:all          # 打包所有浏览器
+```
 
-### 🔧 Core Tech Stack
+### 代码质量
+```bash
+npm run lint             # 运行 ESLint
+npm run lint:fix         # ESLint 自动修复
+npm run format           # Prettier 格式化
+npm run check            # 格式化 + lint修复
+npm run compile          # TypeScript 检查
+```
 
-#### Browser Extension
-- **Framework**: [WXT](https://wxt.dev/) - A modern WebExtension development framework
-- **Frontend**: Vue 3 + TypeScript + Vite
-- **UI Library**: Tailwind CSS + Lucide Icons + Reka UI
-- **Tooling**: ESLint + Prettier + TypeScript compilation
-- **API Integration**: OpenAI-compatible interfaces + Google Gemini + Dictionary API + Youdao TTS
-- **Architectural Patterns**: Provider pattern + Modular design + Event-driven
-- **Pronunciation System**: Factory Pattern + Multi-TTS services + Smart Caching
-- **Storage Management**: Configuration versioning + Cross-browser compatibility
-- **Internationalization**: Vue I18n support for multi-language interfaces
+## ❓ 常见问题
 
-#### Backend Service
-- **Framework**: Express.js
-- **Database**: MySQL + Prisma ORM
-- **Authentication**: JWT (Access Token + Refresh Token)
-- **API**: RESTful API
-- **Security**: Helmet, CORS, bcrypt for password hashing
-- **Validation**: Zod for request validation
-- **Rate Limiting**: Express rate limiter
+### 为什么需要提供API密钥？
+本扩展使用AI技术进行智能文本翻译，需要调用API服务。您可以使用 OpenAI 的API密钥，或任何兼容 OpenAI API格式的第三方服务。
 
-#### Admin Dashboard
-- **Framework**: Vue 3 + TypeScript + Vite
-- **UI Library**: Tailwind CSS + Reka UI
-- **State Management**: Pinia
-- **Routing**: Vue Router
-- **HTTP Client**: Axios
-- **Charts**: Chart.js + vue-chartjs
-- **Internationalization**: Vue I18n
+### 发音功能如何工作？
+发音系统提供完整的学习体验：
+- **音标显示**: 自动获取Dictionary API音标数据
+- **AI词义**: 实时调用AI获取中文释义解释
+- **双TTS支持**: 有道TTS（高质量）+ Web Speech API（备用）
+- **交互悬浮框**: 鼠标悬停查看，支持英美发音切换
 
-> 📖 **See Detailed Documentation**: [Architecture & Features Guide](./docs/ARCHITECTURE_AND_FEATURES.md) - Contains the complete technical architecture, API reference, and development guidelines.
+### 扩展会收集我的浏览数据吗？
+不会。本扩展在本地处理所有网页内容，只将需要翻译的文本片段发送到配置的API服务。发音功能的音标和词义数据也会本地缓存，保护您的隐私。
 
-## ❓ FAQ
+### 我可以控制翻译比例吗？
+可以。扩展提供了精确的翻译控制：
+- **语言水平**: 5个级别从初级到精通，AI智能调整词汇难度
+- **替换比例**: 1%-100%精确控制，支持按字符数计算
+- **原文显示**: 可选择显示、隐藏或学习模式（模糊效果）
 
-### Why do I need to provide an API key?
+## 🤝 贡献指南
 
-This extension uses AI technology for intelligent text translation, which requires an API service. You can use OpenAI's API key or any third-party service that's compatible with OpenAI's API format, including the newly supported Google Gemini API.
+我们欢迎各种形式的贡献！
 
-### How does the pronunciation feature work?
+### 如何贡献
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建 Pull Request
 
-Our pronunciation system is a core feature providing a complete learning experience:
-- **Phonetic Display**: Automatically retrieves Dictionary API phonetic data
-- **AI Definitions**: Real-time AI-generated Chinese definition explanations
-- **Dual TTS Support**: Youdao TTS (high quality) + Web Speech API (backup)
-- **Interactive Tooltips**: Hover to view, supports British/American pronunciation switching
-- **Phrase Learning**: Each word in phrases can be independently viewed and pronounced
+### 开发指南
+- **架构原则**: 遵循Provider模式和模块化设计
+- **代码规范**: TypeScript严格模式，ESLint + Prettier格式化
+- **测试要求**: 确保新功能在多种浏览器和网站上正常工作
+- **性能考虑**: 注意DOM操作效率、内存管理和缓存策略
 
-### How to use Smart Multi-language Mode?
+## 📜 开源许可
 
-Smart multi-language mode is our new feature, easy to use:
-1. **Select Translation Mode**: Choose "🧠 Smart Multi-language Mode" in settings
-2. **Select Target Language**: Choose your learning language from 20+ supported languages
-3. **Start Browsing**: AI automatically detects webpage language and translates to your target language
-4. **No Additional Configuration**: System automatically handles different language webpage content
-
-### Will the extension collect my browsing data?
-
-No. This extension processes all webpage content locally and only sends text fragments that need translation to your configured API service. Pronunciation function's phonetic and definition data are also cached locally to protect your privacy.
-
-### Can I control the translation ratio?
-
-Yes. The extension provides precise translation control:
-- **Language Level**: 5 levels from beginner to advanced with AI-adjusted vocabulary difficulty
-- **Replacement Ratio**: 1%-100% precise control with character-based calculation support
-- **Original Text Display**: Choose to show, hide, or learning mode (blur effects)
-- **Smart Adaptation**: In smart mode, system automatically optimizes translation strategy based on detected language
-
-### How to install on Safari? <a id="safari-extension-installation"></a>
-
-Safari requires additional steps to package Web Extensions as Safari extensions. Please refer to [Apple's developer documentation](https://developer.apple.com/documentation/safariservices/safari_web_extensions/converting_a_web_extension_for_safari).
-
-### Firefox Issues Resolution 🚨
-
-> According to [Add-on signing in Firefox](https://support.mozilla.org/en-US/kb/add-on-signing-in-firefox), only [Extended Support Release (ESR)](https://www.mozilla.org/firefox/organizations/), [Developer Edition](https://www.mozilla.org/firefox/developer/), and [Nightly](https://nightly.mozilla.org/) versions will read the `xpinstall.signatures.required` setting when set to `false`; regular versions can only use temporary installation even if set to `false`.
-
-#### "Failed to get user settings: Error: The storage API will not work with a temporary addon ID"
-
-This is a known limitation in Firefox. Solutions:
-
-1. **Use Latest Version**: Ensure you're using the latest build version with Firefox-specific configuration
-2. **Use Firefox-specific Build**: Run `npm run build:firefox && npm run zip:firefox`
-3. **Temporary Installation**: Install through `about:debugging` page instead of directly installing .xpi file
-
-#### "This component cannot be installed because it has not been verified"
-
-- **Method 1**: Enter `about:debugging#/runtime/this-firefox` in address bar, select `Load Temporary Add-on...` to install Firefox extension from file
-- **Method 2**: Enter `about:config` in address bar, search for `xpinstall.signatures.required`, double-click to change to `false`
-
-<div align="center">
-  <img src="images/firefox-cn.png" style="max-width:80%; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1)"/>
-</div>
-
-### API-related Issues
-
-#### "API Configuration Error" Notification
-
-Check the following configurations:
-- API Key format correct (usually starts with `sk-`)
-- API Endpoint URL validity
-- Model name support
-- Network connection status
-
-#### Poor Translation Quality
-
-You can try:
-- Adjusting user level settings
-- Modifying translation ratio
-- Switching to more powerful AI models
-- Adjusting the Temperature parameter (a range of 0.1-0.3 is recommended)
-
-
-
-## 🛠️ Troubleshooting
-
-### Common Issue Diagnosis
-
-#### 1. Extension fails to load
-- Check your Node.js version (requires 18+)
-- Ensure all dependencies are installed: `npm install`
-- Check the build logs for any errors
-
-#### 2. Translation feature is not working
-- Verify that your API configuration is correct
-- Check your internet connection
-- Look for errors in the developer console
-
-#### 3. Pronunciation feature is abnormal
-- Ensure your browser supports the Web Speech API
-- Check the status of the Youdao TTS service
-- Verify that the Dictionary API is accessible
-
-#### 4. Settings cannot be saved
-- Firefox users, confirm you are using the correct installation method
-- Check the extension's permission settings
-- Try clearing your browser cache and retrying
-
-#### 5. Content script functionality issues
-- Check if ContentManager service initializes properly
-- Look for service loading errors in the console
-- Verify configuration service and processing service status
-- Ensure the website is not in the blacklist
-
-#### 6. Floating ball feature issues
-- Check if floating ball is enabled in settings
-- Confirm floating ball position settings are correct
-- Check for conflicts with other extensions
-
-#### 7. Context menu not displaying
-- Confirm context menu feature is enabled
-- Check if website is in blacklist
-- Verify extension permission settings
-
-## 🤝 Contribution Guide
-
-We warmly welcome contributions of all kinds! Whether it's submitting a bug, proposing a new feature, or contributing code directly.
-
-### How to Contribute
-
-1.  **Submit Issues**
-    - Use GitHub Issues to report bugs or suggest features
-    - Clearly describe the issue or suggestion in detail
-    - If it's a bug, please provide steps to reproduce and environment information
-
-2.  **Contribute Code**
-    - **Fork** this repository
-    - Create a new branch (`git checkout -b feature/your-amazing-feature`)
-    - Write and test your code
-    - Ensure your code follows the project's coding standards
-    - Commit your changes (`git commit -m 'Add some amazing feature'`)
-    - Push your branch to the remote repository (`git push origin feature/your-amazing-feature`)
-    - Create a **Pull Request**
-
-3.  **Improve Documentation**
-    - Documentation improvements are just as important to the project
-    - You can fix typos, improve explanations, or add examples
-
-### Development Guide
-
-- **Architectural Principles**: Follow service-oriented architecture and modular design, especially the Factory Pattern for the pronunciation system
-- **Coding Standards**: TypeScript strict mode, ESLint + Prettier formatting, complete type definitions
-- **Testing Requirements**: Ensure new features work correctly on multiple browsers and websites, especially in multi-language environments
-- **Performance Considerations**: Pay attention to DOM manipulation efficiency, memory management, and multi-language caching strategies
-- **API Compatibility**: Maintain backward compatibility with existing API interfaces and support configuration version migration
-- **Multi-language Support**: When adding a new language, register it in languageManager.ts and test the translation effect
-- **Pronunciation Feature**: When extending TTS services, implement the ITTSProvider interface and register it in the factory
-- **Browser Compatibility**: New features need to be tested in Chrome, Edge, and Firefox
-- **New Feature Development**: When adding new features, consider internationalization support and user configuration management
-
-> 📖 **Detailed Development Guide**: Check out the [Architecture & Features Guide](./docs/ARCHITECTURE_AND_FEATURES.md) for complete development environment setup, code structure explanations, and best practices.
-
-## 🔗 Related Links
-
-- **Project Homepage**: [GitHub Repository](https://github.com/xiao-zaiyi/illa-helper)
-- **Issue Tracker**: [GitHub Issues](https://github.com/xiao-zaiyi/illa-helper/issues)
-- **Releases**: [GitHub Releases](https://github.com/xiao-zaiyi/illa-helper/releases)
-- **Technical Documentation**: [Architecture & Features Guide](./docs/ARCHITECTURE_AND_FEATURES.md)
-- **WXT Framework**: [WXT.dev](https://wxt.dev/)
-
-## 📧 Contact Us
-
-- **Author**: Xiao-zaiyi
-- **GitHub**: [@xiao-zaiyi](https://github.com/xiao-zaiyi)
-- **Project Discussion**: Technical discussions through GitHub Issues
-
-## 📜 License
-
-This project is open-sourced under the [MIT License](./LICENSE). You are free to use, modify, and distribute this code, including for commercial purposes.
+本项目基于 [MIT License](./LICENSE) 开源。您可以自由使用、修改和分发此代码，包括用于商业目的。
 
 ---
 
-## 🌟 Star History [![Star History Chart](https://api.star-history.com/svg?repos=xiao-zaiyi/illa-helper&type=Date)](https://star-history.com/#xiao-zaiyi/illa-helper&Date)
-
 <div align="center">
-  <p>⭐ If this project helps you, please give us a Star!</p>
-  <p>🔄 Welcome to Fork and contribute your improvements!</p>
+  <p>⭐ 如果这个项目对您有帮助，请给我们一个Star！</p>
+  <p>🔄 欢迎Fork并贡献您的改进！</p>
 </div>

@@ -1,6 +1,6 @@
 # Product Overview
 
-**illa-helper** (一站式学语言助手 / One-Language) is a browser extension for immersive language learning based on the "i+1" comprehensible input theory.
+**One-Language** is a browser extension for immersive language learning based on the "i+1" comprehensible input theory.
 
 ## Core Concept
 Intelligently replaces selected words on web pages with translations in the target language, creating a natural language learning environment while browsing. Users learn vocabulary naturally through contextual exposure rather than traditional study methods.

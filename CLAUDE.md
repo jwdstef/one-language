@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **illa-helper**, a browser extension for immersive language learning based on the "i+1" comprehensible input theory. It intelligently replaces selected words with translations to create a natural language learning environment while browsing the web.
+This is **One-Language**, a browser extension for immersive language learning based on the "i+1" comprehensible input theory. It intelligently replaces selected words with translations to create a natural language learning environment while browsing the web.
 
 ## Common Development Commands
 
