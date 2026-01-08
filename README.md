@@ -1,7 +1,7 @@
 # One-Language - 沉浸式语言学习助手
 
 <div align="center">
-<img src="public/icon/128.png" width="100" height="100"  />
+<img src="public/icon/logo.png" width="100" height="100"  />
 </div>
 
 > 基于"可理解输入"理论的浏览器扩展，将日常网页浏览转化为自然的语言学习体验。
