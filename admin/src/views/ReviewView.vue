@@ -119,99 +119,17 @@ function playAudio(audioUrl?: string) {
             <span class="text-sm text-[var(--muted-foreground)]">{{ t('review.today') }}:</span>
             <span class="font-semibold">{{ reviewStore.progress?.reviewedToday || 0 }}</span>
           </div>
-          <!-- Review Mode Indicator (Requirements: 10.4) -->
-          <div class="flex items-center gap-2">
-            <component 
-              :is="hasSmartRecommend ? Sparkles : Clock" 
-              class="h-5 w-5"
-              :class="hasSmartRecommend ? 'text-purple-500' : 'text-gray-400'"
-            />
-            <span class="text-sm" :class="hasSmartRecommend ? 'text-purple-600 font-medium' : 'text-[var(--muted-foreground)]'">
-              {{ hasSmartRecommend ? (t('review.smartMode') || 'Smart Mode') : (t('review.basicMode') || 'Basic Mode') }}
-            </span>
-          </div>
+      <!-- Review Mode Indicator -->
+      <div class="flex items-center gap-2">
+        <Sparkles class="h-5 w-5 text-purple-500" />
+        <span class="text-sm text-purple-600 font-medium">
+          {{ t('review.smartMode') || 'Smart Mode' }}
+        </span>
+      </div>
         </div>
         <div class="text-sm text-[var(--muted-foreground)]">
           {{ t('review.cardsRemaining', { count: remainingCount }) }}
         </div>
-      </div>
-      
-      <!-- Usage Limit Progress Bar (Requirements: 6.1, 6.2) -->
-      <div v-if="usageLimit && !isUnlimited" class="mt-4 pt-4 border-t border-[var(--border)]">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-sm text-[var(--muted-foreground)]">
-            {{ t('review.dailyLimit') || 'Daily Limit' }}
-          </span>
-          <span class="text-sm font-medium" :class="limitReached ? 'text-red-500' : 'text-[var(--foreground)]'">
-            {{ usageLimit.current }} / {{ usageLimit.limit }}
-          </span>
-        </div>
-        <div class="h-2 bg-[var(--muted)] rounded-full overflow-hidden">
-          <div 
-            class="h-full transition-all duration-300 rounded-full"
-            :class="limitReached ? 'bg-red-500' : usagePercentage > 80 ? 'bg-yellow-500' : 'bg-green-500'"
-            :style="{ width: `${usagePercentage}%` }"
-          ></div>
-        </div>
-      </div>
-      
-      <!-- Unlimited Badge for Premium Users -->
-      <div v-else-if="isUnlimited" class="mt-4 pt-4 border-t border-[var(--border)]">
-        <div class="flex items-center gap-2 text-sm text-[var(--primary)]">
-          <Crown class="h-4 w-4" />
-          <span>{{ t('review.unlimitedReviews') || 'Unlimited Reviews' }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Limit Reached Warning (Requirements: 6.2, 6.5) -->
-    <div 
-      v-if="limitReached" 
-      class="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-6"
-    >
-      <div class="flex items-start gap-4">
-        <div class="p-3 bg-orange-100 rounded-full">
-          <Lock class="h-6 w-6 text-orange-600" />
-        </div>
-        <div class="flex-1">
-          <h3 class="text-lg font-semibold text-orange-800 mb-2">
-            {{ t('review.limitReachedTitle') || 'Daily Review Limit Reached' }}
-          </h3>
-          <p class="text-orange-700 mb-4">
-            {{ t('review.limitReachedMessage') || `You've reviewed ${usageLimit?.current || 0} words today. Upgrade to Premium for up to 200 daily reviews!` }}
-          </p>
-          <a 
-            href="/upgrade" 
-            class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <Crown class="h-4 w-4" />
-            {{ t('review.upgradeToPremium') || 'Upgrade to Premium' }}
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Smart Recommendation Upgrade Banner (Requirements: 10.4) -->
-    <div 
-      v-if="!hasSmartRecommend && !limitReached" 
-      class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6"
-    >
-      <div class="flex items-center gap-4">
-        <div class="p-2 bg-purple-100 rounded-full">
-          <Sparkles class="h-5 w-5 text-purple-600" />
-        </div>
-        <div class="flex-1">
-          <p class="text-purple-700 text-sm">
-            {{ t('review.smartRecommendPromo') || 'Upgrade to Premium for Smart Review recommendations that optimize your learning with spaced repetition!' }}
-          </p>
-        </div>
-        <a 
-          href="/upgrade" 
-          class="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          <Crown class="h-3.5 w-3.5" />
-          {{ t('review.upgrade') || 'Upgrade' }}
-        </a>
       </div>
     </div>
 
@@ -356,22 +274,14 @@ function playAudio(audioUrl?: string) {
         class="px-6 py-4 border-t border-[var(--border)] flex items-center justify-center gap-4"
       >
         <button
-          class="flex-1 max-w-xs py-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors"
-          :class="limitReached 
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-            : 'bg-orange-100 text-orange-700 hover:bg-orange-200'"
-          :disabled="limitReached"
+          class="flex-1 max-w-xs py-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors bg-orange-100 text-orange-700 hover:bg-orange-200"
           @click="handleReview(false)"
         >
           <X class="h-6 w-6" />
           {{ t('review.needsReview') }}
         </button>
         <button
-          class="flex-1 max-w-xs py-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors"
-          :class="limitReached 
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-            : 'bg-green-100 text-green-700 hover:bg-green-200'"
-          :disabled="limitReached"
+          class="flex-1 max-w-xs py-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors bg-green-100 text-green-700 hover:bg-green-200"
           @click="handleReview(true)"
         >
           <Check class="h-6 w-6" />

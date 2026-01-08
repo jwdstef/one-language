@@ -141,9 +141,8 @@ export async function refreshSubscriptionStatus(): Promise<SubscriptionStatus | 
  * Check if user has premium subscription
  */
 export async function isPremium(): Promise<boolean> {
-  const status = await getSubscriptionStatus();
-  if (!status) return false;
-  return status.subscription.isPremium && status.subscription.isActive;
+  // 所有用户现在都视为高级用户
+  return true;
 }
 
 /**
@@ -159,39 +158,7 @@ export async function getFeatures(): Promise<PlanFeatures | null> {
  * Check if a specific feature is available
  */
 export async function canAccessFeature(feature: string): Promise<boolean> {
-  const features = await getFeatures();
-  if (!features) return false;
-  
-  // Map feature names to their location in PlanFeatures
-  const featureMap: Record<string, () => boolean> = {
-    // Gamification features
-    achievements: () => features.gamification.achievements,
-    goals: () => features.gamification.goals,
-    reminders: () => features.gamification.reminders,
-    
-    // Statistics features
-    advancedStats: () => features.statistics.advanced,
-    trends: () => features.statistics.trends,
-    basicStats: () => features.statistics.basic,
-    
-    // Export features
-    csvExport: () => features.export.csv,
-    ankiExport: () => features.export.anki,
-    jsonExport: () => features.export.json,
-    customExport: () => features.export.custom,
-    
-    // Other features
-    floatingBall: () => features.features.floatingBall,
-    vocabularyLists: () => features.vocabulary.lists,
-    smartRecommend: () => features.review.smartRecommend,
-  };
-  
-  const checker = featureMap[feature];
-  if (checker) {
-    return checker();
-  }
-  
-  // Default to true for unknown features
+  // 所有功能现在都对所有用户开放
   return true;
 }
 

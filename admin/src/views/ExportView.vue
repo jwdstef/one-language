@@ -10,31 +10,17 @@ const loading = ref(false);
 const exportSuccess = ref<string | null>(null);
 const error = ref<string | null>(null);
 
-// Feature gating flags
-const canExportCsv = ref(false);
-const canExportAnki = ref(false);
+// Feature gating flags - 现在所有功能都开放
+const canExportCsv = ref(true);
+const canExportAnki = ref(true);
 
 onMounted(async () => {
-  // Check feature access
-  const [csvAccess, ankiAccess] = await Promise.all([
-    canAccessFeature('csvExport'),
-    canAccessFeature('ankiExport'),
-  ]);
-  canExportCsv.value = csvAccess;
-  canExportAnki.value = ankiAccess;
+  // 所有导出功能现在都开放
+  canExportCsv.value = true;
+  canExportAnki.value = true;
 });
 
 async function exportData(format: 'csv' | 'json' | 'anki') {
-  // Check if user has access to the format
-  if (format === 'csv' && !canExportCsv.value) {
-    error.value = t('export.premiumRequired');
-    return;
-  }
-  if (format === 'anki' && !canExportAnki.value) {
-    error.value = t('export.premiumRequired');
-    return;
-  }
-
   loading.value = true;
   error.value = null;
   exportSuccess.value = null;
@@ -120,48 +106,30 @@ async function exportData(format: 'csv' | 'json' | 'anki') {
           </div>
         </button>
 
-        <!-- CSV Export (Premium) -->
+        <!-- CSV Export -->
         <button
-          :disabled="loading || !canExportCsv"
-          :class="[
-            'flex flex-col items-center gap-4 p-6 rounded-xl border-2 transition-colors relative',
-            canExportCsv
-              ? 'border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] disabled:opacity-50 disabled:cursor-not-allowed'
-              : 'border-[var(--border)] opacity-60 cursor-not-allowed'
-          ]"
-          @click="canExportCsv && exportData('csv')"
+          :disabled="loading"
+          class="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="exportData('csv')"
         >
-          <Lock v-if="!canExportCsv" class="absolute top-2 right-2 h-4 w-4 text-[var(--muted-foreground)]" />
           <FileSpreadsheet class="h-12 w-12 text-green-600" />
           <div class="text-center">
-            <h3 class="font-semibold mb-1 flex items-center justify-center gap-1">
-              {{ t('export.exportAsCsv') }}
-              <span v-if="!canExportCsv" class="text-xs text-[var(--muted-foreground)]">({{ t('common.premiumFeature') }})</span>
-            </h3>
+            <h3 class="font-semibold mb-1">{{ t('export.exportAsCsv') }}</h3>
             <p class="text-sm text-[var(--muted-foreground)]">
               {{ t('export.csvDescription') }}
             </p>
           </div>
         </button>
 
-        <!-- Anki Export (Premium) -->
+        <!-- Anki Export -->
         <button
-          :disabled="loading || !canExportAnki"
-          :class="[
-            'flex flex-col items-center gap-4 p-6 rounded-xl border-2 transition-colors relative',
-            canExportAnki
-              ? 'border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] disabled:opacity-50 disabled:cursor-not-allowed'
-              : 'border-[var(--border)] opacity-60 cursor-not-allowed'
-          ]"
-          @click="canExportAnki && exportData('anki')"
+          :disabled="loading"
+          class="flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--muted)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="exportData('anki')"
         >
-          <Lock v-if="!canExportAnki" class="absolute top-2 right-2 h-4 w-4 text-[var(--muted-foreground)]" />
           <FileArchive class="h-12 w-12 text-purple-600" />
           <div class="text-center">
-            <h3 class="font-semibold mb-1 flex items-center justify-center gap-1">
-              {{ t('export.exportAsAnki') }}
-              <span v-if="!canExportAnki" class="text-xs text-[var(--muted-foreground)]">({{ t('common.premiumFeature') }})</span>
-            </h3>
+            <h3 class="font-semibold mb-1">{{ t('export.exportAsAnki') }}</h3>
             <p class="text-sm text-[var(--muted-foreground)]">
               {{ t('export.ankiDescription') }}
             </p>

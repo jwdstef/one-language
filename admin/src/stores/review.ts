@@ -10,24 +10,22 @@ export const useReviewStore = defineStore('review', () => {
   const error = ref<string | null>(null);
   const currentIndex = ref(0);
   
-  // Usage limit state (Requirements: 6.1, 6.2, 6.3)
-  const usageLimit = ref<UsageLimitResult | null>(null);
+  // Usage limit state - 现在无限制
+  const usageLimit = ref<UsageLimitResult | null>({ allowed: true, current: 0, limit: 0, remaining: 0 });
   const limitReached = ref(false);
   
-  // Review features state (Requirements: 10.4)
-  const reviewFeatures = ref<{ smartRecommend: boolean; reviewPlan: boolean; dailyLimit: number } | null>(null);
+  // Review features state - 现在所有功能都开放
+  const reviewFeatures = ref<{ smartRecommend: boolean; reviewPlan: boolean; dailyLimit: number } | null>({ 
+    smartRecommend: true, 
+    reviewPlan: true, 
+    dailyLimit: 0 
+  });
 
   async function fetchDueWords(limit: number = 20) {
     loading.value = true;
     error.value = null;
     limitReached.value = false;
     try {
-      // Check usage limit and features first (Requirements: 6.1, 6.2, 10.4)
-      await Promise.all([
-        fetchUsageLimit(),
-        fetchReviewFeatures(),
-      ]);
-      
       const response = await api.get('/review/due', { params: { limit } });
       dueWords.value = response.data.data || [];
       currentIndex.value = 0;
@@ -40,34 +38,24 @@ export const useReviewStore = defineStore('review', () => {
   }
 
   /**
-   * Fetch current usage limit status
-   * Requirements: 6.1, 6.2, 6.3
+   * Fetch current usage limit status - 现在总是返回无限制
    */
   async function fetchUsageLimit() {
-    try {
-      const response = await api.get('/review/limit');
-      usageLimit.value = response.data.data;
-      limitReached.value = !usageLimit.value?.allowed;
-    } catch (err: unknown) {
-      console.error('Failed to fetch usage limit:', err);
-      // Don't block reviews if limit check fails
-      usageLimit.value = null;
-      limitReached.value = false;
-    }
+    // 现在所有用户都有无限制访问
+    usageLimit.value = { allowed: true, current: 0, limit: 0, remaining: 0 };
+    limitReached.value = false;
   }
 
   /**
-   * Fetch review features availability
-   * Requirements: 10.4
+   * Fetch review features availability - 现在所有功能都开放
    */
   async function fetchReviewFeatures() {
-    try {
-      const response = await api.get('/review/features');
-      reviewFeatures.value = response.data.data;
-    } catch (err: unknown) {
-      console.error('Failed to fetch review features:', err);
-      reviewFeatures.value = null;
-    }
+    // 现在所有用户都有所有功能
+    reviewFeatures.value = { 
+      smartRecommend: true, 
+      reviewPlan: true, 
+      dailyLimit: 0 
+    };
   }
 
   async function fetchProgress() {
@@ -82,12 +70,6 @@ export const useReviewStore = defineStore('review', () => {
 
   async function submitReview(wordId: string, known: boolean): Promise<ReviewResult | null> {
     try {
-      // Check if limit is reached before submitting (Requirements: 6.2)
-      if (limitReached.value) {
-        error.value = 'Daily review limit reached. Upgrade to premium for more reviews.';
-        return null;
-      }
-
       const response = await api.post(`/review/${wordId}`, { known });
       const result = response.data.data as ReviewResult;
       
@@ -102,25 +84,6 @@ export const useReviewStore = defineStore('review', () => {
       
       return result;
     } catch (err: unknown) {
-      // Handle usage limit exceeded error (Requirements: 6.2)
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { status?: number; data?: { error?: { code?: string; message?: string; details?: { current?: number; limit?: number; remaining?: number } } } } };
-        if (axiosError.response?.status === 403 && axiosError.response?.data?.error?.code === 'USAGE_LIMIT_EXCEEDED') {
-          limitReached.value = true;
-          const details = axiosError.response.data.error.details;
-          if (details) {
-            usageLimit.value = {
-              allowed: false,
-              current: details.current || 0,
-              limit: details.limit || 0,
-              remaining: details.remaining || 0,
-            };
-          }
-          error.value = axiosError.response.data.error.message || 'Daily review limit reached';
-          return null;
-        }
-      }
-      
       const errorMessage = err instanceof Error ? err.message : 'Failed to submit review';
       error.value = errorMessage;
       return null;

@@ -48,57 +48,44 @@ const showGoalSettings = ref(false);
 const goalForm = ref({ dailyWordGoal: 10, dailyReviewGoal: 20 });
 const savingGoal = ref(false);
 
-// Feature gating flags
-const canAccessAchievements = ref(false);
-const canAccessGoals = ref(false);
-const canAccessAdvancedStats = ref(false);
+// Feature gating flags - 现在所有功能都开放
+const canAccessAchievements = ref(true);
+const canAccessGoals = ref(true);
+const canAccessAdvancedStats = ref(true);
 
 onMounted(async () => {
   try {
-    // Check feature access first
-    const [achievementsAccess, goalsAccess, advancedStatsAccess] = await Promise.all([
-      canAccessFeature('achievements'),
-      canAccessFeature('goals'),
-      canAccessFeature('advancedStats'),
-    ]);
-    canAccessAchievements.value = achievementsAccess;
-    canAccessGoals.value = goalsAccess;
-    canAccessAdvancedStats.value = advancedStatsAccess;
+    // 所有功能现在都开放，直接设置为true
+    canAccessAchievements.value = true;
+    canAccessGoals.value = true;
+    canAccessAdvancedStats.value = true;
 
-    // Build API calls based on feature access
-    const apiCalls: Promise<unknown>[] = [
+    // 直接调用所有API
+    const [overviewRes, weeklyRes, monthlyRes, streakRes, levelRes, progressRes, goalRes, achievementsRes] = await Promise.all([
       api.get('/stats/overview'),
       api.get('/stats/weekly'),
       api.get('/stats/monthly'),
       api.get('/stats/streak'),
-      canAccessAchievements.value ? api.get('/achievements/level') : Promise.resolve({ data: { data: null } }),
-      canAccessGoals.value ? api.get('/goals/progress') : Promise.resolve({ data: { data: null } }),
-      canAccessGoals.value ? api.get('/goals') : Promise.resolve({ data: { data: null } }),
-      canAccessAchievements.value ? api.get('/achievements') : Promise.resolve({ data: { data: null } }),
-    ];
-
-    const [overviewRes, weeklyRes, monthlyRes, streakRes, levelRes, progressRes, goalRes, achievementsRes] = await Promise.all(apiCalls) as { data: { data: unknown } }[];
+      api.get('/achievements/level'),
+      api.get('/goals/progress'),
+      api.get('/goals'),
+      api.get('/achievements'),
+    ]);
 
     overview.value = overviewRes.data.data as UserOverview;
     weeklyStats.value = (weeklyRes.data.data as { dailyActivity?: DailyActivity[] })?.dailyActivity || [];
     monthlyStats.value = (monthlyRes.data.data as { dailyActivity?: DailyActivity[] })?.dailyActivity || [];
     streakInfo.value = streakRes.data.data as StreakInfo;
+    userLevel.value = levelRes.data.data as UserLevel;
+    achievements.value = achievementsRes.data.data as UserAchievementStatus;
+    dailyProgress.value = progressRes.data.data as DailyProgress;
+    userGoal.value = goalRes.data.data as UserGoal;
     
-    if (canAccessAchievements.value) {
-      userLevel.value = levelRes.data.data as UserLevel;
-      achievements.value = achievementsRes.data.data as UserAchievementStatus;
-    }
-    
-    if (canAccessGoals.value) {
-      dailyProgress.value = progressRes.data.data as DailyProgress;
-      userGoal.value = goalRes.data.data as UserGoal;
-      
-      if (userGoal.value) {
-        goalForm.value = {
-          dailyWordGoal: userGoal.value.dailyWordGoal,
-          dailyReviewGoal: userGoal.value.dailyReviewGoal,
-        };
-      }
+    if (userGoal.value) {
+      goalForm.value = {
+        dailyWordGoal: userGoal.value.dailyWordGoal,
+        dailyReviewGoal: userGoal.value.dailyReviewGoal,
+      };
     }
   } catch (err) {
     error.value = t('admin.loadError');
@@ -264,18 +251,14 @@ async function saveGoalSettings() {
           </div>
           <div class="bg-white/10 rounded-lg p-4">
             <p class="text-white/70 text-sm">{{ t('statistics.level') }}</p>
-            <div v-if="canAccessAchievements" class="flex items-center gap-2">
+            <div class="flex items-center gap-2">
               <span class="text-2xl">{{ userLevel?.icon || '🌱' }}</span>
               <div>
                 <p class="text-xl font-bold">{{ userLevel?.name || '初学者' }}</p>
                 <p class="text-xs text-white/60">Lv.{{ userLevel?.level || 1 }}</p>
               </div>
             </div>
-            <div v-else class="flex items-center gap-2">
-              <Lock class="h-6 w-6 text-white/50" />
-              <span class="text-sm text-white/60">{{ t('common.premiumFeature') }}</span>
-            </div>
-            <div v-if="canAccessAchievements" class="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div class="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
               <div class="h-full bg-yellow-300 rounded-full transition-all" :style="{ width: `${userLevel?.progress || 0}%` }" />
             </div>
           </div>
@@ -358,92 +341,81 @@ async function saveGoalSettings() {
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold">{{ t('statistics.dailyGoal') }}</h2>
             <button
-              v-if="canAccessGoals"
               @click="showGoalSettings = !showGoalSettings"
               class="p-2 rounded-lg hover:bg-[var(--muted)] transition-colors"
             >
               <Settings class="h-5 w-5 text-[var(--muted-foreground)]" />
             </button>
-            <Lock v-else class="h-5 w-5 text-[var(--muted-foreground)]" />
           </div>
           
-          <!-- Premium feature locked message -->
-          <div v-if="!canAccessGoals" class="text-center py-8">
-            <Lock class="h-12 w-12 mx-auto text-[var(--muted-foreground)] mb-4" />
-            <p class="text-[var(--muted-foreground)]">{{ t('common.premiumFeature') }}</p>
-            <p class="text-sm text-[var(--muted-foreground)] mt-2">{{ t('statistics.upgradeForGoals') }}</p>
-          </div>
-          
-          <template v-else>
-            <div v-if="showGoalSettings" class="space-y-4 mb-4 p-4 bg-[var(--muted)] rounded-lg">
-              <div>
-                <label class="block text-sm mb-1">{{ t('statistics.wordGoal') }}</label>
-                <input
-                  v-model.number="goalForm.dailyWordGoal"
-                  type="number"
-                  min="1"
-                  max="100"
-                  class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)]"
-                />
-              </div>
-              <div>
-                <label class="block text-sm mb-1">{{ t('statistics.reviewGoal') }}</label>
-                <input
-                  v-model.number="goalForm.dailyReviewGoal"
-                  type="number"
-                  min="1"
-                  max="200"
-                  class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)]"
-                />
-              </div>
-              <button
-                @click="saveGoalSettings"
-                :disabled="savingGoal"
-                class="w-full px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
-              >
-                {{ savingGoal ? t('common.loading') : t('statistics.saveGoal') }}
-              </button>
+          <div v-if="showGoalSettings" class="space-y-4 mb-4 p-4 bg-[var(--muted)] rounded-lg">
+            <div>
+              <label class="block text-sm mb-1">{{ t('statistics.wordGoal') }}</label>
+              <input
+                v-model.number="goalForm.dailyWordGoal"
+                type="number"
+                min="1"
+                max="100"
+                class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)]"
+              />
             </div>
+            <div>
+              <label class="block text-sm mb-1">{{ t('statistics.reviewGoal') }}</label>
+              <input
+                v-model.number="goalForm.dailyReviewGoal"
+                type="number"
+                min="1"
+                max="200"
+                class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)]"
+              />
+            </div>
+            <button
+              @click="saveGoalSettings"
+              :disabled="savingGoal"
+              class="w-full px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+            >
+              {{ savingGoal ? t('common.loading') : t('statistics.saveGoal') }}
+            </button>
+          </div>
 
-            <div class="space-y-4">
-              <div>
-                <div class="flex justify-between text-sm mb-2">
-                  <span class="flex items-center gap-2">
-                    <Target class="h-4 w-4 text-blue-500" />
-                    {{ t('statistics.wordGoal') }}
-                  </span>
-                  <span :class="dailyProgress?.isWordGoalComplete ? 'text-green-500' : ''">
-                    {{ dailyProgress?.wordsToday || 0 }} / {{ dailyProgress?.wordGoal || 10 }}
-                    <span v-if="dailyProgress?.isWordGoalComplete">✓</span>
-                  </span>
-                </div>
-                <div class="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
-                  <div
-                    class="h-full bg-blue-500 rounded-full transition-all"
-                    :style="{ width: `${dailyProgress?.wordProgress || 0}%` }"
-                  />
-                </div>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-sm mb-2">
+                <span class="flex items-center gap-2">
+                  <Target class="h-4 w-4 text-blue-500" />
+                  {{ t('statistics.wordGoal') }}
+                </span>
+                <span :class="dailyProgress?.isWordGoalComplete ? 'text-green-500' : ''">
+                  {{ dailyProgress?.wordsToday || 0 }} / {{ dailyProgress?.wordGoal || 10 }}
+                  <span v-if="dailyProgress?.isWordGoalComplete">✓</span>
+                </span>
               </div>
-              <div>
-                <div class="flex justify-between text-sm mb-2">
-                  <span class="flex items-center gap-2">
-                    <Star class="h-4 w-4 text-yellow-500" />
-                    {{ t('statistics.reviewGoal') }}
-                  </span>
-                  <span :class="dailyProgress?.isReviewGoalComplete ? 'text-green-500' : ''">
-                    {{ dailyProgress?.reviewsToday || 0 }} / {{ dailyProgress?.reviewGoal || 20 }}
-                    <span v-if="dailyProgress?.isReviewGoalComplete">✓</span>
-                  </span>
-                </div>
-                <div class="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
-                  <div
-                    class="h-full bg-yellow-500 rounded-full transition-all"
-                    :style="{ width: `${dailyProgress?.reviewProgress || 0}%` }"
-                  />
-                </div>
+              <div class="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-blue-500 rounded-full transition-all"
+                  :style="{ width: `${dailyProgress?.wordProgress || 0}%` }"
+                />
               </div>
             </div>
-          </template>
+            <div>
+              <div class="flex justify-between text-sm mb-2">
+                <span class="flex items-center gap-2">
+                  <Star class="h-4 w-4 text-yellow-500" />
+                  {{ t('statistics.reviewGoal') }}
+                </span>
+                <span :class="dailyProgress?.isReviewGoalComplete ? 'text-green-500' : ''">
+                  {{ dailyProgress?.reviewsToday || 0 }} / {{ dailyProgress?.reviewGoal || 20 }}
+                  <span v-if="dailyProgress?.isReviewGoalComplete">✓</span>
+                </span>
+              </div>
+              <div class="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-yellow-500 rounded-full transition-all"
+                  :style="{ width: `${dailyProgress?.reviewProgress || 0}%` }"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -454,72 +426,59 @@ async function saveGoalSettings() {
             <Trophy class="h-5 w-5 text-yellow-500" />
             {{ t('statistics.achievements') }}
           </h2>
-          <span v-if="canAccessAchievements" class="text-sm text-[var(--muted-foreground)]">
+          <span class="text-sm text-[var(--muted-foreground)]">
             {{ t('statistics.achievementsUnlocked') }}: {{ achievements?.unlocked.length || 0 }}
           </span>
-          <Lock v-else class="h-5 w-5 text-[var(--muted-foreground)]" />
         </div>
         
-        <!-- Premium feature locked message -->
-        <div v-if="!canAccessAchievements" class="text-center py-8">
-          <Lock class="h-12 w-12 mx-auto text-[var(--muted-foreground)] mb-4" />
-          <p class="text-[var(--muted-foreground)]">{{ t('common.premiumFeature') }}</p>
-          <p class="text-sm text-[var(--muted-foreground)] mt-2">{{ t('statistics.upgradeForAchievements') }}</p>
-        </div>
-        
-        <template v-else>
-          <!-- Recent Achievements -->
-          <div v-if="achievements?.recentUnlocks.length" class="mb-6">
-            <h3 class="text-sm font-medium text-[var(--muted-foreground)] mb-3">{{ t('statistics.recentAchievements') }}</h3>
-            <div class="flex flex-wrap gap-3">
-              <div
-                v-for="achievement in achievements.recentUnlocks"
-                :key="achievement.id"
-                class="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg"
-              >
-                <span class="text-2xl">{{ achievement.icon }}</span>
-                <div>
-                  <p class="font-medium text-sm">{{ achievement.name }}</p>
-                  <p class="text-xs text-[var(--muted-foreground)]">{{ achievement.description }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- All Achievements Grid -->
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <!-- Recent Achievements -->
+        <div v-if="achievements?.recentUnlocks.length" class="mb-6">
+          <h3 class="text-sm font-medium text-[var(--muted-foreground)] mb-3">{{ t('statistics.recentAchievements') }}</h3>
+          <div class="flex flex-wrap gap-3">
             <div
-              v-for="achievement in [...(achievements?.unlocked || []), ...(achievements?.locked || [])]"
+              v-for="achievement in achievements.recentUnlocks"
               :key="achievement.id"
-              :class="[
-                'p-3 rounded-lg border text-center transition-all',
-                achievement.unlockedAt
-                  ? 'bg-[var(--background)] border-[var(--border)]'
-                  : 'bg-[var(--muted)] border-transparent opacity-50'
-              ]"
-              :title="achievement.description"
+              class="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg"
             >
-              <span class="text-3xl block mb-1">{{ achievement.icon }}</span>
-              <p class="text-xs font-medium truncate">{{ achievement.name }}</p>
-              <div v-if="!achievement.unlockedAt && achievement.progress !== undefined" class="mt-2">
-                <div class="h-1 bg-[var(--border)] rounded-full overflow-hidden">
-                  <div class="h-full bg-[var(--primary)] rounded-full" :style="{ width: `${achievement.progress}%` }" />
-                </div>
-                <p class="text-xs text-[var(--muted-foreground)] mt-1">{{ achievement.progress }}%</p>
+              <span class="text-2xl">{{ achievement.icon }}</span>
+              <div>
+                <p class="font-medium text-sm">{{ achievement.name }}</p>
+                <p class="text-xs text-[var(--muted-foreground)]">{{ achievement.description }}</p>
               </div>
             </div>
           </div>
-        </template>
+        </div>
+
+        <!-- All Achievements Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div
+            v-for="achievement in [...(achievements?.unlocked || []), ...(achievements?.locked || [])]"
+            :key="achievement.id"
+            :class="[
+              'p-3 rounded-lg border text-center transition-all',
+              achievement.unlockedAt
+                ? 'bg-[var(--background)] border-[var(--border)]'
+                : 'bg-[var(--muted)] border-transparent opacity-50'
+            ]"
+            :title="achievement.description"
+          >
+            <span class="text-3xl block mb-1">{{ achievement.icon }}</span>
+            <p class="text-xs font-medium truncate">{{ achievement.name }}</p>
+            <div v-if="!achievement.unlockedAt && achievement.progress !== undefined" class="mt-2">
+              <div class="h-1 bg-[var(--border)] rounded-full overflow-hidden">
+                <div class="h-full bg-[var(--primary)] rounded-full" :style="{ width: `${achievement.progress}%` }" />
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)] mt-1">{{ achievement.progress }}%</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Activity Chart (Advanced Statistics - Premium Feature) -->
+      <!-- Activity Chart -->
       <div class="bg-[var(--card)] rounded-xl p-6 border border-[var(--border)]">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold flex items-center gap-2">
-            {{ t('statistics.learningActivity') }}
-            <Lock v-if="!canAccessAdvancedStats" class="h-4 w-4 text-[var(--muted-foreground)]" />
-          </h2>
-          <div v-if="canAccessAdvancedStats" class="flex gap-2">
+          <h2 class="text-lg font-semibold">{{ t('statistics.learningActivity') }}</h2>
+          <div class="flex gap-2">
             <button
               :class="[
                 'px-4 py-2 text-sm rounded-lg transition-colors',
@@ -545,14 +504,7 @@ async function saveGoalSettings() {
           </div>
         </div>
         
-        <!-- Premium feature locked message -->
-        <div v-if="!canAccessAdvancedStats" class="text-center py-12">
-          <Lock class="h-12 w-12 mx-auto text-[var(--muted-foreground)] mb-4" />
-          <p class="text-[var(--muted-foreground)]">{{ t('common.premiumFeature') }}</p>
-          <p class="text-sm text-[var(--muted-foreground)] mt-2">{{ t('statistics.upgradeForAdvancedStats') }}</p>
-        </div>
-        
-        <div v-else class="h-80">
+        <div class="h-80">
           <Line :data="activityChartData" :options="activityChartOptions" />
         </div>
       </div>
