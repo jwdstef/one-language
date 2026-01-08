@@ -111,36 +111,8 @@ export class FeatureGateService {
    * @returns Promise<FeatureAccessResult> - Detailed access result
    */
   public async checkFeatureAccess(feature: FeatureName): Promise<FeatureAccessResult> {
-    const features = await subscriptionService.getFeatures();
-    
-    // If no features available (not logged in), use default free tier features
-    if (!features) {
-      // Check if this is a free feature that should be allowed for unauthenticated users
-      const freeFeatures: FeatureName[] = ['floatingBall']; // Features available to all users
-      if (freeFeatures.includes(feature)) {
-        return { allowed: true };
-      }
-      return {
-        allowed: false,
-        reason: 'Not authenticated',
-        upgradeRequired: true,
-      };
-    }
-
-    const mapping = FEATURE_MAPPINGS[feature];
-    if (!mapping) {
-      console.warn(`[FeatureGateService] Unknown feature: ${feature}`);
-      return { allowed: true }; // Allow unknown features by default
-    }
-
-    const categoryFeatures = features[mapping.category] as unknown as Record<string, unknown>;
-    const isAllowed = Boolean(categoryFeatures[mapping.property]);
-
-    return {
-      allowed: isAllowed,
-      reason: isAllowed ? undefined : `${feature} requires premium subscription`,
-      upgradeRequired: !isAllowed,
-    };
+    // 暂时开放所有功能给所有用户
+    return { allowed: true };
   }
 
   /**
@@ -151,19 +123,13 @@ export class FeatureGateService {
    * @returns Promise<UsageLimitResult> - Usage limit result
    */
   public async canUse(usageType: UsageType): Promise<UsageLimitResult> {
-    const limitResult = await subscriptionService.checkUsageLimit(usageType);
-    
-    // If we can't check limits (not logged in), return a default allowing result
-    if (!limitResult) {
-      return {
-        allowed: true,
-        current: 0,
-        limit: 0,
-        remaining: 0,
-      };
-    }
-
-    return limitResult;
+    // 暂时不限制使用量
+    return {
+      allowed: true,
+      current: 0,
+      limit: 0,
+      remaining: 0,
+    };
   }
 
   /**
@@ -174,23 +140,23 @@ export class FeatureGateService {
    * @returns Promise<string[]> - Array of available option values
    */
   public async getAvailableOptions(optionType: OptionType): Promise<string[]> {
-    const features = await subscriptionService.getFeatures();
-    
-    if (!features) {
-      // Return default free tier options if not authenticated
-      return this.getDefaultFreeOptions(optionType);
-    }
+    // 暂时返回所有可用选项
+    return this.getAllOptions(optionType);
+  }
 
+  /**
+   * Get all available options (premium level)
+   */
+  private getAllOptions(optionType: OptionType): string[] {
     switch (optionType) {
       case 'language':
-        return features.translation.languages;
+        return ['zh', 'en', 'ja', 'ko', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'nl', 'sv', 'no', 'da', 'fi', 'pl', 'cs', 'tr', 'el', 'ar', 'th', 'vi'];
       case 'style':
-        return features.translation.styles;
+        return ['default', 'subtle', 'bold', 'italic', 'underlined', 'highlighted', 'learning', 'custom'];
       case 'level':
-        return features.translation.levels;
+        return ['a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
       case 'ratio':
-        // For ratio, return the max value as a string array
-        return [String(features.translation.maxRatio)];
+        return ['100'];
       default:
         return [];
     }
@@ -205,8 +171,8 @@ export class FeatureGateService {
    * @returns Promise<boolean> - True if value is allowed
    */
   public async isValueAllowed(optionType: OptionType, value: unknown): Promise<boolean> {
-    const result = await this.checkValueAllowed(optionType, value);
-    return result.allowed;
+    // 暂时允许所有值
+    return true;
   }
 
   /**
@@ -217,43 +183,8 @@ export class FeatureGateService {
    * @returns Promise<OptionValueResult> - Detailed result
    */
   public async checkValueAllowed(optionType: OptionType, value: unknown): Promise<OptionValueResult> {
-    const features = await subscriptionService.getFeatures();
-    
-    if (!features) {
-      // Use default free tier limits if not authenticated
-      return this.checkAgainstDefaults(optionType, value);
-    }
-
-    switch (optionType) {
-      case 'language':
-        return {
-          allowed: features.translation.languages.includes(String(value)),
-          availableOptions: features.translation.languages,
-        };
-      
-      case 'style':
-        return {
-          allowed: features.translation.styles.includes(String(value)),
-          availableOptions: features.translation.styles,
-        };
-      
-      case 'level':
-        return {
-          allowed: features.translation.levels.includes(String(value)),
-          availableOptions: features.translation.levels,
-        };
-      
-      case 'ratio':
-        const ratioValue = typeof value === 'number' ? value : Number(value);
-        const maxRatio = features.translation.maxRatio;
-        return {
-          allowed: !isNaN(ratioValue) && ratioValue >= 1 && ratioValue <= maxRatio,
-          maxValue: maxRatio,
-        };
-      
-      default:
-        return { allowed: true };
-    }
+    // 暂时允许所有值
+    return { allowed: true };
   }
 
   // ==================== Helper Methods ====================
@@ -265,11 +196,8 @@ export class FeatureGateService {
    * @returns Promise<number> - Maximum ratio percentage (1-100)
    */
   public async getMaxRatio(): Promise<number> {
-    const features = await subscriptionService.getFeatures();
-    if (!features) {
-      return 30; // Default free tier max ratio
-    }
-    return features.translation.maxRatio;
+    // 暂时返回最大值
+    return 100;
   }
 
   /**
@@ -279,11 +207,8 @@ export class FeatureGateService {
    * @returns Promise<number> - Daily limit (0 = unlimited)
    */
   public async getDailyTranslationLimit(): Promise<number> {
-    const features = await subscriptionService.getFeatures();
-    if (!features) {
-      return 100; // Default free tier limit
-    }
-    return features.translation.dailyLimit;
+    // 暂时返回无限制
+    return 0;
   }
 
   /**
@@ -293,11 +218,8 @@ export class FeatureGateService {
    * @returns Promise<number> - Max words (0 = unlimited)
    */
   public async getMaxVocabularyLimit(): Promise<number> {
-    const features = await subscriptionService.getFeatures();
-    if (!features) {
-      return 100; // Default free tier limit
-    }
-    return features.vocabulary.maxWords;
+    // 暂时返回无限制
+    return 0;
   }
 
   /**
@@ -307,11 +229,8 @@ export class FeatureGateService {
    * @returns Promise<number> - Daily review limit
    */
   public async getDailyReviewLimit(): Promise<number> {
-    const features = await subscriptionService.getFeatures();
-    if (!features) {
-      return 20; // Default free tier limit
-    }
-    return features.review.dailyLimit;
+    // 暂时返回高限制
+    return 200;
   }
 
   /**
@@ -321,11 +240,8 @@ export class FeatureGateService {
    * @returns Promise<number> - Max rules (0 = unlimited)
    */
   public async getMaxWebsiteRulesLimit(): Promise<number> {
-    const features = await subscriptionService.getFeatures();
-    if (!features) {
-      return 10; // Default free tier limit
-    }
-    return features.website.maxRules;
+    // 暂时返回无限制
+    return 0;
   }
 
   /**
@@ -334,7 +250,8 @@ export class FeatureGateService {
    * @returns Promise<boolean> - True if premium
    */
   public async isPremium(): Promise<boolean> {
-    return subscriptionService.isPremium();
+    // 暂时所有用户都视为高级用户
+    return true;
   }
 
   /**
@@ -343,7 +260,66 @@ export class FeatureGateService {
    * @returns Promise<PlanFeatures | null> - Plan features or null
    */
   public async getFeatures(): Promise<PlanFeatures | null> {
-    return subscriptionService.getFeatures();
+    // 暂时返回所有功能开放的配置
+    return {
+      pronunciation: {
+        webSpeechTTS: true,
+        aiDefinition: true,
+        youdaoTTS: true,
+        accentSwitch: true,
+        nestedTooltip: true,
+        hotkey: true,
+      },
+      vocabulary: {
+        lists: true,
+        tags: true,
+        masteryLevel: true,
+        cloudSync: true,
+        maxWords: 0, // 无限制
+      },
+      gamification: {
+        achievements: true,
+        goals: true,
+        reminders: true,
+      },
+      statistics: {
+        basic: true,
+        advanced: true,
+        trends: true,
+      },
+      export: {
+        json: true,
+        csv: true,
+        anki: true,
+        custom: true,
+      },
+      website: {
+        whitelist: true,
+        maxRules: 0, // 无限制
+      },
+      features: {
+        customCSS: true,
+        floatingBall: true,
+        hotkeys: true,
+        contextMenu: true,
+        multiApi: true,
+      },
+      review: {
+        smartRecommend: true,
+        reviewPlan: true,
+        dailyLimit: 200,
+      },
+      translation: {
+        positionControl: true,
+        bracketControl: true,
+        lengthControl: true,
+        dailyLimit: 0, // 无限制
+        maxRatio: 100,
+        languages: ['zh', 'en', 'ja', 'ko', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'nl', 'sv', 'no', 'da', 'fi', 'pl', 'cs', 'tr', 'el', 'ar', 'th', 'vi'],
+        styles: ['default', 'subtle', 'bold', 'italic', 'underlined', 'highlighted', 'learning', 'custom'],
+        levels: ['a1', 'a2', 'b1', 'b2', 'c1', 'c2'],
+      },
+    };
   }
 
   // ==================== Private Helper Methods ====================

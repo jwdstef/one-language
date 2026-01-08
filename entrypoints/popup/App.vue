@@ -522,103 +522,6 @@ const nativeLanguageOptions = computed(() =>
 
     <!-- Main Content -->
     <div class="popup-content">
-      <!-- Membership Status Card (Requirements: 2.3, 17.1) -->
-      <div v-if="currentUser" class="popup-card popup-membership-card">
-        <div class="popup-membership-header">
-          <div class="popup-membership-title">
-            <CrownIcon class="w-4 h-4" :class="{ 'premium-icon': isPremiumUser }" />
-            <span>{{ $t('subscription.memberStatus') }}</span>
-          </div>
-          <div class="popup-plan-badge" :class="isPremiumUser ? 'premium' : 'free'">
-            {{ isPremiumUser ? $t('subscription.premium') : $t('subscription.free') }}
-          </div>
-        </div>
-        
-        <!-- Loading State -->
-        <div v-if="isLoadingSubscription" class="popup-membership-loading">
-          <div class="spinner"></div>
-          <span>{{ $t('subscription.loading') }}</span>
-        </div>
-        
-        <!-- Usage Statistics -->
-        <div v-else-if="usageStatus" class="popup-usage-stats">
-          <div class="popup-usage-title">{{ $t('subscription.todayUsage') }}</div>
-          <div class="popup-usage-grid">
-            <!-- Translation Usage -->
-            <div class="popup-usage-item">
-              <div class="popup-usage-label">{{ $t('subscription.translationUsage') }}</div>
-              <div class="popup-usage-value">
-                <span class="popup-usage-current">{{ usageStatus.translation.current }}</span>
-                <span class="popup-usage-separator">/</span>
-                <span class="popup-usage-limit">{{ usageStatus.translation.limit === 0 ? $t('subscription.unlimited') : usageStatus.translation.limit }}</span>
-              </div>
-              <div class="popup-usage-bar">
-                <div 
-                  class="popup-usage-bar-fill" 
-                  :style="{ width: usageStatus.translation.limit === 0 ? '0%' : Math.min(100, (usageStatus.translation.current / usageStatus.translation.limit) * 100) + '%' }"
-                  :class="{ 'warning': usageStatus.translation.limit > 0 && usageStatus.translation.current >= usageStatus.translation.limit * 0.8 }"
-                ></div>
-              </div>
-            </div>
-            
-            <!-- Review Usage -->
-            <div class="popup-usage-item">
-              <div class="popup-usage-label">{{ $t('subscription.reviewUsage') }}</div>
-              <div class="popup-usage-value">
-                <span class="popup-usage-current">{{ usageStatus.review.current }}</span>
-                <span class="popup-usage-separator">/</span>
-                <span class="popup-usage-limit">{{ usageStatus.review.limit === 0 ? $t('subscription.unlimited') : usageStatus.review.limit }}</span>
-              </div>
-              <div class="popup-usage-bar">
-                <div 
-                  class="popup-usage-bar-fill" 
-                  :style="{ width: usageStatus.review.limit === 0 ? '0%' : Math.min(100, (usageStatus.review.current / usageStatus.review.limit) * 100) + '%' }"
-                  :class="{ 'warning': usageStatus.review.limit > 0 && usageStatus.review.current >= usageStatus.review.limit * 0.8 }"
-                ></div>
-              </div>
-            </div>
-            
-            <!-- Collection Usage -->
-            <div class="popup-usage-item popup-usage-full">
-              <div class="popup-usage-label">{{ $t('subscription.collectionUsage') }}</div>
-              <div class="popup-usage-value">
-                <span class="popup-usage-current">{{ usageStatus.collection.current }}</span>
-                <span class="popup-usage-separator">/</span>
-                <span class="popup-usage-limit">{{ usageStatus.collection.limit === 0 ? $t('subscription.unlimited') : usageStatus.collection.limit }}</span>
-              </div>
-              <div class="popup-usage-bar">
-                <div 
-                  class="popup-usage-bar-fill" 
-                  :style="{ width: usageStatus.collection.limit === 0 ? '0%' : Math.min(100, (usageStatus.collection.current / usageStatus.collection.limit) * 100) + '%' }"
-                  :class="{ 'warning': usageStatus.collection.limit > 0 && usageStatus.collection.current >= usageStatus.collection.limit * 0.8 }"
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Upgrade Button for Free Users -->
-        <button 
-          v-if="!isPremiumUser" 
-          class="popup-upgrade-btn"
-          @click="openUpgradePage"
-        >
-          <SparklesIcon class="w-4 h-4" />
-          <span>{{ $t('subscription.upgradeToPremium') }}</span>
-        </button>
-      </div>
-      
-      <!-- Login Prompt for Non-logged Users -->
-      <div v-else class="popup-card popup-login-prompt">
-        <div class="popup-login-prompt-content">
-          <CrownIcon class="w-5 h-5" />
-          <span>{{ $t('subscription.loginToView') }}</span>
-        </div>
-        <button class="popup-login-btn-small" @click="openAccountPage">
-          {{ $t('auth.login') }}
-        </button>
-      </div>
-
       <!-- Settings Card -->
       <div class="popup-card">
         <div class="popup-settings-grid">
@@ -686,9 +589,6 @@ const nativeLanguageOptions = computed(() =>
                 </option>
               </optgroup>
             </select>
-            <p v-if="!isPremiumUser" class="popup-premium-hint">
-              升级高级版解锁更多语言
-            </p>
           </div>
 
           <div class="popup-setting-group">
@@ -704,9 +604,6 @@ const nativeLanguageOptions = computed(() =>
                 {{ option.label }}{{ option.isLocked ? ' 🔒' : '' }}
               </option>
             </select>
-            <p v-if="!isPremiumUser && allowedLevels.length < 6" class="popup-premium-hint">
-              升级高级版解锁更多等级
-            </p>
           </div>
 
           <div class="popup-setting-group">
@@ -722,9 +619,6 @@ const nativeLanguageOptions = computed(() =>
                 {{ option.label }}{{ option.isLocked ? ' 🔒' : '' }}
               </option>
             </select>
-            <p v-if="!isPremiumUser && allowedStyles.length < 9" class="popup-premium-hint">
-              升级高级版解锁更多样式
-            </p>
             <!-- 自定义样式提示 -->
             <div
               v-if="settings.translationStyle === 'custom'"

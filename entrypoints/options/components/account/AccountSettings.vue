@@ -189,10 +189,6 @@
             <div class="opt-profile-info">
               <h2>{{ currentUser?.name }}</h2>
               <p class="opt-profile-email">{{ currentUser?.email }}</p>
-              <span class="opt-badge opt-badge--primary">
-                <Crown class="w-3 h-3" />
-                {{ getSubscriptionLabel(currentUser?.subscription) }}
-              </span>
             </div>
           </div>
         </div>
@@ -206,126 +202,6 @@
               <Key class="w-4 h-4" />
               修改密码
             </Button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 会员状态卡片 (Requirements: 2.3, 17.2) -->
-      <div class="opt-card opt-animate-slide-up" style="animation-delay: 0.05s;">
-        <div class="opt-card-header">
-          <div class="opt-card-title">
-            <div class="opt-card-title-icon-wrapper opt-card-title-icon-wrapper--gold">
-              <Crown class="opt-card-title-icon" />
-            </div>
-            <div>
-              <h2>{{ $t('subscription.memberStatus') || '会员状态' }}</h2>
-              <p class="opt-card-subtitle">{{ $t('subscription.currentPlan') || '当前版本' }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="opt-card-content">
-          <!-- Loading State -->
-          <div v-if="isLoadingSubscription" class="opt-subscription-loading">
-            <Loader2 class="w-5 h-5 animate-spin" />
-            <span>{{ $t('subscription.loading') || '加载中...' }}</span>
-          </div>
-          
-          <!-- Subscription Details -->
-          <div v-else-if="subscriptionStatus" class="opt-subscription-details">
-            <!-- Plan Info -->
-            <div class="opt-subscription-plan">
-              <div class="opt-plan-badge" :class="isPremiumUser() ? 'opt-plan-badge--premium' : 'opt-plan-badge--free'">
-                <Crown v-if="isPremiumUser()" class="w-5 h-5" />
-                <User v-else class="w-5 h-5" />
-                <span>{{ isPremiumUser() ? ($t('subscription.premium') || '高级版') : ($t('subscription.free') || '免费版') }}</span>
-              </div>
-              <div v-if="isPremiumUser() && subscriptionStatus.subscription.endDate" class="opt-plan-expiry">
-                <span class="opt-plan-expiry-label">{{ $t('subscription.expiresAt') || '到期时间' }}:</span>
-                <span class="opt-plan-expiry-date">{{ formatExpirationDate() }}</span>
-              </div>
-            </div>
-            
-            <!-- Usage Statistics -->
-            <div v-if="usageStatus" class="opt-usage-section">
-              <h4 class="opt-usage-title">{{ $t('subscription.usageStats') || '使用统计' }}</h4>
-              <div class="opt-usage-grid">
-                <!-- Translation Usage -->
-                <div class="opt-usage-item">
-                  <div class="opt-usage-header">
-                    <span class="opt-usage-label">{{ $t('subscription.translationUsage') || '翻译' }}</span>
-                    <span class="opt-usage-value">
-                      {{ usageStatus.translation.current }} / {{ usageStatus.translation.limit === 0 ? ($t('subscription.unlimited') || '无限') : usageStatus.translation.limit }}
-                    </span>
-                  </div>
-                  <div class="opt-usage-bar">
-                    <div 
-                      class="opt-usage-bar-fill" 
-                      :style="{ width: usageStatus.translation.limit === 0 ? '0%' : Math.min(100, (usageStatus.translation.current / usageStatus.translation.limit) * 100) + '%' }"
-                      :class="{ 'opt-usage-bar-fill--warning': usageStatus.translation.limit > 0 && usageStatus.translation.current >= usageStatus.translation.limit * 0.8 }"
-                    ></div>
-                  </div>
-                </div>
-                
-                <!-- Review Usage -->
-                <div class="opt-usage-item">
-                  <div class="opt-usage-header">
-                    <span class="opt-usage-label">{{ $t('subscription.reviewUsage') || '复习' }}</span>
-                    <span class="opt-usage-value">
-                      {{ usageStatus.review.current }} / {{ usageStatus.review.limit === 0 ? ($t('subscription.unlimited') || '无限') : usageStatus.review.limit }}
-                    </span>
-                  </div>
-                  <div class="opt-usage-bar">
-                    <div 
-                      class="opt-usage-bar-fill" 
-                      :style="{ width: usageStatus.review.limit === 0 ? '0%' : Math.min(100, (usageStatus.review.current / usageStatus.review.limit) * 100) + '%' }"
-                      :class="{ 'opt-usage-bar-fill--warning': usageStatus.review.limit > 0 && usageStatus.review.current >= usageStatus.review.limit * 0.8 }"
-                    ></div>
-                  </div>
-                </div>
-                
-                <!-- Collection Usage -->
-                <div class="opt-usage-item opt-usage-item--full">
-                  <div class="opt-usage-header">
-                    <span class="opt-usage-label">{{ $t('subscription.collectionUsage') || '收藏' }}</span>
-                    <span class="opt-usage-value">
-                      {{ usageStatus.collection.current }} / {{ usageStatus.collection.limit === 0 ? ($t('subscription.unlimited') || '无限') : usageStatus.collection.limit }}
-                    </span>
-                  </div>
-                  <div class="opt-usage-bar">
-                    <div 
-                      class="opt-usage-bar-fill" 
-                      :style="{ width: usageStatus.collection.limit === 0 ? '0%' : Math.min(100, (usageStatus.collection.current / usageStatus.collection.limit) * 100) + '%' }"
-                      :class="{ 'opt-usage-bar-fill--warning': usageStatus.collection.limit > 0 && usageStatus.collection.current >= usageStatus.collection.limit * 0.8 }"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Upgrade Button for Free Users -->
-            <Button 
-              v-if="!isPremiumUser()" 
-              class="opt-btn opt-btn--upgrade opt-btn--full"
-              @click="openUpgradePage"
-            >
-              <Sparkles class="w-4 h-4" />
-              {{ $t('subscription.upgradeToPremium') || '升级到高级版' }}
-            </Button>
-            
-            <!-- Renew Button for Premium Users -->
-            <Button 
-              v-else-if="subscriptionStatus.subscription.endDate" 
-              class="opt-btn opt-btn--primary opt-btn--full"
-              @click="openUpgradePage"
-            >
-              <RefreshCw class="w-4 h-4" />
-              续费会员
-            </Button>
-          </div>
-          
-          <!-- No Subscription Data -->
-          <div v-else class="opt-subscription-empty">
-            <p>{{ $t('subscription.loginToView') || '无法加载会员信息' }}</p>
           </div>
         </div>
       </div>

@@ -208,15 +208,9 @@
             <div class="opt-setting-label-row">
               <Palette class="opt-setting-icon" />
               <Label for="translation-style">{{ $t('basicSettings.translationStyle') }}</Label>
-              <span v-if="!isPremiumUser" class="opt-setting-limit-badge">
-                {{ allowedStyles.length }} 种可用
-              </span>
             </div>
             <p class="opt-setting-desc">
               选择翻译文本的显示样式
-              <span v-if="!isPremiumUser" class="opt-premium-hint">
-                （升级高级版解锁全部样式）
-              </span>
             </p>
           </div>
           <div class="opt-style-selector">
@@ -347,15 +341,9 @@
             <div class="opt-setting-label-row">
               <GraduationCap class="opt-setting-icon" />
               <Label for="user-level">{{ $t('basicSettings.userLevel') }}</Label>
-              <span v-if="!isPremiumUser" class="opt-setting-limit-badge">
-                {{ allowedLevels.length }} 级可用
-              </span>
             </div>
             <p class="opt-setting-desc">
               根据您的语言水平智能选择翻译词汇
-              <span v-if="!isPremiumUser" class="opt-premium-hint">
-                （升级高级版解锁全部等级）
-              </span>
             </p>
           </div>
           <div class="opt-setting-control" style="min-width: 180px;">
@@ -389,15 +377,9 @@
               <Percent class="opt-setting-icon" />
               <Label for="replacement-rate">{{ $t('basicSettings.replacementRate') }}</Label>
               <span class="opt-setting-value">{{ Math.round(settings.replacementRate * 100) }}%</span>
-              <span v-if="!isPremiumUser" class="opt-setting-limit-badge">
-                最高 {{ Math.round(maxRatioLimit * 100) }}%
-              </span>
             </div>
             <p class="opt-setting-desc">
               控制页面中被翻译词汇的比例
-              <span v-if="!isPremiumUser" class="opt-premium-hint">
-                （升级高级版可解锁100%）
-              </span>
             </p>
           </div>
           <div class="opt-slider-wrapper">
